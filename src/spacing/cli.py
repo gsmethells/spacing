@@ -16,6 +16,7 @@ except ImportError:
   from importlib_metadata import PackageNotFoundError, version
 
 from .config import BlankLineConfig, setConfig
+from .pathfilter import discoverPythonFiles
 from .processor import FileProcessor
 from .types import BlockType
 
@@ -100,7 +101,9 @@ def main():
 
   # Add version argument
   parser.add_argument('--version', action='version', version=f'spacing {getVersion()}', help='Show version and exit')
-  parser.add_argument('paths', nargs='+', help='Files or directories to process')
+  parser.add_argument(
+    'paths', nargs='*', help='Files or directories to process (default: current directory with smart exclusions)'
+  )
   parser.add_argument(
     '--check', action='store_true', help='Check if files need formatting (exit code 1 if changes needed)'
   )
@@ -154,31 +157,44 @@ def main():
   processedCount = 0
   changedCount = 0
 
-  for pathStr in args.paths:
-    path = Path(pathStr)
+  # If no paths provided, discover Python files in current directory with exclusions
+  if not args.paths:
+    pythonFiles = discoverPythonFiles(Path.cwd(), config)
 
-    if path.is_file() and path.suffix == '.py':
+    for pyFile in pythonFiles:
       processedCount += 1
-      changed, fileExitCode = _processFile(path, args)
+      changed, fileExitCode = _processFile(pyFile, args)
 
       if changed:
         changedCount += 1
         exitCode = max(exitCode, fileExitCode)
-    elif path.is_dir():
-      for pyFile in path.rglob('*.py'):
+  else:
+    # Process explicitly provided paths (no exclusions applied)
+    for pathStr in args.paths:
+      path = Path(pathStr)
+
+      if path.is_file() and path.suffix == '.py':
         processedCount += 1
-        changed, fileExitCode = _processFile(pyFile, args)
+        changed, fileExitCode = _processFile(path, args)
 
         if changed:
           changedCount += 1
           exitCode = max(exitCode, fileExitCode)
-    else:
-      if path.exists():
-        print(f'Skipping {path}: not a Python file or directory', file=sys.stderr)
-      else:
-        print(f'Error: Path not found: {path}', file=sys.stderr)
+      elif path.is_dir():
+        for pyFile in path.rglob('*.py'):
+          processedCount += 1
+          changed, fileExitCode = _processFile(pyFile, args)
 
-        exitCode = 1
+          if changed:
+            changedCount += 1
+            exitCode = max(exitCode, fileExitCode)
+      else:
+        if path.exists():
+          print(f'Skipping {path}: not a Python file or directory', file=sys.stderr)
+        else:
+          print(f'Error: Path not found: {path}', file=sys.stderr)
+
+          exitCode = 1
 
   if not args.quiet:
     if args.check and exitCode == 0:

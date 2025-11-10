@@ -270,14 +270,10 @@ class TestClassifierRegressions:
     """Regression: method calls with lambda keyword arguments should be CALL, not ASSIGNMENT"""
 
     # Lambda in keyword argument
-    assert (
-      StatementClassifier.classifyStatement(['output[STUDY].sort(key=lambda k: k[SDATE])']) == BlockType.CALL
-    )
+    assert StatementClassifier.classifyStatement(['output[STUDY].sort(key=lambda k: k[SDATE])']) == BlockType.CALL
 
     # Multiple method calls with lambdas
-    assert (
-      StatementClassifier.classifyStatement(['output[PATIENT].sort(key=lambda k: k[PNAME])']) == BlockType.CALL
-    )
+    assert StatementClassifier.classifyStatement(['output[PATIENT].sort(key=lambda k: k[PNAME])']) == BlockType.CALL
 
     # Lambda with more complex expression
     assert (

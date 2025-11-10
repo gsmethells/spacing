@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.7.0] - 2025-11-10
+
+**NEW FEATURE: Smart Path Discovery with Exclusions**
+
+- **Automatic file discovery**: Running `spacing` without arguments now automatically discovers and formats all `.py` files in the current directory (recursively)
+- **Smart default exclusions**: Automatically excludes common directories that shouldn't be formatted:
+  - All hidden directories (starting with `.`)
+  - Virtual environments: `venv`, `env`, `virtualenv`
+  - Build artifacts: `build`, `dist`, `__pycache__`, `*.egg-info`, `*.egg`
+- **Configurable exclusions**: New `[paths]` section in `spacing.toml` allows custom exclusions:
+  - `exclude_names`: List of directory/file names to exclude
+  - `exclude_patterns`: List of glob patterns to exclude
+  - `include_hidden`: Override default hidden directory exclusion
+- **Explicit path override**: Exclusions only apply during automatic discovery; explicitly provided paths bypass all exclusions
+- **New module**: Added `pathfilter.py` for path discovery and filtering logic
+
 ## [0.6.1] - 2025-11-10
 
 - Removed redundant `__version__` from `__init__.py` (version now only in pyproject.toml)

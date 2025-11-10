@@ -43,24 +43,37 @@ pip install -e .
 ## Quick Start
 
 ```bash
+# Format all Python files in current directory (automatic discovery with smart exclusions)
+spacing
+
 # Format a single file
 spacing myfile.py
 
-# Format all Python files in a directory
+# Format all Python files in a specific directory
 spacing src/
 
 # Check if files need formatting (exit 1 if changes needed)
-spacing --check myfile.py
+spacing --check
 
 # Preview changes without applying them
-spacing --dry-run myfile.py
+spacing --dry-run
 
 # Show detailed processing information
-spacing --verbose myfile.py
+spacing --verbose
 
 # Show version
 spacing --version
 ```
+
+### Automatic File Discovery
+
+When you run `spacing` without any path arguments, it automatically:
+- Discovers all `.py` files in the current directory (recursively)
+- Excludes common directories you don't want to format:
+  - Hidden directories (starting with `.`)
+  - Virtual environments (`venv`, `env`, `virtualenv`)
+  - Build artifacts (`build`, `dist`, `__pycache__`, `*.egg-info`, `*.egg`)
+- Respects custom exclusions defined in `spacing.toml` (see Configuration section below)
 
 ## Configuration
 
@@ -98,7 +111,19 @@ assignment_to_call = 2
 call_to_assignment = 2
 import_to_assignment = 0
 control_to_definition = 2
+
+[paths]
+# Additional directory/file names to exclude during automatic discovery
+exclude_names = ["my_generated_code", "legacy"]
+
+# Glob patterns for more specific exclusions
+exclude_patterns = ["**/old_*.py", "**/test_old_*.py"]
+
+# Set to true to include hidden directories (overrides default exclusion)
+include_hidden = false
 ```
+
+**Note**: Path exclusions only apply when running `spacing` without arguments (automatic discovery). They are ignored when you explicitly specify paths like `spacing src/` or `spacing venv/` - this gives you full control when needed.
 
 ### Block Types
 

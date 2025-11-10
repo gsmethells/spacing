@@ -12,9 +12,10 @@ Spacing is a Python code formatter that enforces configurable blank line rules, 
 2. **StatementClassifier** (`classifier.py`): Identifies statement types and maintains block classification with pre-compiled regex patterns
 3. **BlankLineRuleEngine** (`rules.py`): Applies configurable blank line rules based on block transitions
 4. **FileAnalyzer** (`analyzer.py`): Manages parsing and analysis of file structure with configurable tab width
-5. **BlankLineConfig** (`config.py`): Singleton configuration system for customizable blank line rules
-6. **CLI Interface** (`cli.py`): Command-line tool with file/directory processing, check mode, dry-run, and verbose output
-7. **FileProcessor** (`processor.py`): Handles atomic file I/O with end-of-file newline preservation and change detection
+5. **BlankLineConfig** (`config.py`): Singleton configuration system for customizable blank line rules and path exclusions
+6. **PathFilter** (`pathfilter.py`): Smart path discovery with configurable exclusions for automatic file detection
+7. **CLI Interface** (`cli.py`): Command-line tool with file/directory processing, check mode, dry-run, and verbose output
+8. **FileProcessor** (`processor.py`): Handles atomic file I/O with end-of-file newline preservation and change detection
 
 ### Processing Pipeline
 
@@ -22,7 +23,13 @@ Spacing is a Python code formatter that enforces configurable blank line rules, 
 Configuration Layer:
 ├── BlankLineConfig (singleton pattern)
 ├── TOML parsing with validation (0-3 range)
+├── Path exclusion configuration (exclude_names, exclude_patterns, include_hidden)
 └── Default configuration (fromDefaults)
+
+Path Discovery Layer (optional, when no paths provided):
+├── PathFilter.discoverPythonFiles()
+├── Smart default exclusions (hidden dirs, venv, build, dist, __pycache__)
+└── Configurable custom exclusions (names and glob patterns)
 
 Processing Pipeline:
 ├── Pass 1: FileAnalyzer
@@ -45,6 +52,19 @@ Processing Pipeline:
 - **setConfig function** allows updating global configuration from CLI
 - **Default configuration** provides sensible defaults (1 blank line between different blocks)
 - **TOML configuration** allows fine-grained customization via `spacing.toml`
+- **Path exclusions** configured via `paths` section in `spacing.toml`
+
+### 1a. Smart Path Discovery
+- **Automatic discovery**: When no paths provided, recursively finds all `.py` files in current directory
+- **Smart default exclusions**: Automatically excludes common directories that shouldn't be formatted:
+  - All hidden directories (starting with `.`)
+  - Virtual environments: `venv`, `env`, `virtualenv`
+  - Build artifacts: `build`, `dist`, `__pycache__`, `*.egg-info`, `*.egg`
+- **Configurable exclusions**: Users can add custom exclusions via `spacing.toml`:
+  - `exclude_names`: List of directory/file names to exclude (e.g., `["my_generated_code"]`)
+  - `exclude_patterns`: List of glob patterns to exclude (e.g., `["**/old_*.py"]`)
+  - `include_hidden`: Boolean to override default hidden directory exclusion
+- **Explicit path override**: Exclusions only apply during automatic discovery; explicitly provided paths bypass exclusions
 
 ### 2. Atomic File Operations
 - **Temporary file pattern**: Write to `.spacing_temp_<random>` then rename
@@ -173,6 +193,9 @@ class BlankLineConfig:
     consecutiveDefinition: int = 1
     afterDocstring: int = 1
     indentWidth: int = 2
+    excludeNames: list = field(default_factory=list)
+    excludePatterns: list = field(default_factory=list)
+    includeHidden: bool = False
 
     @classmethod
     def fromToml(cls, configPath: Path) -> 'BlankLineConfig'
@@ -205,6 +228,16 @@ call_to_assignment = 2
 import_to_assignment = 0
 assignment_to_import = 0
 control_to_definition = 2
+
+[paths]
+# Additional directory/file names to exclude (matched anywhere in path)
+exclude_names = ["my_generated_code", "legacy"]
+
+# Glob patterns for more specific matching
+exclude_patterns = ["**/old_*.py", "**/test_old_*.py"]
+
+# Set to true to include hidden directories (overrides default exclusion)
+include_hidden = false
 ```
 
 ### Block Type Names for Configuration

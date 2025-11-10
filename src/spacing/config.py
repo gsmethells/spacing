@@ -20,6 +20,9 @@ class BlankLineConfig:
   consecutiveDefinition: int = 1
   afterDocstring: int = 1
   indentWidth: int = 2
+  excludeNames: list = field(default_factory=list)
+  excludePatterns: list = field(default_factory=list)
+  includeHidden: bool = False
 
   @classmethod
   def fromToml(cls, configPath):
@@ -43,6 +46,7 @@ class BlankLineConfig:
       raise ValueError(f'Failed to read TOML file {configPath}: {e}')
 
     blankLinesConfig = data.get('blank_lines', {})
+    pathsConfig = data.get('paths', {})
 
     # Parse default value
     defaultBetweenDifferent = blankLinesConfig.get('default_between_different', 1)
@@ -94,6 +98,20 @@ class BlankLineConfig:
 
       transitions[(fromBlock, toBlock)] = value
 
+    # Parse path exclusions
+    excludeNames = pathsConfig.get('exclude_names', [])
+    excludePatterns = pathsConfig.get('exclude_patterns', [])
+    includeHidden = pathsConfig.get('include_hidden', False)
+
+    if not isinstance(excludeNames, list):
+      raise ValueError('paths.exclude_names must be a list')
+
+    if not isinstance(excludePatterns, list):
+      raise ValueError('paths.exclude_patterns must be a list')
+
+    if not isinstance(includeHidden, bool):
+      raise ValueError('paths.include_hidden must be a boolean')
+
     return cls(
       defaultBetweenDifferent=defaultBetweenDifferent,
       transitions=transitions,
@@ -101,6 +119,9 @@ class BlankLineConfig:
       consecutiveDefinition=consecutiveDefinition,
       afterDocstring=afterDocstring,
       indentWidth=indentWidth,
+      excludeNames=excludeNames,
+      excludePatterns=excludePatterns,
+      includeHidden=includeHidden,
     )
 
   @classmethod
@@ -206,6 +227,7 @@ class BlankLineConfig:
 
     if value < 0 or value > 3:
       raise ValueError(f'{key} must be between 0 and 3, got: {value}')
+
 
 # Global configuration instance available for import
 config = BlankLineConfig.fromDefaults()
