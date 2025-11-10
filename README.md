@@ -1,5 +1,11 @@
 # Spacing
 
+[![Pipeline Status](https://gitlab.com/oldmission/spacing/badges/main/pipeline.svg)](https://gitlab.com/oldmission/spacing/-/pipelines)
+[![Coverage](https://gitlab.com/oldmission/spacing/badges/main/coverage.svg)](https://gitlab.com/oldmission/spacing/-/graphs/main/charts)
+[![PyPI Version](https://img.shields.io/pypi/v/spacing.svg)](https://pypi.org/project/spacing/)
+[![Python Versions](https://img.shields.io/pypi/pyversions/spacing.svg)](https://pypi.org/project/spacing/)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+
 A Python code formatter that enforces configurable blank line rules.
 
 ## Overview
@@ -437,14 +443,28 @@ class Helper:
 
 ## Contributing
 
-Contributions are welcome! Please:
+Contributions are welcome! We appreciate bug reports, feature requests, and code contributions.
+
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on:
+- Reporting bugs
+- Suggesting features
+- Development setup
+- Coding standards
+- Testing requirements
+- Submitting merge requests
+
+### Quick Start for Contributors
 
 1. Fork the repository
 2. Create a feature branch
 3. Add tests for any new functionality
-4. Ensure all tests pass: `pytest`
+4. Ensure all tests pass: `PYTHONPATH=src pytest test/`
 5. Run code quality checks: `ruff check` and `ruff format`
-6. Submit a pull request
+6. Submit a merge request
+
+## Security
+
+For security vulnerabilities, please see [SECURITY.md](SECURITY.md) for our security policy and reporting procedures.
 
 ## License
 

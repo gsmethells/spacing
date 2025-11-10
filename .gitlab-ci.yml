@@ -1,0 +1,108 @@
+# GitLab CI/CD Pipeline for Spacing
+# Runs tests, quality checks, and publishes to PyPI
+
+stages:
+  - lint
+  - test
+  - coverage
+  - publish
+
+# Default configuration for all jobs
+default:
+  image: python:3.11
+  before_script:
+    - pip install -e .
+    - pip install pytest pytest-cov ruff
+
+# Lint stage: Code quality checks
+lint:ruff:
+  stage: lint
+  script:
+    - ruff check src/spacing/ test/
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_TAG'
+
+lint:format:
+  stage: lint
+  script:
+    - ruff format --check src/spacing/ test/
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_TAG'
+
+# Test stage: Run tests on multiple Python versions
+.test_template: &test_template
+  stage: test
+  script:
+    - PYTHONPATH=src pytest test/ -v --junitxml=report.xml --cov=spacing --cov-report=term --cov-report=xml
+  artifacts:
+    reports:
+      junit: report.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+    paths:
+      - coverage.xml
+    expire_in: 1 week
+  coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_TAG'
+
+test:python3.11:
+  <<: *test_template
+  image: python:3.11
+
+test:python3.12:
+  <<: *test_template
+  image: python:3.12
+
+test:python3.13:
+  <<: *test_template
+  image: python:3.13
+
+test:python3.14:
+  <<: *test_template
+  image: python:3.14
+
+# Coverage stage: Generate coverage report
+coverage:report:
+  stage: coverage
+  script:
+    - pip install coverage
+    - PYTHONPATH=src pytest test/ --cov=spacing --cov-report=term-missing --cov-report=html
+    - echo "Coverage report generated in htmlcov/"
+  artifacts:
+    paths:
+      - htmlcov/
+    expire_in: 30 days
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+  needs:
+    - test:python3.11
+
+# Publish stage: Deploy to PyPI on tags
+publish:pypi:
+  stage: publish
+  image: python:3.11
+  before_script:
+    - pip install build twine
+  script:
+    - python -m build
+    - twine upload dist/*
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
+  only:
+    - tags
+  needs:
+    - test:python3.11
+    - test:python3.12
+    - test:python3.13
+    - test:python3.14
+  environment:
+    name: production
+    url: https://pypi.org/project/spacing/
