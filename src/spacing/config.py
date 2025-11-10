@@ -1,5 +1,5 @@
 """
-Configuration management for prism blank line rules.
+Configuration management for spacing blank line rules.
 Copyright (c) 2025-2026 Greg Smethells. All rights reserved.
 See the accompanying AUTHORS file for a complete list of authors.
 This file is subject to the terms and conditions defined in LICENSE.
@@ -24,7 +24,7 @@ class BlankLineConfig:
   @classmethod
   def fromToml(cls, configPath):
     """Load configuration from TOML file
-    :param configPath: Path to prism.toml file
+    :param configPath: Path to spacing.toml file
     :type configPath: Path
     :rtype: BlankLineConfig
     :raises: ValueError for invalid configuration values

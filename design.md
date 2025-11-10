@@ -1,8 +1,8 @@
-# Prism - Blank Line Enforcement Tool Design
+# Spacing - Blank Line Enforcement Tool Design
 
 ## Overview
 
-Prism is a Python code formatter that enforces configurable blank line rules, similar to `black` or `ruff`. It processes Python files in-place, applying complex blank line rules while preserving existing multiline formatting and docstring content.
+Spacing is a Python code formatter that enforces configurable blank line rules, similar to `black` or `ruff`. It processes Python files in-place, applying complex blank line rules while preserving existing multiline formatting and docstring content.
 
 ## Architecture
 
@@ -44,10 +44,10 @@ Processing Pipeline:
 - **Global config instance** eliminates parameter passing throughout codebase
 - **setConfig function** allows updating global configuration from CLI
 - **Default configuration** provides sensible defaults (1 blank line between different blocks)
-- **TOML configuration** allows fine-grained customization via `prism.toml`
+- **TOML configuration** allows fine-grained customization via `spacing.toml`
 
 ### 2. Atomic File Operations
-- **Temporary file pattern**: Write to `.prism_temp_<random>` then rename
+- **Temporary file pattern**: Write to `.spacing_temp_<random>` then rename
 - **Prevents partial writes**: Original file remains intact if write fails
 - **End-of-file newline preservation**: Maintains existing EOF newline or lack thereof
 - **Encoding handling**: Explicit UTF-8 encoding with specific error handling
@@ -183,7 +183,7 @@ class BlankLineConfig:
 
 ### Configuration File Format
 ```toml
-# prism.toml - Complete example
+# spacing.toml - Complete example
 [blank_lines]
 # Default spacing between different block types (0-3)
 default_between_different = 1
@@ -221,26 +221,26 @@ control_to_definition = 2
 ### Command-Line Options
 ```bash
 # Basic usage
-prism file.py              # Format single file
-prism src/                 # Format directory recursively
+spacing file.py              # Format single file
+spacing src/                 # Format directory recursively
 
 # Check mode (no modifications)
-prism --check file.py      # Exit 1 if changes needed, 0 otherwise
+spacing --check file.py      # Exit 1 if changes needed, 0 otherwise
 
 # Dry-run mode (show what would change)
-prism --dry-run file.py    # Show diff without applying changes
+spacing --dry-run file.py    # Show diff without applying changes
 
 # Verbose mode
-prism --verbose file.py    # Show detailed processing information
+spacing --verbose file.py    # Show detailed processing information
 
 # Configuration
-prism --config custom.toml file.py  # Use custom config file
+spacing --config custom.toml file.py  # Use custom config file
 
 # Version
-prism --version            # Show version information
+spacing --version            # Show version information
 
 # Help
-prism --help              # Show usage information
+spacing --help              # Show usage information
 ```
 
 ### Exit Codes
@@ -345,7 +345,7 @@ def func():
 ### Non-Critical Technical Debt
 
 #### MAJOR-003: Excessive Complexity in Rules Engine
-**File**: `src/prism/rules.py` (main rule application logic)
+**File**: `src/spacing/rules.py` (main rule application logic)
 **Problem**: The main blank line decision logic contains deeply nested conditionals with multiple boolean flags and complex state tracking.
 **Impact**: Maintainability concerns, future modifications may introduce bugs
 **Approach**: Consider state machine pattern or extract helper methods for different rule categories
@@ -362,7 +362,7 @@ def func():
 
 ### Core Focus: Blank Line Intelligence
 
-Prism's mission is to be **the definitive solution for scope-aware, configurable blank line enforcement**. This is a unique capability that Black, Ruff, and other formatters don't provide comprehensively. Our goal is to become so good at this specific problem that we could be integrated into tools like Ruff.
+Spacing's mission is to be **the definitive solution for scope-aware, configurable blank line enforcement**. This is a unique capability that Black, Ruff, and other formatters don't provide comprehensively. Our goal is to become so good at this specific problem that we could be integrated into tools like Ruff.
 
 ### ENHANCEMENT-001: Visitor Pattern for Statement Analysis
 **Benefit**: Make the code more extensible for future block types
@@ -389,16 +389,16 @@ Prism's mission is to be **the definitive solution for scope-aware, configurable
 **Priority**: Medium - aids debugging and transparency
 
 ### ENHANCEMENT-005: Support for Additional Languages
-**Benefit**: Extend prism beyond Python (JavaScript, TypeScript, Java, etc.)
+**Benefit**: Extend spacing beyond Python (JavaScript, TypeScript, Java, etc.)
 **Approach**: Abstract language-specific parsing into pluggable modules
 **Impact**: Wider applicability of blank line enforcement philosophy
-**Priority**: High - dramatically expands prism's usefulness and adoption potential
-**Strategic**: Makes prism valuable enough to integrate into multi-language tools like Ruff
+**Priority**: High - dramatically expands spacing's usefulness and adoption potential
+**Strategic**: Makes spacing valuable enough to integrate into multi-language tools like Ruff
 
 ### ENHANCEMENT-006: Integration API for Ruff/Other Tools
-**Benefit**: Enable prism's blank line intelligence to be used by other formatters
+**Benefit**: Enable spacing's blank line intelligence to be used by other formatters
 **Approach**: Expose stable API/library interface that other tools can import and use
-**Impact**: Prism becomes the de facto blank line engine for Python formatting ecosystem
+**Impact**: Spacing becomes the de facto blank line engine for Python formatting ecosystem
 **Priority**: High - strategic goal for adoption
 **Requirements**:
   - Clean, well-documented API
@@ -408,11 +408,11 @@ Prism's mission is to be **the definitive solution for scope-aware, configurable
 
 ### Out of Scope
 
-The following are explicitly **NOT** in prism's roadmap as they dilute focus from our core competency:
+The following are explicitly **NOT** in spacing's roadmap as they dilute focus from our core competency:
 
 - **Line length enforcement/wrapping** - Black and Ruff already do this excellently
 - **Import sorting** - isort and Ruff already provide this
 - **Quote style normalization** - Black and Ruff handle this
 - **General code formatting** - Not our mission
 
-These features would make prism "yet another Python formatter" instead of "the best blank line tool."
+These features would make spacing "yet another Python formatter" instead of "the best blank line tool."

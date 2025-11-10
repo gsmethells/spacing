@@ -4,7 +4,7 @@ build-backend = 'hatchling.build'
 
 [project]
 name = 'spacing'
-version = '0.6.0'
+version = '0.6.1'
 description = 'Python blank line formatter enforcing spacing rules for clean, readable code'
 authors = [{name = 'Greg Smethells'}]
 license = {text = 'GPL-3.0-or-later'}
@@ -12,11 +12,13 @@ readme = 'README.md'
 requires-python = '>=3.11'
 keywords = ['formatter', 'python', 'blank-lines', 'code-quality']
 classifiers = [
-  'Development Status :: 3 - Alpha',
+  'Development Status :: 5 - Production/Stable',
   'Intended Audience :: Developers',
   'Programming Language :: Python :: 3',
   'Programming Language :: Python :: 3.11',
   'Programming Language :: Python :: 3.12',
+  'Programming Language :: Python :: 3.13',
+  'Programming Language :: Python :: 3.14',
 ]
 
 [project.scripts]

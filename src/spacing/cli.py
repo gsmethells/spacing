@@ -1,5 +1,5 @@
 """
-Command line interface for prism.
+Command line interface for spacing.
 Copyright (c) 2025-2026 Greg Smethells. All rights reserved.
 See the accompanying AUTHORS file for a complete list of authors.
 This file is subject to the terms and conditions defined in LICENSE.
@@ -21,12 +21,12 @@ from .types import BlockType
 
 
 def getVersion():
-  """Get the version of prism-blanklines package"""
+  """Get the version of spacing package"""
 
   versionStr = 'unknown (development)'
 
   try:
-    versionStr = version('prism-blanklines')
+    versionStr = version('spacing')
   except PackageNotFoundError:
     # Package not installed, try to read from pyproject.toml in development
     try:
@@ -96,10 +96,10 @@ def _processFile(filepath, args):
 def main():
   """CLI entry point"""
 
-  parser = argparse.ArgumentParser(description='Enforce blank line rules from CLAUDE.md')
+  parser = argparse.ArgumentParser(description='Python blank line formatter enforcing spacing rules')
 
   # Add version argument
-  parser.add_argument('--version', action='version', version=f'prism {getVersion()}', help='Show version and exit')
+  parser.add_argument('--version', action='version', version=f'spacing {getVersion()}', help='Show version and exit')
   parser.add_argument('paths', nargs='+', help='Files or directories to process')
   parser.add_argument(
     '--check', action='store_true', help='Check if files need formatting (exit code 1 if changes needed)'
@@ -109,7 +109,7 @@ def main():
   parser.add_argument('--quiet', action='store_true', help='Suppress all output except errors')
 
   # Configuration options
-  parser.add_argument('--config', type=Path, help='Path to configuration file (default: ./prism.toml)')
+  parser.add_argument('--config', type=Path, help='Path to configuration file (default: ./spacing.toml)')
   parser.add_argument('--no-config', action='store_true', help='Ignore configuration file')
   parser.add_argument(
     '--blank-lines-default', type=int, metavar='N', help='Default blank lines between different block types (0-3)'
@@ -208,7 +208,7 @@ def loadConfiguration(args):
 
   # Load from config file unless --no-config is specified
   if not args.no_config:
-    configPath = args.config or Path('./prism.toml')
+    configPath = args.config or Path('./spacing.toml')
 
     if configPath.exists():
       try:

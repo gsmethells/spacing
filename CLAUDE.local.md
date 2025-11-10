@@ -1,6 +1,6 @@
-# Local Claude Code Rules for Prism Project
+# Local Claude Code Rules for Spacing Project
 
-These rules are specific to the prism blank line enforcement project and supplement the main CLAUDE.md rules.
+These rules are specific to the spacing blank line formatter project and supplement the main CLAUDE.md rules.
 
 ## Bug Fix Process
 

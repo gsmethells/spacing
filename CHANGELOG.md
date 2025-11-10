@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.6.1] - 2025-11-10
+
+- Removed redundant `__version__` from `__init__.py` (version now only in pyproject.toml)
+- Added Python 3.13 and 3.14 support
+- Updated development status to Production/Stable
+
 ## [0.6.0] - 2025-11-10
 
 **BREAKING CHANGE: Project Renamed**
@@ -8,7 +14,7 @@
 - Package now available on PyPI as `spacing` instead of `prism-blanklines`
 - Repository moved to GitLab: https://gitlab.com/oldmission/spacing
 - All imports changed from `prism.*` to `spacing.*`
-- Configuration file remains `prism.toml` (or use `spacing.toml`)
+- Configuration file renamed from `prism.toml` to `spacing.toml`
 
 ## [0.5.6] - 2025-11-09
 

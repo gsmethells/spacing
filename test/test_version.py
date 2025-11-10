@@ -27,9 +27,9 @@ class TestVersion:
   def testVersionFlag(self):
     """Test that --version flag works from command line"""
 
-    # Run prism --version as a subprocess
+    # Run spacing --version as a subprocess
     result = subprocess.run(
-      [sys.executable, '-m', 'prism.cli', '--version'],
+      [sys.executable, '-m', 'spacing.cli', '--version'],
       capture_output=True,
       text=True,
       cwd='src',  # Run from src directory
@@ -39,17 +39,17 @@ class TestVersion:
     assert result.returncode == 0
 
     # Should output version string
-    assert 'prism' in result.stdout.lower()
+    assert 'spacing' in result.stdout.lower()
 
     # Should have some version-like string
     output = result.stdout.strip()
 
-    assert len(output) > 5  # At least "prism X"
+    assert len(output) > 5  # At least "spacing X"
 
   def testVersionInHelp(self):
     """Test that --version is listed in help"""
 
-    result = subprocess.run([sys.executable, '-m', 'prism.cli', '--help'], capture_output=True, text=True, cwd='src')
+    result = subprocess.run([sys.executable, '-m', 'spacing.cli', '--help'], capture_output=True, text=True, cwd='src')
 
     # Should exit successfully
     assert result.returncode == 0

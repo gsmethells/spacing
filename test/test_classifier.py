@@ -209,7 +209,7 @@ class TestClassifierRegressions:
 
     # Slash (paths, URLs)
     assert StatementClassifier.classifyStatement(["routes['/api/v1/users'] = handler"]) == BlockType.ASSIGNMENT
-    assert StatementClassifier.classifyStatement(["paths['src/prism/config.py'] = config"]) == BlockType.ASSIGNMENT
+    assert StatementClassifier.classifyStatement(["paths['src/spacing/config.py'] = config"]) == BlockType.ASSIGNMENT
 
     # Plus (URLs, versions)
     assert StatementClassifier.classifyStatement(["params['name+space'] = value"]) == BlockType.ASSIGNMENT
