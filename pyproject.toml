@@ -74,3 +74,25 @@ pythonpath = ['src']
 python_files = ['test*.py']
 python_classes = ['Test*']
 python_functions = ['test*']
+
+[tool.coverage.run]
+source = ['src/spacing']
+omit = ['test/*', 'src/spacing/__init__.py']
+branch = true
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false
+exclude_lines = [
+  'pragma: no cover',
+  'def __repr__',
+  'raise AssertionError',
+  'raise NotImplementedError',
+  'if __name__ == .__main__.:',
+  'if TYPE_CHECKING:',
+  '@abstractmethod',
+]
+
+[tool.coverage.html]
+directory = 'htmlcov'
