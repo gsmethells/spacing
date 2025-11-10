@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.7.1] - 2025-11-10
+
+**CI/CD Enhancements**
+
+- **Automated tagging**: Pipeline automatically creates git tags when version in `pyproject.toml` changes on main branch
+- **Automated PyPI publishing**: When a version tag is created, pipeline automatically publishes to PyPI (requires PyPI credentials in GitLab CI/CD variables)
+- **Complete automation**: Just bump version in `pyproject.toml` and push to main - tagging and publishing happen automatically
+- See `PYPI_SETUP.md` for setup instructions
+
 ## [0.7.0] - 2025-11-10
 
 **NEW FEATURE: Smart Path Discovery with Exclusions**
