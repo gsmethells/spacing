@@ -1,93 +1,430 @@
-# spacing
+# Spacing
 
+A Python code formatter that enforces configurable blank line rules.
 
+## Overview
 
-## Getting started
+Spacing is a code formatting tool that intelligently manages blank lines in Python code, similar to how `black` handles code formatting. It applies sophisticated rules to ensure consistent spacing between different types of code blocks while preserving your code's logical structure and documentation.
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## Features
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
-
-```
-cd existing_repo
-git remote add origin https://gitlab.com/oldmission/spacing.git
-git branch -M main
-git push -uf origin main
-```
-
-## Integrate with your tools
-
-- [ ] [Set up project integrations](https://gitlab.com/oldmission/spacing/-/settings/integrations)
-
-## Collaborate with your team
-
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
-
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+- **Configurable blank line rules** - Customize spacing between different code block types
+- **Smart block detection** - Identifies assignments, function calls, imports, control structures, definitions, and more
+- **Multiline statement support** - Properly handles statements spanning multiple lines
+- **Docstring preservation** - Never modifies content within docstrings
+- **Nested scope handling** - Applies rules independently at each indentation level
+- **Comment-aware processing** - Preserves existing spacing around comment blocks
+- **Atomic file operations** - Safe file writing with automatic rollback on errors
+- **Change detection** - Only modifies files that need formatting
+- **Dry-run mode** - Preview changes without modifying files
+- **Check mode** - Verify formatting without making changes
 
 ## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+### From PyPI
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+```bash
+pip install spacing
+```
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+### From Source
+
+```bash
+git clone git@gitlab.com:oldmission/spacing.git
+cd spacing
+pip install -e .
+```
+
+### Requirements
+
+- Python 3.11 or higher
+- No external dependencies for core functionality
+
+## Quick Start
+
+```bash
+# Format a single file
+spacing myfile.py
+
+# Format all Python files in a directory
+spacing src/
+
+# Check if files need formatting (exit 1 if changes needed)
+spacing --check myfile.py
+
+# Preview changes without applying them
+spacing --dry-run myfile.py
+
+# Show detailed processing information
+spacing --verbose myfile.py
+
+# Show version
+spacing --version
+```
+
+## Configuration
+
+### Default Behavior
+
+By default, spacing uses these rules (aligned with PEP 8):
+- **1 blank line** between different block types
+- **1 blank line** between consecutive control structures (`if`, `for`, `while`, `try`, etc.)
+- **2 blank lines** between consecutive top-level (module level) function/class definitions
+- **1 blank line** between consecutive method definitions inside classes
+- **0 blank lines** between statements of the same type
+  - Exception: **1 blank line** between consecutive control blocks at the same scope 
+
+### Configuration File
+
+Create a `spacing.toml` file in your project root to customize blank line rules:
+
+```toml
+[blank_lines]
+# Default spacing between different block types (0-3 blank lines)
+default_between_different = 1
+
+# Spacing between consecutive control blocks (if, for, while, try, with)
+consecutive_control = 1
+
+# Spacing between consecutive definitions (def, class)
+consecutive_definition = 1
+
+# Indent width for indentation detection (default: 2 spaces)
+indent_width = 2
+
+# Fine-grained transition overrides
+# Format: <from_block>_to_<to_block> = <count>
+assignment_to_call = 2
+call_to_assignment = 2
+import_to_assignment = 0
+control_to_definition = 2
+```
+
+### Block Types
+
+Spacing recognizes these code block types (in precedence order):
+
+1. **`assignment`** - Variable assignments, list/dict comprehensions, lambda expressions
+   ```python
+   x = 42
+   items = [i for i in range(10)]
+   func = lambda x: x * 2
+   ```
+
+2. **`call`** - Function/method calls, `del`, `assert`, `pass`, `raise`, `yield`, `return`
+   ```python
+   print('hello')
+   someFunction()
+   return result
+   ```
+
+3. **`import`** - Import statements
+   ```python
+   import os
+   from pathlib import Path
+   ```
+
+4. **`control`** - Control structures (`if`/`elif`/`else`, `for`/`else`, `while`/`else`, `try`/`except`/`finally`, `with`)
+   ```python
+   if condition:
+       x = 1
+       y = 0
+
+   for item in items:
+       prologue(item)
+       process(item)
+       epilogue(item)
+
+   ```
+
+5. **`definition`** - Function and class definitions
+   ```python
+   def myFunction():
+       pass
+
+   class MyClass:
+       pass
+   ```
+
+6. **`declaration`** - `global` and `nonlocal` statements
+   ```python
+   global myVar
+   nonlocal count
+   ```
+
+7. **`comment`** - Comment lines
+   ```python
+   # This is a comment
+   ```
+
+### Configuration Examples
+
+#### Minimal spacing (compact style)
+```toml
+[blank_lines]
+default_between_different = 0
+consecutive_control = 1
+consecutive_definition = 1
+```
+
+#### Extra spacing (airy style)
+```toml
+[blank_lines]
+default_between_different = 2
+consecutive_control = 2
+consecutive_definition = 2
+```
+
+#### Custom transitions
+```toml
+[blank_lines]
+# Default: 1 blank line between different types
+default_between_different = 1
+
+# But no blank lines between imports and assignments
+import_to_assignment = 0
+
+# And 2 blank lines between import blocks and definitions such as a `class`
+import_to_definition = 2
+```
+
+### Using Custom Configuration
+
+```bash
+# Use a specific config file
+spacing --config custom.toml myfile.py
+
+# Use default configuration (ignore spacing.toml if it exists)
+spacing --no-config myfile.py
+```
+
+## Block Classification Rules
+
+### Precedence
+
+When a statement could match multiple block types, spacing uses precedence:
+
+```python
+x = someFunction()  # Assignment (precedence over Call)
+result = [i for i in range(10)]  # Assignment (comprehension)
+```
+
+### Multiline Statements
+
+Multiline statements are classified as a single unit:
+
+```python
+result = complexFunction(
+    arg1,
+    arg2,
+    arg3
+)  # Entire statement is classified as Assignment
+```
+
+### Docstrings
+
+Docstring content is never modified - all internal formatting, blank lines, and special characters are preserved exactly:
+
+```python
+def example():
+    """
+    This docstring content is preserved exactly.
+
+    # This is NOT treated as a comment
+
+    All blank lines inside are preserved.
+    """
+    pass
+```
+
+## Comment Handling
+
+Spacing has special rules for comments:
+
+1. **Consecutive comments** - No blank lines inserted between comment lines
+   ```python
+   # Copyright header line 1
+   # Copyright header line 2
+   # Copyright header line 3
+   ```
+
+2. **Comment breaks** - Blank line added before a comment (unless previous line was also a comment)
+   ```python
+   x = 1
+
+   # This comment gets a blank line before it
+   y = 2
+   ```
+
+3. **After comments** - Existing spacing preserved (leave-as-is policy)
+   ```python
+   # Comment
+
+   import os  # Existing blank line preserved
+
+   # Comment
+   x = 1  # No blank line (preserved)
+   ```
+
+## Scope and Blank Lines
+
+Spacing applies rules independent of scope:
+
+```python
+def outer():
+  x = 1
+  y = 0
+  z = 0
+
+  print('Level 1')
+
+  def inner():
+    y += 1
+
+    print('Level 2')
+
+    if condition:
+      z += 1
+```
+
+Rules are applied separately for:
+- Module level (indent 0)
+- Inside `outer()` function (indent 2)
+- Inside `inner()` function (indent 4)
+- Inside `if` block (indent 6)
+
+## Exit Codes
+
+- **0** - Success: No changes needed or changes applied successfully
+- **1** - Failure: Changes needed (in `--check` mode) or processing error occurred
+
+## Integration
+
+### Pre-commit Hook
+
+Add to `.pre-commit-config.yaml`:
+
+```yaml
+repos:
+  - repo: local
+    hooks:
+      - id: spacing
+        name: spacing
+        entry: spacing
+        language: system
+        types: [python]
+```
+
+### CI/CD
+
+```bash
+# Check formatting in CI
+spacing --check src/
+if [ $? -ne 0 ]; then
+    echo "Code needs formatting. Run: spacing src/"
+    exit 1
+fi
+```
+
+### Editor Integration
+
+Most editors can be configured to run spacing on save or as a format command.
+
+## Examples
+
+### Before and After
+
+**Before:**
+```python
+import os
+import sys
+def main():
+    x = 1
+    y = 2
+    if x > 0:
+        print(x)
+    else:
+        print(y)
+    for i in range(10):
+        process(i)
+    class Helper:
+        pass
+```
+
+**After (with default config):**
+```python
+import os
+import sys
+
+x = 1
+y = 2
+
+if x > 0:
+    print(x)
+else:
+    print(y)
+
+for i in range(10):
+    process(i)
+
+class Helper:
+    pass
+```
+
+## Comparison with Other Tools
+
+| Feature                 | Spacing           | Black                 | Ruff                  |
+|-------------------------|-----------------|-----------------------|-----------------------|
+| Blank line rules        | ✅ Configurable | ✅ Fixed              | ✅ Fixed              |
+| Scope-aware spacing     | ✅ Yes          | ⚠️  Limited            | ⚠️  Limited            |
+| Indentation handling    | ✅ Configurable | ⚠️  Enforces/reformats | ⚠️  Enforces/reformats |
+
+**Spacing's Focus**: Spacing solves **one problem exceptionally well** - scope-aware, configurable blank line enforcement. This is a unique capability that Black and Ruff don't provide comprehensively.
+
+**Key Differentiators**:
+- **Configurable blank line rules** - Control spacing between any block type transition
+- **Independent scope-level processing** - Rules applied within each scope equally
+- **Works with your indentation** - Detects existing style, never reformats it
+
+**Philosophy**: Spacing is designed to work **alongside** Black or Ruff, not replace them. Use Black/Ruff for general formatting (line length, quotes, imports) and Spacing for blank line intelligence.
+
+## Troubleshooting
+
+### Files Not Being Modified
+
+1. Check if files already match the rules: `spacing --check file.py`
+2. Use verbose mode to see what's happening: `spacing --verbose file.py`
+3. Verify your configuration: check `spacing.toml` syntax
+
+### Unexpected Blank Lines
+
+1. Review your configuration file (`spacing.toml`)
+2. Use `--dry-run` to preview changes: `spacing --dry-run file.py`
+3. Check for comment blocks that may trigger special rules
+4. Verify indentation consistency (tabs vs spaces)
+
+### Configuration Not Being Applied
+
+1. Ensure `spacing.toml` is in the current directory or specify with `--config`
+2. Check TOML syntax is valid
+3. Verify values are in valid range (0-3)
+4. Check block type names match documentation
 
 ## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+Contributions are welcome! Please:
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+1. Fork the repository
+2. Create a feature branch
+3. Add tests for any new functionality
+4. Ensure all tests pass: `pytest`
+5. Run code quality checks: `ruff check` and `ruff format`
+6. Submit a pull request
 
 ## License
-For open source projects, say how it is licensed.
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+See the LICENSE file for details.
+
+## Acknowledgments
+
+Spacing was inspired by the philosophy of tools like Black and Ruff - that automated formatting allows developers to focus on logic rather than style.
