@@ -228,6 +228,7 @@ class BlankLineConfig:
     if value < 0 or value > 3:
       raise ValueError(f'{key} must be between 0 and 3, got: {value}')
 
+
 # Global configuration instance available for import
 config = BlankLineConfig.fromDefaults()
 

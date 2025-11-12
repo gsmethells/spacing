@@ -57,6 +57,7 @@ class BlankLineRuleEngine:
     # 1. Immediately before a comment (code -> blank -> comment)
     # 2. Immediately after a comment (comment -> blank -> anything)
     # 3. Between comments (comment -> blank -> comment)
+    # EXCEPTION: Don't preserve if PEP 8 requires 2 blank lines (module-level definitions)
     for i in range(len(statements) - 1):
       # If there's a blank line, check what comes immediately before and after
       if statements[i + 1].isBlank:
@@ -74,7 +75,31 @@ class BlankLineRuleEngine:
           # - Previous statement (i) is a comment, OR
           # - Next non-blank statement is a comment
           if statements[i].isComment or statements[nextNonBlankIdx].isComment:
-            preserveExistingBlank[nextNonBlankIdx] = True
+            # Check if this is a case where PEP 8 requires 2 blank lines
+            # (comment after module-level definition)
+            shouldPreserve = True
+
+            if statements[nextNonBlankIdx].isComment and statements[nextNonBlankIdx].indentLevel == 0:
+              # Look back past blanks to find if there's a completed definition block
+              for k in range(i, -1, -1):
+                if statements[k].isBlank:
+                  continue
+
+                # Found a non-blank statement at module level
+                if statements[k].indentLevel == 0:
+                  # If it's a DEFINITION, don't preserve - let PEP 8 apply
+                  if statements[k].blockType == BlockType.DEFINITION:
+                    shouldPreserve = False
+
+                  break
+
+                # If we found a statement at deeper level, keep looking back
+                # (we might be after a definition block body)
+                if statements[k].indentLevel > 0:
+                  continue
+
+            if shouldPreserve:
+              preserveExistingBlank[nextNonBlankIdx] = True
 
     # Apply rules at each indentation level independently
     shouldHaveBlankLine = self._applyRulesAtLevel(statements, shouldHaveBlankLine, startsNewScope, 0)

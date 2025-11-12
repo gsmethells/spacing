@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.7.3] - 2025-11-12
+
+- Fixed PEP 8 compliance: Comments after module-level definitions now correctly get 2 blank lines
+
 ## [0.7.2] - 2025-11-10
 
 **Professional Project Infrastructure**
