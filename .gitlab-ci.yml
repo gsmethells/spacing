@@ -118,7 +118,8 @@ auto-tag:
     - |
       if ! git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
         git tag -a "$TAG_NAME" -m "Release version $VERSION"
-        git push https://oauth2:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git "$TAG_NAME"
+        # Use PROJECT_ACCESS_TOKEN for pushing (must be configured in CI/CD variables)
+        git push https://oauth2:${PROJECT_ACCESS_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git "$TAG_NAME"
         echo "Successfully created and pushed tag $TAG_NAME"
       fi
   rules:
