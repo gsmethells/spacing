@@ -83,6 +83,12 @@ pip install pytest pytest-cov ruff
    # Format code
    ruff format src/spacing/ test/
 
+   # Format blank lines with spacing (dogfooding!)
+   PYTHONPATH=src python -m spacing.cli
+
+   # Check blank lines with spacing
+   PYTHONPATH=src python -m spacing.cli --check
+
    # Check coverage
    PYTHONPATH=src pytest test/ --cov=spacing --cov-report=term-missing
    ```
@@ -185,14 +191,21 @@ ruff check --fix src/spacing/ test/
 ruff format src/spacing/ test/
 ```
 
-### Running Spacing on Itself
+### Dogfooding: Running Spacing on Itself
+
+We use spacing to format its own codebase! This ensures:
+- Spacing follows its own rules
+- The tool works on real-world code
+- We catch bugs early
 
 ```bash
 # Format the spacing codebase
 PYTHONPATH=src python -m spacing.cli
 
-# Check if formatting is needed
+# Check if formatting is needed (this runs in CI)
 PYTHONPATH=src python -m spacing.cli --check
+
+# The CI pipeline will fail if spacing's code doesn't follow spacing's rules!
 ```
 
 ## Project Structure

@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.7.2] - 2025-11-10
+
+**Professional Project Infrastructure**
+
+- **README badges**: Added pipeline status, coverage, PyPI version, Python versions, and license badges
+- **Community files**: Added CONTRIBUTING.md with comprehensive contribution guidelines
+- **Security policy**: Added SECURITY.md with vulnerability reporting process and security best practices
+- **Issue templates**: Added structured bug report and feature request templates for GitLab
+- **MR template**: Simplified merge request template for easier use
+- **Dogfooding**: Added `lint:spacing` CI job - spacing now enforces its own blank line rules on itself
+- **CI/CD pipeline**: Complete GitLab CI/CD with automated testing, coverage reporting, tagging, and PyPI publishing
+- **Setup guide**: Added PYPI_SETUP.md with detailed instructions for automated publishing
+
 ## [0.7.1] - 2025-11-10
 
 **CI/CD Enhancements**

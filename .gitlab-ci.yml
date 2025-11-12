@@ -34,6 +34,15 @@ lint:format:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
     - if: '$CI_COMMIT_TAG'
 
+lint:spacing:
+  stage: lint
+  script:
+    - PYTHONPATH=src python -m spacing.cli --check
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_TAG'
+
 # Test stage: Run tests on multiple Python versions
 .test_template: &test_template
   stage: test
