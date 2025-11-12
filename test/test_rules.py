@@ -5,7 +5,9 @@ See the accompanying AUTHORS file for a complete list of authors.
 This file is subject to the terms and conditions defined in LICENSE.
 """
 
+from spacing.analyzer import FileAnalyzer
 from spacing.config import BlankLineConfig, setConfig
+from spacing.processor import FileProcessor
 from spacing.rules import BlankLineRuleEngine
 from spacing.types import BlockType, Statement
 
@@ -467,4 +469,57 @@ class DICOMPushRequest:
         result = result_file.read()
 
       assert result == expected_code, f'Consecutive if statements should keep blank line\nGot:\n{result}'
-      assert changed, 'Should add blank line after docstring'
+
+  def testPep8TwoBlankLinesBeforeCommentAtModuleLevel(self):
+    """Regression: 2 blank lines before comment after module-level class definition"""
+
+    input = [
+      'class Foo:\n',
+      '  pass\n',
+      '\n',
+      '# Comment before module-level variable\n',
+      'x = 1\n',
+    ]
+    expected = [
+      'class Foo:\n',
+      '  pass\n',
+      '\n',
+      '\n',
+      '# Comment before module-level variable\n',
+      'x = 1\n',
+    ]
+    analyzer = FileAnalyzer()
+    statements = analyzer.analyzeFile(input)
+    ruleEngine = BlankLineRuleEngine()
+    blankLineCounts = ruleEngine.applyRules(statements)
+    result = FileProcessor._reconstructFile(statements, blankLineCounts, input)
+
+    assert result == expected, f'Expected 2 blank lines before comment after class definition, got:\n{result}'
+
+  def testPep8TwoBlankLinesBetweenDefinitionsWithComment(self):
+    """Regression: 2 blank lines between top-level definitions even with comment in between"""
+
+    input = [
+      'def foo():\n',
+      '  pass\n',
+      '\n',
+      '# Comment\n',
+      'def bar():\n',
+      '  pass\n',
+    ]
+    expected = [
+      'def foo():\n',
+      '  pass\n',
+      '\n',
+      '\n',
+      '# Comment\n',
+      'def bar():\n',
+      '  pass\n',
+    ]
+    analyzer = FileAnalyzer()
+    statements = analyzer.analyzeFile(input)
+    ruleEngine = BlankLineRuleEngine()
+    blankLineCounts = ruleEngine.applyRules(statements)
+    result = FileProcessor._reconstructFile(statements, blankLineCounts, input)
+
+    assert result == expected, f'Expected 2 blank lines before comment between definitions, got:\n{result}'

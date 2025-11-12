@@ -159,6 +159,7 @@ x = 1"""
 # Another comment
 # Final comment
 """
+
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
       f.write(content)
       f.flush()

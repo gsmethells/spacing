@@ -15,6 +15,7 @@ def test_shouldExcludeHiddenDirs():
   """Test that hidden directories are excluded by default"""
 
   config = BlankLineConfig.fromDefaults()
+
   assert shouldExcludePath(Path('.git/hooks/pre-commit'), config) is True
   assert shouldExcludePath(Path('.vscode/settings.json'), config) is True
   assert shouldExcludePath(Path('src/.hidden/file.py'), config) is True
@@ -24,6 +25,7 @@ def test_shouldNotExcludeRegularDirs():
   """Test that regular directories are not excluded"""
 
   config = BlankLineConfig.fromDefaults()
+
   assert shouldExcludePath(Path('src/main.py'), config) is False
   assert shouldExcludePath(Path('tests/test_main.py'), config) is False
 
@@ -32,6 +34,7 @@ def test_shouldExcludeVenv():
   """Test that venv directories are excluded by default"""
 
   config = BlankLineConfig.fromDefaults()
+
   assert shouldExcludePath(Path('venv/lib/python3.11/site-packages/foo.py'), config) is True
   assert shouldExcludePath(Path('env/bin/activate'), config) is True
   assert shouldExcludePath(Path('virtualenv/lib/foo.py'), config) is True
@@ -41,6 +44,7 @@ def test_shouldExcludeBuildArtifacts():
   """Test that build artifacts are excluded by default"""
 
   config = BlankLineConfig.fromDefaults()
+
   assert shouldExcludePath(Path('build/lib/foo.py'), config) is True
   assert shouldExcludePath(Path('dist/package-1.0.tar.gz'), config) is True
   assert shouldExcludePath(Path('__pycache__/foo.pyc'), config) is True
@@ -52,6 +56,7 @@ def test_includeHiddenOverride():
 
   config = BlankLineConfig.fromDefaults()
   config.includeHidden = True
+
   assert shouldExcludePath(Path('.git/hooks/pre-commit'), config) is False
   assert shouldExcludePath(Path('src/.hidden/file.py'), config) is False
 
@@ -61,6 +66,7 @@ def test_customExcludeNames():
 
   config = BlankLineConfig.fromDefaults()
   config.excludeNames = ['my_generated_code']
+
   assert shouldExcludePath(Path('my_generated_code/foo.py'), config) is True
   assert shouldExcludePath(Path('src/my_generated_code/bar.py'), config) is True
 
@@ -70,6 +76,7 @@ def test_customExcludePatterns():
 
   config = BlankLineConfig.fromDefaults()
   config.excludePatterns = ['**/old_*.py']
+
   assert shouldExcludePath(Path('src/old_main.py'), config) is True
   assert shouldExcludePath(Path('tests/old_test.py'), config) is True
   assert shouldExcludePath(Path('src/new_main.py'), config) is False
@@ -127,4 +134,5 @@ def test_discoverPythonFilesEmpty():
 
   config = BlankLineConfig.fromDefaults()
   files = discoverPythonFiles(Path('/nonexistent'), config)
+
   assert files == []

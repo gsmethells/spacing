@@ -205,6 +205,7 @@ class TestClassifierRegressions:
     assert (
       StatementClassifier.classifyStatement(["cache['http://example.com:8080/path'] = data"]) == BlockType.ASSIGNMENT
     )
+
     assert StatementClassifier.classifyStatement(["events['2025-11-09:14:30:00'] = event"]) == BlockType.ASSIGNMENT
 
     # Slash (paths, URLs)
@@ -233,6 +234,7 @@ class TestClassifierRegressions:
     assert (
       StatementClassifier.classifyStatement(["urls['http://example.com#section'] = anchor"]) == BlockType.ASSIGNMENT
     )
+
     assert StatementClassifier.classifyStatement(["ids['#user-123'] = userId"]) == BlockType.ASSIGNMENT
 
     # Percent (URL encoding)
