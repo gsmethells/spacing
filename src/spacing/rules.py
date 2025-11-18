@@ -203,6 +203,38 @@ class BlankLineRuleEngine:
 
     return self._hasBodyBetween(statements, prevIdx, beforeIdx, targetIndent)
 
+  def _applyCommentRules(
+    self,
+    completedDefinitionBlock,
+    prevBlockType,
+    stmt,
+    startsNewScope,
+  ):
+    """Apply blank line rules for comment statements
+
+    :param completedDefinitionBlock: Whether a completed def block precedes
+    :param prevBlockType: Block type of previous statement
+    :param stmt: Current comment statement
+    :param startsNewScope: Whether this starts a new scope
+    :return: True if blank line needed before comment, False otherwise
+    """
+
+    # Comment break rule: blank line before comment (unless following comment)
+    # BUT: no blank line at start of new scope has highest precedence
+    # ALSO: if after a completed definition at module level, apply PEP 8 rule
+    # ALSO: if after a docstring, preserve the PEP 257 blank line rule
+    # AT ALL LEVELS: blank line before comment when transitioning from non-comment block
+    if completedDefinitionBlock:
+      return self._needsBlankLineBetween(BlockType.DEFINITION, stmt.blockType, stmt.indentLevel) > 0
+    elif prevBlockType == BlockType.DOCSTRING:
+      # PEP 257: blank line after docstring (configurable via afterDocstring)
+      return self._needsBlankLineBetween(BlockType.DOCSTRING, stmt.blockType, stmt.indentLevel) > 0
+    elif prevBlockType is not None and prevBlockType != BlockType.COMMENT and not startsNewScope:
+      # Universal rule: transitioning to a comment from any non-comment block requires blank line
+      return True
+
+    return False
+
   def _applyRulesAtLevel(
     self,
     statements: list[Statement],
@@ -229,23 +261,12 @@ class BlankLineRuleEngine:
       completedDefinitionBlock = self._hasCompletedDefinitionBlock(statements, i, targetIndent)
 
       if stmt.isComment:
-        # Comment break rule: blank line before comment (unless following comment)
-        # BUT: no blank line at start of new scope has highest precedence
-        # ALSO: if after a completed definition at module level, apply PEP 8 rule
-        # ALSO: if after a docstring, preserve the PEP 257 blank line rule
-        # AT ALL LEVELS: blank line before comment when transitioning from non-comment block
-        if completedDefinitionBlock:
-          shouldHaveBlankLine[i] = (
-            self._needsBlankLineBetween(BlockType.DEFINITION, stmt.blockType, stmt.indentLevel) > 0
-          )
-        elif prevBlockType == BlockType.DOCSTRING:
-          # PEP 257: blank line after docstring (configurable via afterDocstring)
-          shouldHaveBlankLine[i] = (
-            self._needsBlankLineBetween(BlockType.DOCSTRING, stmt.blockType, stmt.indentLevel) > 0
-          )
-        elif prevBlockType is not None and prevBlockType != BlockType.COMMENT and not startsNewScope[i]:
-          # Universal rule: transitioning to a comment from any non-comment block requires blank line
-          shouldHaveBlankLine[i] = True
+        shouldHaveBlankLine[i] = self._applyCommentRules(
+          completedDefinitionBlock,
+          prevBlockType,
+          stmt,
+          startsNewScope[i],
+        )
 
         # Comments cause a break - set prevBlockType to COMMENT so next statement
         # can decide whether it needs a blank line after the comment
