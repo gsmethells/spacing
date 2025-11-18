@@ -19,3 +19,5 @@ pip-wheel-metadata/
 
 .idea
 *.swp
+# Personal Claude Code configuration overrides (not shared with team)
+CLAUDE.local.md

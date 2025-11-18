@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.7.4] - 2025-11-17
+
+- Fixed module-level docstring spacing to match ruff format behavior (always 1 blank line after module docstrings, non-configurable per PEP 257)
+- Fixed comment spacing at module level to properly respect PEP 8's 2-blank-line rule around top-level definitions
+
 ## [0.7.3] - 2025-11-12
 
 - Fixed PEP 8 compliance: Comments after module-level definitions now correctly get 2 blank lines

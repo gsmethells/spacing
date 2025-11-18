@@ -2,7 +2,16 @@
 
 **IMPORTANT**: This file contains language-agnostic rules that must be followed concerning coding standards and workflows for all projects.
 
-**Language-Specific Rules**: See `CLAUDE.local.md` for language-specific coding standards (naming conventions, linting tools, testing frameworks, etc.). The rules in CLAUDE.local.md supplement and may override rules in this file where language conventions differ.
+## Language-Specific Standards
+
+Uncomment the language(s) used in this project:
+
+@python-code-standard.md
+`@java-code-standard.md`
+`@cpp-code-standard.md`
+`@javascript-code-standard.md`
+
+**Note**: These language standard files are committed to version control and shared across the team. For personal overrides, create a `CLAUDE.local.md` file (gitignored) in your local repository.
 
 ## General Code Standards
 

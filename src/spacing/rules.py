@@ -76,9 +76,9 @@ class BlankLineRuleEngine:
           # - Next non-blank statement is a comment
           if statements[i].isComment or statements[nextNonBlankIdx].isComment:
             # Check if this is a case where PEP 8 requires 2 blank lines
-            # (comment after module-level definition)
             shouldPreserve = True
 
+            # Case 1: comment after module-level definition - don't preserve
             if statements[nextNonBlankIdx].isComment and statements[nextNonBlankIdx].indentLevel == 0:
               # Look back past blanks to find if there's a completed definition block
               for k in range(i, -1, -1):
@@ -97,6 +97,45 @@ class BlankLineRuleEngine:
                 # (we might be after a definition block body)
                 if statements[k].indentLevel > 0:
                   continue
+
+            # Case 2: module-level definition after comment - check if there's a completed definition before comment
+            # If YES: blank lines go BEFORE comment, preserve existing blank after comment
+            # If NO: need 2 blank lines total, don't preserve (let PEP 8 spacing apply)
+            if (
+              statements[i].isComment
+              and statements[i].indentLevel == 0
+              and statements[nextNonBlankIdx].blockType == BlockType.DEFINITION
+              and statements[nextNonBlankIdx].indentLevel == 0
+            ):
+              # Check if there's a completed definition block BEFORE this comment
+              hasCompletedDefBefore = False
+
+              for k in range(i, -1, -1):
+                if statements[k].isBlank:
+                  continue
+
+                # Found a non-blank statement at module level
+                if statements[k].indentLevel == 0:
+                  # Check if it's a DEFINITION that had a body
+                  if statements[k].blockType == BlockType.DEFINITION:
+                    # Check if this definition had a body
+                    for m in range(k + 1, i):
+                      if statements[m].indentLevel > 0:
+                        hasCompletedDefBefore = True
+
+                        break
+
+                  break
+
+                # If we found a statement at deeper level, keep looking back
+                if statements[k].indentLevel > 0:
+                  continue
+
+              # If there's a completed definition before the comment, preserve the blank line after comment
+              # (the 2 blank lines go BEFORE the comment in this case)
+              # If NOT, don't preserve - we need to add blank lines (PEP 8 requires 2 before def)
+              if not hasCompletedDefBefore:
+                shouldPreserve = False
 
             if shouldPreserve:
               preserveExistingBlank[nextNonBlankIdx] = True
@@ -296,7 +335,45 @@ class BlankLineRuleEngine:
           )
         else:
           # After comment blocks, leave-as-is (no blank line added here)
-          shouldHaveBlankLine[i] = False
+          # EXCEPT: at module level, if next statement is a definition AND there's NO completed
+          # definition before the comment, apply PEP 8 spacing (2 blank lines)
+          if stmt.indentLevel == 0 and stmt.blockType == BlockType.DEFINITION:
+            # Check if there's a completed definition before the most recent comment
+            hasCompletedDefBeforeComment = False
+
+            # Find the most recent comment
+            for k in range(i - 1, -1, -1):
+              if statements[k].isComment and statements[k].indentLevel == 0:
+                # Found the comment, now check what came before it
+                for m in range(k - 1, -1, -1):
+                  if statements[m].isBlank:
+                    continue
+
+                  if statements[m].indentLevel == 0:
+                    if statements[m].blockType == BlockType.DEFINITION:
+                      # Check if this definition had a body
+                      for n in range(m + 1, k):
+                        if statements[n].indentLevel > 0:
+                          hasCompletedDefBeforeComment = True
+
+                          break
+
+                    break
+
+                  if statements[m].indentLevel > 0:
+                    continue
+
+                break
+
+            # Only add blank lines if there's NO completed definition before the comment
+            if not hasCompletedDefBeforeComment:
+              shouldHaveBlankLine[i] = (
+                self._needsBlankLineBetween(BlockType.COMMENT, stmt.blockType, stmt.indentLevel) > 0
+              )
+            else:
+              shouldHaveBlankLine[i] = False
+          else:
+            shouldHaveBlankLine[i] = False
       elif completedControlBlock:
         # After a completed control block, apply normal rules with CONTROL as prev type
         shouldHaveBlankLine[i] = self._needsBlankLineBetween(BlockType.CONTROL, stmt.blockType, stmt.indentLevel) > 0
