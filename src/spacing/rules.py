@@ -146,6 +146,63 @@ class BlankLineRuleEngine:
     # Convert boolean list to actual blank line counts
     return self._convertToBlankLineCounts(statements, shouldHaveBlankLine, preserveExistingBlank, startsNewScope)
 
+  def _findPreviousNonBlankAtLevel(self, statements, fromIdx, targetIndent):
+    """Find previous non-blank statement at target indentation level
+
+    :param statements: List of statements
+    :param fromIdx: Index to start searching backwards from
+    :param targetIndent: Indentation level to match
+    :return: Tuple of (statement, index) or (None, None) if not found
+    """
+
+    for j in range(fromIdx - 1, -1, -1):
+      stmt = statements[j]
+
+      if stmt.isBlank or stmt.indentLevel > targetIndent:
+        continue
+
+      if stmt.indentLevel == targetIndent:
+        return (stmt, j)
+
+      break
+
+    return (None, None)
+
+  def _hasBodyBetween(self, statements, defIdx, endIdx, targetIndent):
+    """Check if definition has indented body between two indices
+
+    :param statements: List of statements
+    :param defIdx: Index of definition statement
+    :param endIdx: Index to search up to
+    :param targetIndent: Base indentation level
+    :return: True if body exists
+    """
+
+    for k in range(defIdx + 1, endIdx):
+      if statements[k].indentLevel > targetIndent:
+        return True
+
+    return False
+
+  def _hasCompletedDefinitionBlock(self, statements, beforeIdx, targetIndent):
+    """Check if there's a completed definition block before given index
+
+    :param statements: List of statements
+    :param beforeIdx: Index to check before
+    :param targetIndent: Indentation level to check at
+    :return: True if completed definition block exists
+    """
+
+    prevStmt, prevIdx = self._findPreviousNonBlankAtLevel(statements, beforeIdx, targetIndent)
+
+    if prevStmt is None:
+      return False
+
+    if prevStmt.blockType != BlockType.DEFINITION:
+      return False
+
+    return self._hasBodyBetween(statements, prevIdx, beforeIdx, targetIndent)
+
   def _applyRulesAtLevel(
     self,
     statements: list[Statement],
@@ -169,29 +226,7 @@ class BlankLineRuleEngine:
 
       # For comments, we need to check completedDefinitionBlock BEFORE the early exit
       # Check for completed definition blocks (needed for comments too)
-      completedDefinitionBlock = False
-
-      if i > 0:
-        for j in range(i - 1, -1, -1):
-          prevStmt = statements[j]
-
-          if prevStmt.isBlank or prevStmt.indentLevel > targetIndent:
-            continue
-
-          if prevStmt.indentLevel == targetIndent:
-            if prevStmt.blockType == BlockType.DEFINITION:
-              hasBody = False
-
-              for k in range(j + 1, i):
-                if statements[k].indentLevel > targetIndent:
-                  hasBody = True
-
-                  break
-
-              if hasBody:
-                completedDefinitionBlock = True
-
-            break
+      completedDefinitionBlock = self._hasCompletedDefinitionBlock(statements, i, targetIndent)
 
       if stmt.isComment:
         # Comment break rule: blank line before comment (unless following comment)
@@ -238,29 +273,7 @@ class BlankLineRuleEngine:
 
       # Recompute completedDefinitionBlock for non-comments (already done for comments)
       if not stmt.isComment:
-        completedDefinitionBlock = False
-
-        if i > 0:
-          for j in range(i - 1, -1, -1):
-            prevStmt = statements[j]
-
-            if prevStmt.isBlank or prevStmt.indentLevel > targetIndent:
-              continue
-
-            if prevStmt.indentLevel == targetIndent:
-              if prevStmt.blockType == BlockType.DEFINITION:
-                hasBody = False
-
-                for k in range(j + 1, i):
-                  if statements[k].indentLevel > targetIndent:
-                    hasBody = True
-
-                    break
-
-                if hasBody:
-                  completedDefinitionBlock = True
-
-              break
+        completedDefinitionBlock = self._hasCompletedDefinitionBlock(statements, i, targetIndent)
 
       if i > 0:
         # Check if we're returning from a deeper indentation level
