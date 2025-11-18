@@ -235,6 +235,47 @@ class BlankLineRuleEngine:
 
     return False
 
+  def _isReturningFromNestedLevel(self, statements, currentIdx, targetIndent):
+    """Check if current statement is returning from deeper indentation
+
+    :param statements: List of statements
+    :param currentIdx: Current statement index
+    :param targetIndent: Target indentation level
+    :return: True if returning from nested level
+    """
+
+    for j in range(currentIdx - 1, -1, -1):
+      stmt = statements[j]
+
+      if stmt.isBlank:
+        continue
+
+      # If we find a statement at a deeper level, we're returning from nested
+      if stmt.indentLevel > targetIndent:
+        return True
+
+      # If we find a statement at our level, stop looking
+      if stmt.indentLevel <= targetIndent:
+        break
+
+    return False
+
+  def _hasCompletedControlBlock(self, statements, beforeIdx, targetIndent):
+    """Check if there's a completed control block before given index
+
+    :param statements: List of statements
+    :param beforeIdx: Index to check before
+    :param targetIndent: Indentation level
+    :return: True if completed control block exists
+    """
+
+    prevStmt, prevIdx = self._findPreviousNonBlankAtLevel(statements, beforeIdx, targetIndent)
+
+    if prevStmt is None or prevStmt.blockType != BlockType.CONTROL:
+      return False
+
+    return self._hasBodyBetween(statements, prevIdx, beforeIdx, targetIndent)
+
   def _applyRulesAtLevel(
     self,
     statements: list[Statement],
@@ -289,56 +330,13 @@ class BlankLineRuleEngine:
       # Check if there was a completed control block before this statement
       # (completedDefinitionBlock was already checked for comments above)
       # OR if we're returning from a deeper indentation level
-      completedControlBlock = False
-      returningFromNestedLevel = False
 
       # Recompute completedDefinitionBlock for non-comments (already done for comments)
       if not stmt.isComment:
         completedDefinitionBlock = self._hasCompletedDefinitionBlock(statements, i, targetIndent)
 
-      if i > 0:
-        # Check if we're returning from a deeper indentation level
-        for j in range(i - 1, -1, -1):
-          prevStmt = statements[j]
-
-          if prevStmt.isBlank:
-            continue
-
-          # If we find a statement at a deeper level, we're returning from nested
-          if prevStmt.indentLevel > targetIndent:
-            returningFromNestedLevel = True
-
-            break
-
-          # If we find a statement at our level, stop looking
-          if prevStmt.indentLevel <= targetIndent:
-            break
-
-        # Also check for completed control blocks (not definitions, already handled)
-        for j in range(i - 1, -1, -1):
-          prevStmt = statements[j]
-
-          # Skip blanks and deeper indents
-          if prevStmt.isBlank or prevStmt.indentLevel > targetIndent:
-            continue
-
-          # If we find a statement at our level
-          if prevStmt.indentLevel == targetIndent:
-            # Check if it's a control block that had a body after it
-            if prevStmt.blockType == BlockType.CONTROL:
-              # Check if there was a deeper indented block after it (its body)
-              hasBody = False
-
-              for k in range(j + 1, i):
-                if statements[k].indentLevel > targetIndent:
-                  hasBody = True
-
-                  break
-
-              if hasBody:
-                completedControlBlock = True
-
-            break
+      completedControlBlock = self._hasCompletedControlBlock(statements, i, targetIndent)
+      returningFromNestedLevel = self._isReturningFromNestedLevel(statements, i, targetIndent)
 
       # Main blank line rules
       # Don't add blank line if this is the first statement in a new scope
