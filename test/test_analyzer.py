@@ -192,3 +192,41 @@ class TestFileAnalyzer:
 
       assert result == expectedCode, 'Should not add blank lines between decorators and definitions'
       assert not changed, 'Properly formatted decorators should not trigger changes'
+
+  def testDecoratorWithBlankLineBeforeDefinition(self):
+    """Test decorator followed by blank line before definition"""
+
+    analyzer = FileAnalyzer()
+    lines = [
+      '@decorator',
+      '',
+      'def foo():',
+      '  pass',
+    ]
+    statements = analyzer.analyzeFile(lines)
+
+    # Decorator and def are grouped together as one DEFINITION, blank line is consumed
+    assert len(statements) == 2
+    assert statements[0].blockType == BlockType.DEFINITION
+    assert statements[0].startLineIndex == 0
+    assert statements[0].endLineIndex == 2  # Includes decorator, blank, and def
+    assert statements[1].blockType == BlockType.CALL  # pass statement
+
+  def testMultilineStatementWithBracketContinuation(self):
+    """Test multiline statement where brackets don't close mid-statement"""
+
+    analyzer = FileAnalyzer()
+    lines = [
+      'result = some_function(',
+      '    arg1,',
+      '    arg2',
+      ')',
+      'x = 1',
+    ]
+    statements = analyzer.analyzeFile(lines)
+
+    # Should have multiline assignment (result = ...), then another assignment
+    assert len(statements) == 2
+    assert statements[0].blockType == BlockType.ASSIGNMENT  # result = some_function(...)
+    assert len(statements[0].lines) == 4  # All bracket lines grouped
+    assert statements[1].blockType == BlockType.ASSIGNMENT  # x = 1

@@ -286,3 +286,406 @@ def main():
         result = result_file.read()
 
       assert result == expectedCode
+
+
+class TestCLIProcessFile:
+  def testProcessFileDryRun(self):
+    """Test _processFile in dry-run mode"""
+
+    from spacing.cli import _processFile
+
+    content = """import sys
+x = 1
+y = 2"""
+
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+      f.write(content)
+      f.flush()
+
+      args = argparse.Namespace(check=False, dry_run=True, verbose=False, quiet=False)
+      changed, exitCode = _processFile(Path(f.name), args)
+
+      assert changed
+      assert exitCode == 0
+
+  def testProcessFileCheckMode(self):
+    """Test _processFile in check mode"""
+
+    from spacing.cli import _processFile
+
+    content = """import sys
+x = 1"""
+
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+      f.write(content)
+      f.flush()
+
+      args = argparse.Namespace(check=True, dry_run=False, verbose=False, quiet=False)
+      changed, exitCode = _processFile(Path(f.name), args)
+
+      assert changed
+      assert exitCode == 1  # check mode returns exit code 1 when changes needed
+
+  def testProcessFileCheckModeNoChanges(self):
+    """Test _processFile in check mode when no changes needed"""
+
+    from spacing.cli import _processFile
+
+    content = """import sys
+
+x = 1"""
+
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+      f.write(content)
+      f.flush()
+
+      args = argparse.Namespace(check=True, dry_run=False, verbose=False, quiet=False)
+      changed, exitCode = _processFile(Path(f.name), args)
+
+      assert not changed
+      assert exitCode == 0
+
+  def testProcessFileDryRunVerbose(self):
+    """Test _processFile in dry-run verbose mode"""
+
+    from spacing.cli import _processFile
+
+    content = """import sys
+x = 1"""
+
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+      f.write(content)
+      f.flush()
+
+      args = argparse.Namespace(check=False, dry_run=True, verbose=True, quiet=False)
+      changed, exitCode = _processFile(Path(f.name), args)
+
+      assert changed
+      assert exitCode == 0
+
+  def testProcessFileQuietMode(self):
+    """Test _processFile in quiet mode"""
+
+    from spacing.cli import _processFile
+
+    content = """import sys
+x = 1"""
+
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+      f.write(content)
+      f.flush()
+
+      args = argparse.Namespace(check=False, dry_run=False, verbose=False, quiet=True)
+      changed, exitCode = _processFile(Path(f.name), args)
+
+      assert changed
+      assert exitCode == 0
+
+
+class TestCLIVersion:
+  def testGetVersion(self):
+    """Test getVersion returns a valid version string"""
+
+    from spacing.cli import getVersion
+
+    version = getVersion()
+
+    assert version is not None
+    assert len(version) > 0
+    # Should be either a proper version or 'unknown'
+    assert 'unknown' in version or version[0].isdigit()
+
+
+class TestCLIMain:
+  def testMainWithSpecificFile(self, monkeypatch):
+    """Test main() with specific file argument"""
+
+    import sys
+    from spacing.cli import main
+
+    content = """import sys
+x = 1"""
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+      testFile = Path(tmpdir) / 'test.py'
+      testFile.write_text(content)
+
+      # Mock sys.argv
+      monkeypatch.setattr(sys, 'argv', ['spacing', str(testFile)])
+
+      # Mock sys.exit to catch the exit code
+      exitCode = None
+
+      def mockExit(code):
+        nonlocal exitCode
+        exitCode = code
+
+      monkeypatch.setattr(sys, 'exit', mockExit)
+
+      main()
+
+      assert exitCode == 0
+
+  def testMainWithCheckMode(self, monkeypatch):
+    """Test main() with --check flag"""
+
+    import sys
+    from spacing.cli import main
+
+    content = """import sys
+x = 1"""
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+      testFile = Path(tmpdir) / 'test.py'
+      testFile.write_text(content)
+
+      # Mock sys.argv
+      monkeypatch.setattr(sys, 'argv', ['spacing', '--check', str(testFile)])
+
+      # Mock sys.exit to catch the exit code
+      exitCode = None
+
+      def mockExit(code):
+        nonlocal exitCode
+        exitCode = code
+
+      monkeypatch.setattr(sys, 'exit', mockExit)
+
+      main()
+
+      assert exitCode == 1  # Should exit with 1 when changes are needed
+
+  def testMainWithNonexistentPath(self, monkeypatch):
+    """Test main() with nonexistent path"""
+
+    import sys
+    from spacing.cli import main
+
+    # Mock sys.argv
+    monkeypatch.setattr(sys, 'argv', ['spacing', '/nonexistent/file.py'])
+
+    # Mock sys.exit to catch the exit code
+    exitCode = None
+
+    def mockExit(code):
+      nonlocal exitCode
+      exitCode = code
+
+    monkeypatch.setattr(sys, 'exit', mockExit)
+
+    main()
+
+    assert exitCode == 1  # Should exit with 1 on error
+
+  def testMainWithDirectory(self, monkeypatch):
+    """Test main() with directory argument"""
+
+    import sys
+    from spacing.cli import main
+
+    content = """import sys
+x = 1"""
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+      testFile = Path(tmpdir) / 'test.py'
+      testFile.write_text(content)
+
+      # Mock sys.argv
+      monkeypatch.setattr(sys, 'argv', ['spacing', str(tmpdir)])
+
+      # Mock sys.exit to catch the exit code
+      exitCode = None
+
+      def mockExit(code):
+        nonlocal exitCode
+        exitCode = code
+
+      monkeypatch.setattr(sys, 'exit', mockExit)
+
+      main()
+
+      assert exitCode == 0
+
+  def testMainWithNoPathsAutoDiscovery(self, monkeypatch):
+    """Test main() with no paths (auto-discovery in current directory)"""
+
+    import sys
+    import os
+    from spacing.cli import main
+
+    content = """import sys
+x = 1"""
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+      testFile = Path(tmpdir) / 'test.py'
+      testFile.write_text(content)
+
+      # Change to temp directory
+      originalCwd = os.getcwd()
+      os.chdir(tmpdir)
+
+      try:
+        # Mock sys.argv with no paths (should auto-discover)
+        monkeypatch.setattr(sys, 'argv', ['spacing'])
+
+        # Mock sys.exit to catch the exit code
+        exitCode = None
+
+        def mockExit(code):
+          nonlocal exitCode
+          exitCode = code
+
+        monkeypatch.setattr(sys, 'exit', mockExit)
+
+        main()
+
+        assert exitCode == 0
+      finally:
+        os.chdir(originalCwd)
+
+  def testMainWithQuietFlag(self, monkeypatch):
+    """Test main() with --quiet flag"""
+
+    import sys
+    from spacing.cli import main
+
+    content = """import sys
+x = 1"""
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+      testFile = Path(tmpdir) / 'test.py'
+      testFile.write_text(content)
+
+      # Mock sys.argv
+      monkeypatch.setattr(sys, 'argv', ['spacing', '--quiet', str(testFile)])
+
+      # Mock sys.exit to catch the exit code
+      exitCode = None
+
+      def mockExit(code):
+        nonlocal exitCode
+        exitCode = code
+
+      monkeypatch.setattr(sys, 'exit', mockExit)
+
+      main()
+
+      assert exitCode == 0
+
+  def testMainWithDryRunFlag(self, monkeypatch):
+    """Test main() with --dry-run flag"""
+
+    import sys
+    from spacing.cli import main
+
+    content = """import sys
+x = 1"""
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+      testFile = Path(tmpdir) / 'test.py'
+      testFile.write_text(content)
+
+      # Mock sys.argv
+      monkeypatch.setattr(sys, 'argv', ['spacing', '--dry-run', str(testFile)])
+
+      # Mock sys.exit to catch the exit code
+      exitCode = None
+
+      def mockExit(code):
+        nonlocal exitCode
+        exitCode = code
+
+      monkeypatch.setattr(sys, 'exit', mockExit)
+
+      main()
+
+      assert exitCode == 0
+
+  def testMainWithNonPythonFile(self, monkeypatch):
+    """Test main() with non-Python file (should skip)"""
+
+    import sys
+    from spacing.cli import main
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+      testFile = Path(tmpdir) / 'test.txt'
+      testFile.write_text('not python')
+
+      # Mock sys.argv
+      monkeypatch.setattr(sys, 'argv', ['spacing', str(testFile)])
+
+      # Mock sys.exit to catch the exit code
+      exitCode = None
+
+      def mockExit(code):
+        nonlocal exitCode
+        exitCode = code
+
+      monkeypatch.setattr(sys, 'exit', mockExit)
+
+      main()
+
+      # Should process 0 files but not error
+      assert exitCode == 0
+
+  def testMainCheckModeAllFilesPass(self, monkeypatch):
+    """Test main() with --check when all files are already formatted"""
+
+    import sys
+    from spacing.cli import main
+
+    content = """import sys
+
+x = 1"""
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+      testFile = Path(tmpdir) / 'test.py'
+      testFile.write_text(content)
+
+      # Mock sys.argv
+      monkeypatch.setattr(sys, 'argv', ['spacing', '--check', str(testFile)])
+
+      # Mock sys.exit to catch the exit code
+      exitCode = None
+
+      def mockExit(code):
+        nonlocal exitCode
+        exitCode = code
+
+      monkeypatch.setattr(sys, 'exit', mockExit)
+
+      main()
+
+      # Should exit with 0 when all checks pass
+      assert exitCode == 0
+
+  def testMainDryRunNoChanges(self, monkeypatch):
+    """Test main() with --dry-run when files are already formatted"""
+
+    import sys
+    from spacing.cli import main
+
+    content = """import sys
+
+x = 1"""
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+      testFile = Path(tmpdir) / 'test.py'
+      testFile.write_text(content)
+
+      # Mock sys.argv
+      monkeypatch.setattr(sys, 'argv', ['spacing', '--dry-run', str(testFile)])
+
+      # Mock sys.exit to catch the exit code
+      exitCode = None
+
+      def mockExit(code):
+        nonlocal exitCode
+        exitCode = code
+
+      monkeypatch.setattr(sys, 'exit', mockExit)
+
+      main()
+
+      # Should exit with 0 in dry-run mode
+      assert exitCode == 0

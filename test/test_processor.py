@@ -174,3 +174,73 @@ x = 1"""
 
       # Verify it's syntactically valid (no exceptions during processing)
       assert len(final_content) > 0
+
+  def testFileWithEncodingError(self):
+    """Test handling of UnicodeDecodeError when reading file"""
+
+    with tempfile.NamedTemporaryFile(mode='wb', suffix='.py', delete=False) as f:
+      # Write invalid UTF-8 bytes
+      f.write(b'\xff\xfe\xfd')
+      f.flush()
+
+      result = FileProcessor.processFile(Path(f.name), checkOnly=False)
+
+      assert not result  # Should return False on encoding error
+
+  def testFileWithPermissionError(self, monkeypatch):
+    """Test handling of PermissionError when reading file"""
+
+    import builtins
+
+    def mockOpen(*args, **kwargs):
+      raise PermissionError('Permission denied')
+
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+      f.write('x = 1')
+      f.flush()
+
+      # Mock open to raise PermissionError
+      monkeypatch.setattr(builtins, 'open', mockOpen)
+
+      result = FileProcessor.processFile(Path(f.name), checkOnly=False)
+
+      assert not result  # Should return False on permission error
+
+  def testReturnDetailsWithChanges(self):
+    """Test returnDetails parameter returns summary and diff when changes are made"""
+
+    content = """import sys
+x = 1
+y = 2"""
+    expected = """import sys
+
+x = 1
+y = 2"""
+
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+      f.write(content)
+      f.flush()
+
+      changed, (summary, diff) = FileProcessor.processFile(Path(f.name), checkOnly=False, returnDetails=True)
+
+      assert changed
+      assert summary is not None
+      assert diff is not None
+      assert len(summary) > 0
+
+  def testReturnDetailsCheckOnlyMode(self):
+    """Test returnDetails parameter in checkOnly mode"""
+
+    content = """import sys
+x = 1
+y = 2"""
+
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+      f.write(content)
+      f.flush()
+
+      changed, (summary, diff) = FileProcessor.processFile(Path(f.name), checkOnly=True, returnDetails=True)
+
+      assert changed
+      assert summary is not None
+      assert diff is not None

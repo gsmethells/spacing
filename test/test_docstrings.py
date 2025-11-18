@@ -563,3 +563,64 @@ def foo():
     finally:
       # Reset config
       setConfig(BlankLineConfig.fromDefaults())
+
+  def testModuleLevelDocstringFollowedByClass(self):
+    """Test that module-level docstring followed by class gets PEP 8 spacing (2 blank lines)"""
+
+    input_code = '''"""
+Module docstring.
+"""
+class Foo:
+  pass
+'''
+    expected = '''"""
+Module docstring.
+"""
+
+
+class Foo:
+  pass
+'''
+
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+      f.write(input_code)
+      f.flush()
+
+      changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
+
+      assert changed
+
+      with open(f.name) as result_file:
+        result = result_file.read()
+
+      assert result == expected, f'Expected 2 blank lines after module docstring before class\nGot:\n{result}'
+
+  def testCommentAfterModuleLevelDefinition(self):
+    """Test that comment after module-level definition doesn't preserve extra blank lines"""
+
+    input_code = '''def foo():
+  pass
+
+# Comment after definition
+x = 1
+'''
+    expected = '''def foo():
+  pass
+
+
+# Comment after definition
+x = 1
+'''
+
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+      f.write(input_code)
+      f.flush()
+
+      changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
+
+      assert changed
+
+      with open(f.name) as result_file:
+        result = result_file.read()
+
+      assert result == expected, f'Expected 2 blank lines before comment after definition\nGot:\n{result}'

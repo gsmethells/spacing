@@ -16,9 +16,10 @@ Uncomment the language(s) used in this project:
 ## General Code Standards
 
 ### Headers
-- Include a copyright header in files with at least one line of code
-  - use the first three lines from the COPYRIGHT file
-  - use a language-specific comment style
+- Include a copyright header in files with at least one line of code (if required by your organization)
+  - Use your organization's standard copyright header format
+  - Use a language-specific comment style
+  - Example: `# Copyright (c) 2025 Your Organization. All rights reserved.`
 
 ### Spaces and Wrapping
 - Use appropriate indentation for your language (follow language conventions)
@@ -66,9 +67,9 @@ Uncomment the language(s) used in this project:
 - Achieve correctness first and optimize later: this prevents premature optimization
 
 ### Code Quality & Linting
-- Use language-specific linters and formatters as defined in CLAUDE.local.md
+- Use language-specific linters and formatters as defined in the language standard files (e.g., python-code-standard.md, java-code-standard.md)
 - All code must pass linting checks before committing
-- Configure linting tools in project root (e.g., .eslintrc, .clang-format, etc.)
+- Configure linting tools in project root (e.g., .eslintrc, .clang-format, pyproject.toml, etc.)
 - Common issues to avoid across all languages:
   - Unused imports or variables
   - Lines that are too long (follow 120 character limit)
@@ -126,7 +127,7 @@ Verification checklist:
 **MANDATORY**: Always follow this approach when writing any code.
 
 When implementing code changes:
-- Follow all coding standards in this file and CLAUDE.local.md at all times
+- Follow all coding standards in this file and imported language standard files at all times
 - Maintain a todo list to stay organized
 - Maintain a `DESIGN.md` file in the project base directory covering:
   - Overview
@@ -135,7 +136,7 @@ When implementing code changes:
 - Set up and use appropriate development environment for your language
 - When fixing tests, only run the failing tests during iteration
 - Update `DESIGN.md` immediately after making significant code changes
-- Run language-specific linters and formatters as specified in CLAUDE.local.md
+- Run language-specific linters and formatters as specified in the language standard files
 
 ### Project-Specific Context
 
