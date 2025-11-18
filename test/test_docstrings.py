@@ -427,7 +427,6 @@ import os
 
 x = 1
 '''
-
     expected = '''"""
 Module docstring.
 """
@@ -436,9 +435,9 @@ import os
 
 x = 1
 '''
-
     config = BlankLineConfig.fromDefaults()
     config.afterDocstring = 0
+
     setConfig(config)
 
     try:
@@ -459,7 +458,7 @@ x = 1
       setConfig(BlankLineConfig.fromDefaults())
 
   def testModuleLevelDocstringFollowedByFunction(self):
-    """Test that module-level docstring followed by function gets proper spacing"""
+    """Test that module-level docstring followed by function gets PEP 8 spacing (2 blank lines)"""
 
     input_code = '''"""
 Module docstring.
@@ -467,17 +466,17 @@ Module docstring.
 def foo():
   pass
 '''
-
     expected = '''"""
 Module docstring.
 """
 
+
 def foo():
   pass
 '''
-
     config = BlankLineConfig.fromDefaults()
     config.afterDocstring = 0
+
     setConfig(config)
 
     try:
@@ -492,7 +491,9 @@ def foo():
         with open(f.name) as result_file:
           result = result_file.read()
 
-        assert result == expected, f'Expected 1 blank line after module docstring\nGot:\n{result}'
+        assert result == expected, (
+          f'Expected 2 blank lines after module docstring before definition (PEP 8)\nGot:\n{result}'
+        )
     finally:
       # Reset config
       setConfig(BlankLineConfig.fromDefaults())
@@ -500,22 +501,21 @@ def foo():
   def testCommentAtModuleLevelBeforeDefinition(self):
     """Test that comment at module level before definition gets PEP 8 spacing (2 blank lines)"""
 
-    input_code = '''x = 1
+    input_code = """x = 1
 
 # Comment about the function
 
 def foo():
   pass
-'''
-
-    expected = '''x = 1
+"""
+    expected = """x = 1
 
 # Comment about the function
 
 
 def foo():
   pass
-'''
+"""
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
       f.write(input_code)
@@ -538,14 +538,13 @@ def foo():
 
   x = 1
 '''
-
     expected = '''def foo():
   """Function docstring."""
   x = 1
 '''
-
     config = BlankLineConfig.fromDefaults()
     config.afterDocstring = 0
+
     setConfig(config)
 
     try:
