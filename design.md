@@ -100,9 +100,12 @@ Processing Pipeline:
 - When `inString=True`, lines are added to current statement without special handling
 
 **PEP 257 Compliance:**
-- Per PEP 257, blank lines after docstrings are configurable via `afterDocstring` (default: 1)
+- Per PEP 257, blank lines after docstrings follow these rules:
+  - **Module-level docstrings**: ALWAYS 1 blank line after (non-configurable, PEP 257 requirement)
+  - **Class docstrings**: ALWAYS 1 blank line after (non-configurable, PEP 257 requirement)
+  - **Function/method docstrings**: Configurable via `afterDocstring` (default: 1)
 - The default of 1 blank line follows PEP 257 recommendation for visual separation
-- Setting `afterDocstring = 0` provides a more compact style
+- Setting `afterDocstring = 0` provides a more compact style for function/method docstrings only
 - Docstrings to other docstrings always have 0 blank lines (not configurable)
 
 **PEP 8 Compliance:**
@@ -215,7 +218,8 @@ default_between_different = 1
 consecutive_control = 1
 consecutive_definition = 1
 
-# Blank lines after docstrings (0-3, default: 1 for PEP 257 compliance)
+# Blank lines after function/method docstrings (0-3, default: 1 for PEP 257 compliance)
+# Note: Module and class docstrings ALWAYS have 1 blank line (non-configurable)
 after_docstring = 1
 
 # Indent width for indentation detection (default: 2)

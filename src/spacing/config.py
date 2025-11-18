@@ -165,18 +165,23 @@ class BlankLineConfig:
         blankLines = 0
     else:
       # PEP 8: Surround top-level function and class definitions with 2 blank lines
-      # This applies when:
-      # 1. Transitioning TO a definition at module level
-      # 2. Transitioning FROM a definition at module level
-      if indentLevel == 0 and (toBlock == BlockType.DEFINITION or fromBlock == BlockType.DEFINITION):
+      # This takes precedence over docstring rules when transitioning to a definition
+      if indentLevel == 0 and toBlock == BlockType.DEFINITION:
+        blankLines = 2
+
+      # PEP 8: 2 blank lines FROM module-level definitions
+      elif indentLevel == 0 and fromBlock == BlockType.DEFINITION:
         blankLines = 2
 
       # PEP 257: blank line after docstrings
+      # Module docstrings → non-definition: 1 blank line (handled by PEP 8 above for definitions)
       # Class docstrings ALWAYS get 1 blank line (non-configurable)
       # Method/function docstrings use afterDocstring config (default 1)
       elif fromBlock == BlockType.DOCSTRING and toBlock != BlockType.DOCSTRING:
         if isClassDocstring:
-          blankLines = 1  # Always 1 for class docstrings
+          blankLines = 1  # Always 1 for class docstrings (PEP 257)
+        elif indentLevel == 0:
+          blankLines = 1  # Always 1 for module-level docstrings (PEP 257)
         else:
           blankLines = self.afterDocstring  # Configurable for method/function docstrings
       else:

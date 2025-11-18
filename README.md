@@ -108,6 +108,10 @@ consecutive_control = 1
 # Spacing between consecutive definitions (def, class)
 consecutive_definition = 1
 
+# Blank lines after function/method docstrings (0-3, default: 1)
+# Note: Module and class docstrings always have 1 blank line (non-configurable per PEP 257)
+after_docstring = 1
+
 # Indent width for indentation detection (default: 2 spaces)
 indent_width = 2
 
