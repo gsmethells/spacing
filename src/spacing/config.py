@@ -132,7 +132,7 @@ class BlankLineConfig:
 
     return cls()
 
-  def getBlankLines(self, fromBlock, toBlock, indentLevel=None, isClassDocstring=False):
+  def getBlankLines(self, fromBlock, toBlock, indentLevel=None, isClassDocstring=False, isModuleLevelDocstring=False):
     """Get number of blank lines for transition between block types
     :param fromBlock: Source block type
     :type fromBlock: BlockType
@@ -142,6 +142,8 @@ class BlankLineConfig:
     :type indentLevel: int
     :param isClassDocstring: True if fromBlock is a class docstring (not configurable)
     :type isClassDocstring: bool
+    :param isModuleLevelDocstring: True if fromBlock is a module-level docstring (not configurable)
+    :type isModuleLevelDocstring: bool
     :rtype: int
     """
 
@@ -174,14 +176,11 @@ class BlankLineConfig:
         blankLines = 2
 
       # PEP 257: blank line after docstrings
-      # Module docstrings → non-definition: 1 blank line (handled by PEP 8 above for definitions)
-      # Class docstrings ALWAYS get 1 blank line (non-configurable)
+      # Module-level and class docstrings ALWAYS get 1 blank line (non-configurable)
       # Method/function docstrings use afterDocstring config (default 1)
       elif fromBlock == BlockType.DOCSTRING and toBlock != BlockType.DOCSTRING:
-        if isClassDocstring:
-          blankLines = 1  # Always 1 for class docstrings (PEP 257)
-        elif indentLevel == 0:
-          blankLines = 1  # Always 1 for module-level docstrings (PEP 257)
+        if isClassDocstring or isModuleLevelDocstring:
+          blankLines = 1  # Always 1 for class and module-level docstrings
         else:
           blankLines = self.afterDocstring  # Configurable for method/function docstrings
       else:

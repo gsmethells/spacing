@@ -295,6 +295,33 @@ class BlankLineRuleEngine:
 
     return False
 
+  def _isModuleLevelDocstring(self, statements, docstringIdx, prevBlockType):
+    """Check if statement at index is a module-level docstring
+
+    :param statements: List of statements
+    :param docstringIdx: Index of potential docstring
+    :param prevBlockType: Block type of the statement
+    :return: True if this is a module-level docstring
+    """
+
+    if prevBlockType != BlockType.DOCSTRING or docstringIdx is None:
+      return False
+
+    # Must be at indent level 0
+    if statements[docstringIdx].indentLevel != 0:
+      return False
+
+    # Look back to see if there's anything before this docstring besides comments/blanks
+    for j in range(docstringIdx - 1, -1, -1):
+      if statements[j].isBlank or statements[j].isComment:
+        continue
+
+      # Found a non-comment, non-blank statement before the docstring
+      return False
+
+    # No non-comment statement found before docstring - it's module-level
+    return True
+
   def _determineBlankLineForStatement(
     self,
     statements,
@@ -335,10 +362,16 @@ class BlankLineRuleEngine:
     if prevBlockType is not None:
       # Special case: after comments, don't apply normal block transition rules
       if prevBlockType != BlockType.COMMENT:
-        # Check if previous statement is a class docstring
+        # Check if previous statement is a class or module-level docstring
         isClassDocstring = self._isClassDocstring(statements, prevStmtIdx, prevBlockType)
+        isModuleLevelDocstring = self._isModuleLevelDocstring(statements, prevStmtIdx, prevBlockType)
 
-        return self._needsBlankLineBetween(prevBlockType, stmt.blockType, stmt.indentLevel, isClassDocstring) > 0
+        return (
+          self._needsBlankLineBetween(
+            prevBlockType, stmt.blockType, stmt.indentLevel, isClassDocstring, isModuleLevelDocstring
+          )
+          > 0
+        )
       else:
         # After comment blocks, leave-as-is (no blank line added here)
         # EXCEPT: at module level, if next statement is a definition AND there's NO completed
@@ -547,14 +580,12 @@ class BlankLineRuleEngine:
 
         # Check if prevStmt is a class docstring (docstring immediately after class definition)
         isClassDocstring = False
+        isModuleLevelDocstring = False
 
         if prevStmt.blockType == BlockType.DOCSTRING:
-          # Look back to find what came before the docstring
-          for j in range(prevNonBlankIdx - 1, -1, -1):
-            if not statements[j].isBlank:
-              isClassDocstring = self._isClassDefinition(statements[j])
-
-              break
+          # Check if it's a class or module-level docstring
+          isClassDocstring = self._isClassDocstring(statements, prevNonBlankIdx, prevStmt.blockType)
+          isModuleLevelDocstring = self._isModuleLevelDocstring(statements, prevNonBlankIdx, prevStmt.blockType)
 
         # Determine the effective block types
         # For comments, use BlockType.COMMENT regardless of what blockType field says
@@ -563,7 +594,7 @@ class BlankLineRuleEngine:
 
         # Use block-to-block configuration for blank line count
         blankLineCount = self._needsBlankLineBetween(
-          prevBlockType, currentBlockType, stmt.indentLevel, isClassDocstring
+          prevBlockType, currentBlockType, stmt.indentLevel, isClassDocstring, isModuleLevelDocstring
         )
         blankLineCounts[i] = blankLineCount
 
@@ -587,7 +618,9 @@ class BlankLineRuleEngine:
 
     return False
 
-  def _needsBlankLineBetween(self, prevType, currentType, indentLevel=None, isClassDocstring=False):
+  def _needsBlankLineBetween(
+    self, prevType, currentType, indentLevel=None, isClassDocstring=False, isModuleLevelDocstring=False
+  ):
     """Determine number of blank lines needed between block types
     :param prevType: Previous block type
     :type prevType: BlockType
@@ -597,9 +630,11 @@ class BlankLineRuleEngine:
     :type indentLevel: int
     :param isClassDocstring: True if prevType is a class docstring
     :type isClassDocstring: bool
+    :param isModuleLevelDocstring: True if prevType is a module-level docstring
+    :type isModuleLevelDocstring: bool
     :rtype: int
     """
 
     from .config import config
 
-    return config.getBlankLines(prevType, currentType, indentLevel, isClassDocstring)
+    return config.getBlankLines(prevType, currentType, indentLevel, isClassDocstring, isModuleLevelDocstring)
