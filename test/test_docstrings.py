@@ -598,19 +598,19 @@ class Foo:
   def testCommentAfterModuleLevelDefinition(self):
     """Test that comment after module-level definition doesn't preserve extra blank lines"""
 
-    input_code = '''def foo():
+    input_code = """def foo():
   pass
 
 # Comment after definition
 x = 1
-'''
-    expected = '''def foo():
+"""
+    expected = """def foo():
   pass
 
 
 # Comment after definition
 x = 1
-'''
+"""
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
       f.write(input_code)

@@ -392,6 +392,7 @@ class TestCLIVersion:
 
     assert version is not None
     assert len(version) > 0
+
     # Should be either a proper version or 'unknown'
     assert 'unknown' in version or version[0].isdigit()
 
@@ -408,6 +409,7 @@ x = 1"""
 
     with tempfile.TemporaryDirectory() as tmpdir:
       testFile = Path(tmpdir) / 'test.py'
+
       testFile.write_text(content)
 
       # Mock sys.argv
@@ -418,12 +420,11 @@ x = 1"""
 
       def mockExit(code):
         nonlocal exitCode
+
         exitCode = code
 
       monkeypatch.setattr(sys, 'exit', mockExit)
-
       main()
-
       assert exitCode == 0
 
   def testMainWithCheckMode(self, monkeypatch):
@@ -437,6 +438,7 @@ x = 1"""
 
     with tempfile.TemporaryDirectory() as tmpdir:
       testFile = Path(tmpdir) / 'test.py'
+
       testFile.write_text(content)
 
       # Mock sys.argv
@@ -447,12 +449,11 @@ x = 1"""
 
       def mockExit(code):
         nonlocal exitCode
+
         exitCode = code
 
       monkeypatch.setattr(sys, 'exit', mockExit)
-
       main()
-
       assert exitCode == 1  # Should exit with 1 when changes are needed
 
   def testMainWithNonexistentPath(self, monkeypatch):
@@ -469,12 +470,11 @@ x = 1"""
 
     def mockExit(code):
       nonlocal exitCode
+
       exitCode = code
 
     monkeypatch.setattr(sys, 'exit', mockExit)
-
     main()
-
     assert exitCode == 1  # Should exit with 1 on error
 
   def testMainWithDirectory(self, monkeypatch):
@@ -488,6 +488,7 @@ x = 1"""
 
     with tempfile.TemporaryDirectory() as tmpdir:
       testFile = Path(tmpdir) / 'test.py'
+
       testFile.write_text(content)
 
       # Mock sys.argv
@@ -498,19 +499,18 @@ x = 1"""
 
       def mockExit(code):
         nonlocal exitCode
+
         exitCode = code
 
       monkeypatch.setattr(sys, 'exit', mockExit)
-
       main()
-
       assert exitCode == 0
 
   def testMainWithNoPathsAutoDiscovery(self, monkeypatch):
     """Test main() with no paths (auto-discovery in current directory)"""
 
-    import sys
     import os
+    import sys
     from spacing.cli import main
 
     content = """import sys
@@ -518,10 +518,12 @@ x = 1"""
 
     with tempfile.TemporaryDirectory() as tmpdir:
       testFile = Path(tmpdir) / 'test.py'
+
       testFile.write_text(content)
 
       # Change to temp directory
       originalCwd = os.getcwd()
+
       os.chdir(tmpdir)
 
       try:
@@ -533,12 +535,11 @@ x = 1"""
 
         def mockExit(code):
           nonlocal exitCode
+
           exitCode = code
 
         monkeypatch.setattr(sys, 'exit', mockExit)
-
         main()
-
         assert exitCode == 0
       finally:
         os.chdir(originalCwd)
@@ -554,6 +555,7 @@ x = 1"""
 
     with tempfile.TemporaryDirectory() as tmpdir:
       testFile = Path(tmpdir) / 'test.py'
+
       testFile.write_text(content)
 
       # Mock sys.argv
@@ -564,12 +566,11 @@ x = 1"""
 
       def mockExit(code):
         nonlocal exitCode
+
         exitCode = code
 
       monkeypatch.setattr(sys, 'exit', mockExit)
-
       main()
-
       assert exitCode == 0
 
   def testMainWithDryRunFlag(self, monkeypatch):
@@ -583,6 +584,7 @@ x = 1"""
 
     with tempfile.TemporaryDirectory() as tmpdir:
       testFile = Path(tmpdir) / 'test.py'
+
       testFile.write_text(content)
 
       # Mock sys.argv
@@ -593,12 +595,11 @@ x = 1"""
 
       def mockExit(code):
         nonlocal exitCode
+
         exitCode = code
 
       monkeypatch.setattr(sys, 'exit', mockExit)
-
       main()
-
       assert exitCode == 0
 
   def testMainWithNonPythonFile(self, monkeypatch):
@@ -609,6 +610,7 @@ x = 1"""
 
     with tempfile.TemporaryDirectory() as tmpdir:
       testFile = Path(tmpdir) / 'test.txt'
+
       testFile.write_text('not python')
 
       # Mock sys.argv
@@ -619,10 +621,10 @@ x = 1"""
 
       def mockExit(code):
         nonlocal exitCode
+
         exitCode = code
 
       monkeypatch.setattr(sys, 'exit', mockExit)
-
       main()
 
       # Should process 0 files but not error
@@ -640,6 +642,7 @@ x = 1"""
 
     with tempfile.TemporaryDirectory() as tmpdir:
       testFile = Path(tmpdir) / 'test.py'
+
       testFile.write_text(content)
 
       # Mock sys.argv
@@ -650,10 +653,10 @@ x = 1"""
 
       def mockExit(code):
         nonlocal exitCode
+
         exitCode = code
 
       monkeypatch.setattr(sys, 'exit', mockExit)
-
       main()
 
       # Should exit with 0 when all checks pass
@@ -671,6 +674,7 @@ x = 1"""
 
     with tempfile.TemporaryDirectory() as tmpdir:
       testFile = Path(tmpdir) / 'test.py'
+
       testFile.write_text(content)
 
       # Mock sys.argv
@@ -681,10 +685,10 @@ x = 1"""
 
       def mockExit(code):
         nonlocal exitCode
+
         exitCode = code
 
       monkeypatch.setattr(sys, 'exit', mockExit)
-
       main()
 
       # Should exit with 0 in dry-run mode

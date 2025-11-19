@@ -145,6 +145,7 @@ def test_discoverPythonFilesAcceptsStringPath():
 
   with tempfile.TemporaryDirectory() as tmpdir:
     tmpPath = Path(tmpdir)
+
     (tmpPath / 'main.py').touch()
 
     config = BlankLineConfig.fromDefaults()
