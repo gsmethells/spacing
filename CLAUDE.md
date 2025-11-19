@@ -10,6 +10,7 @@ Uncomment the language(s) used in this project:
 `@java-code-standard.md`
 `@cpp-code-standard.md`
 `@javascript-code-standard.md`
+`@bash-code-standard.md`
 
 **Note**: These language standard files are committed to version control and shared across the team. For personal overrides, create a `CLAUDE.local.md` file (gitignored) in your local repository.
 
@@ -129,13 +130,15 @@ Verification checklist:
 When implementing code changes:
 - Follow all coding standards in this file and imported language standard files at all times
 - Maintain a todo list to stay organized
-- Maintain a `DESIGN.md` file in the project base directory covering:
+- Maintain a **concise** `DESIGN.md` file in the project base directory covering:
   - Overview
   - Architecture
   - Important design decisions
+  - **Current truth, not chronological history** - update existing sections in place
+  - **MANDATORY: Keep entries concise** - state facts, not code examples or lengthy explanations
 - Set up and use appropriate development environment for your language
 - When fixing tests, only run the failing tests during iteration
-- Update `DESIGN.md` immediately after making significant code changes
+- Update `DESIGN.md` immediately after making significant code changes (replace outdated info, don't append dated sections)
 - Run language-specific linters and formatters as specified in the language standard files
 
 ### Project-Specific Context
