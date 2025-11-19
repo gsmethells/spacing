@@ -129,6 +129,34 @@ def test_discoverPythonFilesWithIncludeHidden():
     assert (tmpPath / '.hidden' / 'secret.py') in files
 
 
+def test_shouldExcludePathAcceptsStringPath():
+  """Test that shouldExcludePath accepts string paths and converts to Path"""
+
+  config = BlankLineConfig.fromDefaults()
+
+  # Pass string instead of Path object - should handle conversion
+  assert shouldExcludePath('venv/lib/foo.py', config) is True
+  assert shouldExcludePath('.git/config', config) is True
+  assert shouldExcludePath('src/main.py', config) is False
+
+
+def test_discoverPythonFilesAcceptsStringPath():
+  """Test that discoverPythonFiles accepts string paths and converts to Path"""
+
+  with tempfile.TemporaryDirectory() as tmpdir:
+    tmpPath = Path(tmpdir)
+
+    (tmpPath / 'main.py').touch()
+
+    config = BlankLineConfig.fromDefaults()
+
+    # Pass string instead of Path object - should handle conversion
+    files = discoverPythonFiles(str(tmpPath), config)
+
+    assert len(files) == 1
+    assert (tmpPath / 'main.py') in files
+
+
 def test_discoverPythonFilesEmpty():
   """Test that discoverPythonFiles returns empty list for non-directory"""
 
