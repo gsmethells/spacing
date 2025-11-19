@@ -146,6 +146,283 @@ class BlankLineRuleEngine:
     # Convert boolean list to actual blank line counts
     return self._convertToBlankLineCounts(statements, shouldHaveBlankLine, preserveExistingBlank, startsNewScope)
 
+  def _findPreviousNonBlankAtLevel(self, statements, fromIdx, targetIndent):
+    """Find previous non-blank statement at target indentation level
+
+    :param statements: List of statements
+    :param fromIdx: Index to start searching backwards from
+    :param targetIndent: Indentation level to match
+    :return: Tuple of (statement, index) or (None, None) if not found
+    """
+
+    for j in range(fromIdx - 1, -1, -1):
+      stmt = statements[j]
+
+      if stmt.isBlank or stmt.indentLevel > targetIndent:
+        continue
+
+      if stmt.indentLevel == targetIndent:
+        return (stmt, j)
+
+      break
+
+    return (None, None)
+
+  def _hasBodyBetween(self, statements, defIdx, endIdx, targetIndent):
+    """Check if definition has indented body between two indices
+
+    :param statements: List of statements
+    :param defIdx: Index of definition statement
+    :param endIdx: Index to search up to
+    :param targetIndent: Base indentation level
+    :return: True if body exists
+    """
+
+    for k in range(defIdx + 1, endIdx):
+      if statements[k].indentLevel > targetIndent:
+        return True
+
+    return False
+
+  def _hasCompletedDefinitionBlock(self, statements, beforeIdx, targetIndent):
+    """Check if there's a completed definition block before given index
+
+    :param statements: List of statements
+    :param beforeIdx: Index to check before
+    :param targetIndent: Indentation level to check at
+    :return: True if completed definition block exists
+    """
+
+    prevStmt, prevIdx = self._findPreviousNonBlankAtLevel(statements, beforeIdx, targetIndent)
+
+    if prevStmt is None:
+      return False
+
+    if prevStmt.blockType != BlockType.DEFINITION:
+      return False
+
+    return self._hasBodyBetween(statements, prevIdx, beforeIdx, targetIndent)
+
+  def _applyCommentRules(
+    self,
+    completedDefinitionBlock,
+    prevBlockType,
+    stmt,
+    startsNewScope,
+  ):
+    """Apply blank line rules for comment statements
+
+    :param completedDefinitionBlock: Whether a completed def block precedes
+    :param prevBlockType: Block type of previous statement
+    :param stmt: Current comment statement
+    :param startsNewScope: Whether this starts a new scope
+    :return: True if blank line needed before comment, False otherwise
+    """
+
+    # Comment break rule: blank line before comment (unless following comment)
+    # BUT: no blank line at start of new scope has highest precedence
+    # ALSO: if after a completed definition at module level, apply PEP 8 rule
+    # ALSO: if after a docstring, preserve the PEP 257 blank line rule
+    # AT ALL LEVELS: blank line before comment when transitioning from non-comment block
+    if completedDefinitionBlock:
+      return self._needsBlankLineBetween(BlockType.DEFINITION, stmt.blockType, stmt.indentLevel) > 0
+    elif prevBlockType == BlockType.DOCSTRING:
+      # PEP 257: blank line after docstring (configurable via afterDocstring)
+      return self._needsBlankLineBetween(BlockType.DOCSTRING, stmt.blockType, stmt.indentLevel) > 0
+    elif prevBlockType is not None and prevBlockType != BlockType.COMMENT and not startsNewScope:
+      # Universal rule: transitioning to a comment from any non-comment block requires blank line
+      return True
+
+    return False
+
+  def _isReturningFromNestedLevel(self, statements, currentIdx, targetIndent):
+    """Check if current statement is returning from deeper indentation
+
+    :param statements: List of statements
+    :param currentIdx: Current statement index
+    :param targetIndent: Target indentation level
+    :return: True if returning from nested level
+    """
+
+    for j in range(currentIdx - 1, -1, -1):
+      stmt = statements[j]
+
+      if stmt.isBlank:
+        continue
+
+      # If we find a statement at a deeper level, we're returning from nested
+      if stmt.indentLevel > targetIndent:
+        return True
+
+      # If we find a statement at our level, stop looking
+      if stmt.indentLevel <= targetIndent:
+        break
+
+    return False
+
+  def _hasCompletedControlBlock(self, statements, beforeIdx, targetIndent):
+    """Check if there's a completed control block before given index
+
+    :param statements: List of statements
+    :param beforeIdx: Index to check before
+    :param targetIndent: Indentation level
+    :return: True if completed control block exists
+    """
+
+    prevStmt, prevIdx = self._findPreviousNonBlankAtLevel(statements, beforeIdx, targetIndent)
+
+    if prevStmt is None or prevStmt.blockType != BlockType.CONTROL:
+      return False
+
+    return self._hasBodyBetween(statements, prevIdx, beforeIdx, targetIndent)
+
+  def _isClassDocstring(self, statements, docstringIdx, prevBlockType):
+    """Check if statement at index is a class docstring
+
+    :param statements: List of statements
+    :param docstringIdx: Index of potential docstring
+    :param prevBlockType: Block type of the statement
+    :return: True if this is a class docstring
+    """
+
+    if prevBlockType != BlockType.DOCSTRING or docstringIdx is None:
+      return False
+
+    # Look back from the docstring to see if it follows a class definition
+    for j in range(docstringIdx - 1, -1, -1):
+      if not statements[j].isBlank:
+        return self._isClassDefinition(statements[j])
+
+    return False
+
+  def _isModuleLevelDocstring(self, statements, docstringIdx, prevBlockType):
+    """Check if statement at index is a module-level docstring
+
+    :param statements: List of statements
+    :param docstringIdx: Index of potential docstring
+    :param prevBlockType: Block type of the statement
+    :return: True if this is a module-level docstring
+    """
+
+    if prevBlockType != BlockType.DOCSTRING or docstringIdx is None:
+      return False
+
+    # Must be at indent level 0
+    if statements[docstringIdx].indentLevel != 0:
+      return False
+
+    # Look back to see if there's anything before this docstring besides comments/blanks
+    for j in range(docstringIdx - 1, -1, -1):
+      if statements[j].isBlank or statements[j].isComment:
+        continue
+
+      # Found a non-comment, non-blank statement before the docstring
+      return False
+
+    # No non-comment statement found before docstring - it's module-level
+    return True
+
+  def _determineBlankLineForStatement(
+    self,
+    statements,
+    currentIdx,
+    stmt,
+    startsNewScope,
+    completedDefinitionBlock,
+    completedControlBlock,
+    returningFromNestedLevel,
+    prevBlockType,
+    prevStmtIdx,
+    targetIndent,
+  ):
+    """Determine if current statement needs a blank line before it
+
+    :param statements: List of statements
+    :param currentIdx: Current statement index
+    :param stmt: Current statement
+    :param startsNewScope: Whether this starts a new scope
+    :param completedDefinitionBlock: Whether a completed definition block precedes
+    :param completedControlBlock: Whether a completed control block precedes
+    :param returningFromNestedLevel: Whether returning from nested indentation
+    :param prevBlockType: Previous block type
+    :param prevStmtIdx: Previous statement index
+    :param targetIndent: Target indentation level
+    :return: True if blank line needed, False otherwise
+    """
+
+    # Rule 1: No blank line at start of new scope (highest priority)
+    if startsNewScope:
+      return False
+
+    # Rule 2: After completed definition block
+    if completedDefinitionBlock:
+      return self._needsBlankLineBetween(BlockType.DEFINITION, stmt.blockType, stmt.indentLevel) > 0
+
+    # Rule 3: After previous block type
+    if prevBlockType is not None:
+      # Special case: after comments, don't apply normal block transition rules
+      if prevBlockType != BlockType.COMMENT:
+        # Check if previous statement is a class or module-level docstring
+        isClassDocstring = self._isClassDocstring(statements, prevStmtIdx, prevBlockType)
+        isModuleLevelDocstring = self._isModuleLevelDocstring(statements, prevStmtIdx, prevBlockType)
+
+        return (
+          self._needsBlankLineBetween(
+            prevBlockType, stmt.blockType, stmt.indentLevel, isClassDocstring, isModuleLevelDocstring
+          )
+          > 0
+        )
+      else:
+        # After comment blocks, leave-as-is (no blank line added here)
+        # EXCEPT: at module level, if next statement is a definition AND there's NO completed
+        # definition before the comment, apply PEP 8 spacing (2 blank lines)
+        if stmt.indentLevel == 0 and stmt.blockType == BlockType.DEFINITION:
+          # Check if there's a completed definition before the most recent comment
+          hasCompletedDefBeforeComment = False
+
+          # Find the most recent comment
+          for k in range(currentIdx - 1, -1, -1):
+            if statements[k].isComment and statements[k].indentLevel == 0:
+              # Found the comment, now check what came before it
+              for m in range(k - 1, -1, -1):
+                if statements[m].isBlank:
+                  continue
+
+                if statements[m].indentLevel == 0:
+                  if statements[m].blockType == BlockType.DEFINITION:
+                    # Check if this definition had a body
+                    for n in range(m + 1, k):
+                      if statements[n].indentLevel > 0:
+                        hasCompletedDefBeforeComment = True
+
+                        break
+
+                  break
+
+                if statements[m].indentLevel > 0:
+                  continue
+
+              break
+
+          # Only add blank lines if there's NO completed definition before the comment
+          if not hasCompletedDefBeforeComment:
+            return self._needsBlankLineBetween(BlockType.COMMENT, stmt.blockType, stmt.indentLevel) > 0
+          else:
+            return False
+        else:
+          return False
+
+    # Rule 4: After completed control block
+    if completedControlBlock:
+      return self._needsBlankLineBetween(BlockType.CONTROL, stmt.blockType, stmt.indentLevel) > 0
+
+    # Rule 5: Returning from nested level
+    if returningFromNestedLevel:
+      return True
+
+    # Default: no blank line
+    return False
+
   def _applyRulesAtLevel(
     self,
     statements: list[Statement],
@@ -169,48 +446,15 @@ class BlankLineRuleEngine:
 
       # For comments, we need to check completedDefinitionBlock BEFORE the early exit
       # Check for completed definition blocks (needed for comments too)
-      completedDefinitionBlock = False
-
-      if i > 0:
-        for j in range(i - 1, -1, -1):
-          prevStmt = statements[j]
-
-          if prevStmt.isBlank or prevStmt.indentLevel > targetIndent:
-            continue
-
-          if prevStmt.indentLevel == targetIndent:
-            if prevStmt.blockType == BlockType.DEFINITION:
-              hasBody = False
-
-              for k in range(j + 1, i):
-                if statements[k].indentLevel > targetIndent:
-                  hasBody = True
-
-                  break
-
-              if hasBody:
-                completedDefinitionBlock = True
-
-            break
+      completedDefinitionBlock = self._hasCompletedDefinitionBlock(statements, i, targetIndent)
 
       if stmt.isComment:
-        # Comment break rule: blank line before comment (unless following comment)
-        # BUT: no blank line at start of new scope has highest precedence
-        # ALSO: if after a completed definition at module level, apply PEP 8 rule
-        # ALSO: if after a docstring, preserve the PEP 257 blank line rule
-        # AT ALL LEVELS: blank line before comment when transitioning from non-comment block
-        if completedDefinitionBlock:
-          shouldHaveBlankLine[i] = (
-            self._needsBlankLineBetween(BlockType.DEFINITION, stmt.blockType, stmt.indentLevel) > 0
-          )
-        elif prevBlockType == BlockType.DOCSTRING:
-          # PEP 257: blank line after docstring (configurable via afterDocstring)
-          shouldHaveBlankLine[i] = (
-            self._needsBlankLineBetween(BlockType.DOCSTRING, stmt.blockType, stmt.indentLevel) > 0
-          )
-        elif prevBlockType is not None and prevBlockType != BlockType.COMMENT and not startsNewScope[i]:
-          # Universal rule: transitioning to a comment from any non-comment block requires blank line
-          shouldHaveBlankLine[i] = True
+        shouldHaveBlankLine[i] = self._applyCommentRules(
+          completedDefinitionBlock,
+          prevBlockType,
+          stmt,
+          startsNewScope[i],
+        )
 
         # Comments cause a break - set prevBlockType to COMMENT so next statement
         # can decide whether it needs a blank line after the comment
@@ -233,157 +477,27 @@ class BlankLineRuleEngine:
       # Check if there was a completed control block before this statement
       # (completedDefinitionBlock was already checked for comments above)
       # OR if we're returning from a deeper indentation level
-      completedControlBlock = False
-      returningFromNestedLevel = False
 
       # Recompute completedDefinitionBlock for non-comments (already done for comments)
       if not stmt.isComment:
-        completedDefinitionBlock = False
+        completedDefinitionBlock = self._hasCompletedDefinitionBlock(statements, i, targetIndent)
 
-        if i > 0:
-          for j in range(i - 1, -1, -1):
-            prevStmt = statements[j]
-
-            if prevStmt.isBlank or prevStmt.indentLevel > targetIndent:
-              continue
-
-            if prevStmt.indentLevel == targetIndent:
-              if prevStmt.blockType == BlockType.DEFINITION:
-                hasBody = False
-
-                for k in range(j + 1, i):
-                  if statements[k].indentLevel > targetIndent:
-                    hasBody = True
-
-                    break
-
-                if hasBody:
-                  completedDefinitionBlock = True
-
-              break
-
-      if i > 0:
-        # Check if we're returning from a deeper indentation level
-        for j in range(i - 1, -1, -1):
-          prevStmt = statements[j]
-
-          if prevStmt.isBlank:
-            continue
-
-          # If we find a statement at a deeper level, we're returning from nested
-          if prevStmt.indentLevel > targetIndent:
-            returningFromNestedLevel = True
-
-            break
-
-          # If we find a statement at our level, stop looking
-          if prevStmt.indentLevel <= targetIndent:
-            break
-
-        # Also check for completed control blocks (not definitions, already handled)
-        for j in range(i - 1, -1, -1):
-          prevStmt = statements[j]
-
-          # Skip blanks and deeper indents
-          if prevStmt.isBlank or prevStmt.indentLevel > targetIndent:
-            continue
-
-          # If we find a statement at our level
-          if prevStmt.indentLevel == targetIndent:
-            # Check if it's a control block that had a body after it
-            if prevStmt.blockType == BlockType.CONTROL:
-              # Check if there was a deeper indented block after it (its body)
-              hasBody = False
-
-              for k in range(j + 1, i):
-                if statements[k].indentLevel > targetIndent:
-                  hasBody = True
-
-                  break
-
-              if hasBody:
-                completedControlBlock = True
-
-            break
+      completedControlBlock = self._hasCompletedControlBlock(statements, i, targetIndent)
+      returningFromNestedLevel = self._isReturningFromNestedLevel(statements, i, targetIndent)
 
       # Main blank line rules
-      # Don't add blank line if this is the first statement in a new scope
-      if startsNewScope[i]:
-        # Never add blank line at start of new scope, regardless of completed control blocks
-        shouldHaveBlankLine[i] = False
-      elif completedDefinitionBlock:
-        # After a completed definition block, apply normal rules with DEFINITION as prev type
-        # This handles PEP 8's "surround top-level definitions with 2 blank lines"
-        shouldHaveBlankLine[i] = self._needsBlankLineBetween(BlockType.DEFINITION, stmt.blockType, stmt.indentLevel) > 0
-      elif prevBlockType is not None:
-        # Special case: after comments, don't apply normal block transition rules
-        # Comments follow "leave-as-is" behavior - only existing blanks are preserved
-        if prevBlockType != BlockType.COMMENT:
-          # Check if previous statement is a class docstring
-          isClassDocstring = False
-
-          if prevBlockType == BlockType.DOCSTRING and prevStmtIdx is not None:
-            # Look back from the docstring to see if it follows a class definition
-            for j in range(prevStmtIdx - 1, -1, -1):
-              if not statements[j].isBlank:
-                isClassDocstring = self._isClassDefinition(statements[j])
-
-                break
-
-          shouldHaveBlankLine[i] = (
-            self._needsBlankLineBetween(prevBlockType, stmt.blockType, stmt.indentLevel, isClassDocstring) > 0
-          )
-        else:
-          # After comment blocks, leave-as-is (no blank line added here)
-          # EXCEPT: at module level, if next statement is a definition AND there's NO completed
-          # definition before the comment, apply PEP 8 spacing (2 blank lines)
-          if stmt.indentLevel == 0 and stmt.blockType == BlockType.DEFINITION:
-            # Check if there's a completed definition before the most recent comment
-            hasCompletedDefBeforeComment = False
-
-            # Find the most recent comment
-            for k in range(i - 1, -1, -1):
-              if statements[k].isComment and statements[k].indentLevel == 0:
-                # Found the comment, now check what came before it
-                for m in range(k - 1, -1, -1):
-                  if statements[m].isBlank:
-                    continue
-
-                  if statements[m].indentLevel == 0:
-                    if statements[m].blockType == BlockType.DEFINITION:
-                      # Check if this definition had a body
-                      for n in range(m + 1, k):
-                        if statements[n].indentLevel > 0:
-                          hasCompletedDefBeforeComment = True
-
-                          break
-
-                    break
-
-                  if statements[m].indentLevel > 0:
-                    continue
-
-                break
-
-            # Only add blank lines if there's NO completed definition before the comment
-            if not hasCompletedDefBeforeComment:
-              shouldHaveBlankLine[i] = (
-                self._needsBlankLineBetween(BlockType.COMMENT, stmt.blockType, stmt.indentLevel) > 0
-              )
-            else:
-              shouldHaveBlankLine[i] = False
-          else:
-            shouldHaveBlankLine[i] = False
-      elif completedControlBlock:
-        # After a completed control block, apply normal rules with CONTROL as prev type
-        shouldHaveBlankLine[i] = self._needsBlankLineBetween(BlockType.CONTROL, stmt.blockType, stmt.indentLevel) > 0
-      elif returningFromNestedLevel:
-        # When returning from nested level, add blank line
-        shouldHaveBlankLine[i] = True
-      else:
-        # No previous block, no completed control, not returning from nested - no blank line
-        shouldHaveBlankLine[i] = False
-
+      shouldHaveBlankLine[i] = self._determineBlankLineForStatement(
+        statements,
+        i,
+        stmt,
+        startsNewScope[i],
+        completedDefinitionBlock,
+        completedControlBlock,
+        returningFromNestedLevel,
+        prevBlockType,
+        prevStmtIdx,
+        targetIndent,
+      )
       prevBlockType = stmt.blockType
       prevStmtIdx = i
 
@@ -466,14 +580,12 @@ class BlankLineRuleEngine:
 
         # Check if prevStmt is a class docstring (docstring immediately after class definition)
         isClassDocstring = False
+        isModuleLevelDocstring = False
 
         if prevStmt.blockType == BlockType.DOCSTRING:
-          # Look back to find what came before the docstring
-          for j in range(prevNonBlankIdx - 1, -1, -1):
-            if not statements[j].isBlank:
-              isClassDocstring = self._isClassDefinition(statements[j])
-
-              break
+          # Check if it's a class or module-level docstring
+          isClassDocstring = self._isClassDocstring(statements, prevNonBlankIdx, prevStmt.blockType)
+          isModuleLevelDocstring = self._isModuleLevelDocstring(statements, prevNonBlankIdx, prevStmt.blockType)
 
         # Determine the effective block types
         # For comments, use BlockType.COMMENT regardless of what blockType field says
@@ -482,7 +594,7 @@ class BlankLineRuleEngine:
 
         # Use block-to-block configuration for blank line count
         blankLineCount = self._needsBlankLineBetween(
-          prevBlockType, currentBlockType, stmt.indentLevel, isClassDocstring
+          prevBlockType, currentBlockType, stmt.indentLevel, isClassDocstring, isModuleLevelDocstring
         )
         blankLineCounts[i] = blankLineCount
 
@@ -506,7 +618,9 @@ class BlankLineRuleEngine:
 
     return False
 
-  def _needsBlankLineBetween(self, prevType, currentType, indentLevel=None, isClassDocstring=False):
+  def _needsBlankLineBetween(
+    self, prevType, currentType, indentLevel=None, isClassDocstring=False, isModuleLevelDocstring=False
+  ):
     """Determine number of blank lines needed between block types
     :param prevType: Previous block type
     :type prevType: BlockType
@@ -516,9 +630,11 @@ class BlankLineRuleEngine:
     :type indentLevel: int
     :param isClassDocstring: True if prevType is a class docstring
     :type isClassDocstring: bool
+    :param isModuleLevelDocstring: True if prevType is a module-level docstring
+    :type isModuleLevelDocstring: bool
     :rtype: int
     """
 
     from .config import config
 
-    return config.getBlankLines(prevType, currentType, indentLevel, isClassDocstring)
+    return config.getBlankLines(prevType, currentType, indentLevel, isClassDocstring, isModuleLevelDocstring)

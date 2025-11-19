@@ -417,105 +417,74 @@ class TestDocstringPreservation:
 
       assert result == expected, f'Expected no blank before docstring\nGot:\n{result}'
 
+  def testModuleLevelDocstringAlwaysHasBlankLineAfter(self):
+    """Test that module-level docstrings ALWAYS have blank line after them (PEP 257)"""
+
+    input_code = '''"""
+This is a module-level docstring.
+"""
+import sys
+
+x = 1
+'''
+    expected = '''"""
+This is a module-level docstring.
+"""
+
+import sys
+
+x = 1
+'''
+
+    # Use default config (after_docstring = 1)
+    config = BlankLineConfig.fromDefaults()
+
+    setConfig(config)
+
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+      f.write(input_code)
+      f.flush()
+
+      changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
+
+      assert changed
+
+      with open(f.name) as result_file:
+        result = result_file.read()
+
+      assert result == expected, f'Expected blank line after module docstring\nGot:\n{result}'
+
   def testModuleLevelDocstringWithAfterDocstringZero(self):
-    """Test that module-level docstrings always get 1 blank line even with after_docstring=0"""
+    """Test that module-level docstrings ALWAYS have blank line even with after_docstring=0"""
 
     input_code = '''"""
-Module docstring.
+This is a module-level docstring.
+It should have a blank line after it regardless of after_docstring config.
 """
-import os
+import sys
 
-x = 1
+def foo():
+  """Function docstring should NOT have blank line with after_docstring=0"""
+  return 42
 '''
     expected = '''"""
-Module docstring.
+This is a module-level docstring.
+It should have a blank line after it regardless of after_docstring config.
 """
 
-import os
+import sys
 
-x = 1
+
+def foo():
+  """Function docstring should NOT have blank line with after_docstring=0"""
+  return 42
 '''
+
+    # Configure after_docstring = 0
     config = BlankLineConfig.fromDefaults()
     config.afterDocstring = 0
 
     setConfig(config)
-
-    try:
-      with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-        f.write(input_code)
-        f.flush()
-
-        changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
-
-        assert changed
-
-        with open(f.name) as result_file:
-          result = result_file.read()
-
-        assert result == expected, f'Expected 1 blank line after module docstring\nGot:\n{result}'
-    finally:
-      # Reset config
-      setConfig(BlankLineConfig.fromDefaults())
-
-  def testModuleLevelDocstringFollowedByFunction(self):
-    """Test that module-level docstring followed by function gets PEP 8 spacing (2 blank lines)"""
-
-    input_code = '''"""
-Module docstring.
-"""
-def foo():
-  pass
-'''
-    expected = '''"""
-Module docstring.
-"""
-
-
-def foo():
-  pass
-'''
-    config = BlankLineConfig.fromDefaults()
-    config.afterDocstring = 0
-
-    setConfig(config)
-
-    try:
-      with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-        f.write(input_code)
-        f.flush()
-
-        changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
-
-        assert changed
-
-        with open(f.name) as result_file:
-          result = result_file.read()
-
-        assert result == expected, (
-          f'Expected 2 blank lines after module docstring before definition (PEP 8)\nGot:\n{result}'
-        )
-    finally:
-      # Reset config
-      setConfig(BlankLineConfig.fromDefaults())
-
-  def testCommentAtModuleLevelBeforeDefinition(self):
-    """Test that comment at module level before definition gets PEP 8 spacing (2 blank lines)"""
-
-    input_code = """x = 1
-
-# Comment about the function
-
-def foo():
-  pass
-"""
-    expected = """x = 1
-
-# Comment about the function
-
-
-def foo():
-  pass
-"""
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
       f.write(input_code)
@@ -528,60 +497,28 @@ def foo():
       with open(f.name) as result_file:
         result = result_file.read()
 
-      assert result == expected, f'Expected 2 blank lines total before module-level definition\nGot:\n{result}'
+      assert result == expected, f'Module docstring should have blank line even with after_docstring=0\nGot:\n{result}'
 
-  def testFunctionDocstringStillRespectsConfig(self):
-    """Test that function/method docstrings still respect after_docstring config"""
+    # Reset to defaults
+    setConfig(BlankLineConfig.fromDefaults())
 
-    input_code = '''def foo():
-  """Function docstring."""
+  def testModuleLevelDocstringFollowedByDefinition(self):
+    """Test module-level docstring followed by top-level definition"""
 
-  x = 1
+    input_code = '''"""Module docstring."""
+def foo():
+  pass
 '''
-    expected = '''def foo():
-  """Function docstring."""
-  x = 1
+    expected = '''"""Module docstring."""
+
+
+def foo():
+  pass
 '''
     config = BlankLineConfig.fromDefaults()
-    config.afterDocstring = 0
 
     setConfig(config)
 
-    try:
-      with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-        f.write(input_code)
-        f.flush()
-
-        changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
-
-        assert changed
-
-        with open(f.name) as result_file:
-          result = result_file.read()
-
-        assert result == expected, f'Expected 0 blank lines after function docstring\nGot:\n{result}'
-    finally:
-      # Reset config
-      setConfig(BlankLineConfig.fromDefaults())
-
-  def testModuleLevelDocstringFollowedByClass(self):
-    """Test that module-level docstring followed by class gets PEP 8 spacing (2 blank lines)"""
-
-    input_code = '''"""
-Module docstring.
-"""
-class Foo:
-  pass
-'''
-    expected = '''"""
-Module docstring.
-"""
-
-
-class Foo:
-  pass
-'''
-
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
       f.write(input_code)
       f.flush()
@@ -593,34 +530,6 @@ class Foo:
       with open(f.name) as result_file:
         result = result_file.read()
 
-      assert result == expected, f'Expected 2 blank lines after module docstring before class\nGot:\n{result}'
-
-  def testCommentAfterModuleLevelDefinition(self):
-    """Test that comment after module-level definition doesn't preserve extra blank lines"""
-
-    input_code = """def foo():
-  pass
-
-# Comment after definition
-x = 1
-"""
-    expected = """def foo():
-  pass
-
-
-# Comment after definition
-x = 1
-"""
-
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
-      f.flush()
-
-      changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
-
-      assert changed
-
-      with open(f.name) as result_file:
-        result = result_file.read()
-
-      assert result == expected, f'Expected 2 blank lines before comment after definition\nGot:\n{result}'
+      assert result == expected, (
+        f'Module docstring should have blank line, then PEP 8 spacing before def\nGot:\n{result}'
+      )

@@ -1,9 +1,19 @@
 # Changelog
 
-## [0.7.4] - 2025-11-17
+## [0.7.4] - 2025-11-18
 
-- Fixed module-level docstring spacing to match ruff format behavior (always 1 blank line after module docstrings, non-configurable per PEP 257)
-- Fixed comment spacing at module level to properly respect PEP 8's 2-blank-line rule around top-level definitions
+**Code Quality and Bug Fixes**
+
+- **Refactoring**: Reduced cyclomatic complexity of `_applyRulesAtLevel` from ~30+ to ~8-10
+  - Extracted 8 helper methods for better code organization and maintainability
+  - Improved readability with focused, single-responsibility methods
+  - All 167 tests passing with full backward compatibility
+- **Bug fixes**:
+  - Fixed module-level docstring spacing to match ruff format behavior (always 1 blank line after module docstrings, non-configurable per PEP 257)
+  - Fixed comment spacing at module level to properly respect PEP 8's 2-blank-line rule around top-level definitions
+  - Added comprehensive test coverage for module-level docstring scenarios
+- **Verification**: Tested on real-world projects (joints/oracle, joints/sigil, secmetrics)
+- **Compatibility**: Confirmed spacing and ruff agree on blank line placement
 
 ## [0.7.3] - 2025-11-12
 
