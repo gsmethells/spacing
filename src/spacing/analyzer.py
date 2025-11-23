@@ -7,7 +7,7 @@ This file is subject to the terms and conditions defined in LICENSE.
 
 from .classifier import StatementClassifier
 from .parser import MultilineParser
-from .types import BlockType, Statement
+from .types import BLANK_LINE_INDENT, BlockType, Statement
 
 
 class FileAnalyzer:
@@ -73,7 +73,7 @@ class FileAnalyzer:
               startLineIndex=i,
               endLineIndex=i,
               blockType=BlockType.CALL,  # Dummy value
-              indentLevel=-1,
+              indentLevel=BLANK_LINE_INDENT,
               isBlank=True,
             )
           )
@@ -130,7 +130,20 @@ class FileAnalyzer:
     return statements
 
   def _createStatement(self, lines: list[str], startIdx: int, endIdx: int) -> Statement:
-    """Create Statement object from lines"""
+    """Create Statement object from lines
+
+    :param lines: Lines comprising the statement (must be non-empty)
+    :type lines: list[str]
+    :param startIdx: Starting line index
+    :type startIdx: int
+    :param endIdx: Ending line index
+    :type endIdx: int
+    :rtype: Statement
+    :raises ValueError: If lines is empty
+    """
+
+    if not lines:
+      raise ValueError('Cannot create statement from empty lines list')
 
     blockType = StatementClassifier.classifyStatement(lines)
     indentLevel = self._getIndentLevel(lines[0])
@@ -146,10 +159,16 @@ class FileAnalyzer:
     )
 
   def _getIndentLevel(self, line: str) -> int:
-    """Calculate indentation level"""
+    """Calculate indentation level
+
+    :param line: Line to calculate indentation for
+    :type line: str
+    :rtype: int
+    :return: Indentation level in spaces, or BLANK_LINE_INDENT for blank lines
+    """
 
     if not line.strip():
-      return -1  # Blank lines have no meaningful indentation
+      return BLANK_LINE_INDENT  # Blank lines have no meaningful indentation
 
     from .config import config
 

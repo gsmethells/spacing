@@ -161,11 +161,6 @@ Comprehensive test suite (191 tests) covering:
 
 See `test/` directory for details.
 
-## Outstanding Issues
-
-See `HANDOFF.md` for current issues and technical debt. Key item:
-- MAJOR-1 (blocking): Blank lines incorrectly added after control statements before comments
-
 ## Strategic Direction
 
 **Mission**: Definitive solution for scope-aware, configurable blank line enforcement

@@ -261,3 +261,32 @@ invalid toml syntax
     # Docstring to docstring should not use afterDocstring
     assert configDefault.getBlankLines(BlockType.DOCSTRING, BlockType.DOCSTRING) == 0
     assert configCompact.getBlankLines(BlockType.DOCSTRING, BlockType.DOCSTRING) == 0
+
+  def testInvalidPathConfigTypes(self):
+    """Test that invalid types for path config raise ValueError"""
+
+    import tempfile
+
+    # Test exclude_names as non-list
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.toml', delete=False) as f:
+      f.write('[paths]\nexclude_names = "not_a_list"\n')
+      f.flush()
+
+      with pytest.raises(ValueError, match='paths.exclude_names must be a list'):
+        BlankLineConfig.fromToml(Path(f.name))
+
+    # Test exclude_patterns as non-list
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.toml', delete=False) as f:
+      f.write('[paths]\nexclude_patterns = 123\n')
+      f.flush()
+
+      with pytest.raises(ValueError, match='paths.exclude_patterns must be a list'):
+        BlankLineConfig.fromToml(Path(f.name))
+
+    # Test include_hidden as non-bool
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.toml', delete=False) as f:
+      f.write('[paths]\ninclude_hidden = "yes"\n')
+      f.flush()
+
+      with pytest.raises(ValueError, match='paths.include_hidden must be a boolean'):
+        BlankLineConfig.fromToml(Path(f.name))
