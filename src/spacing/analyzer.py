@@ -14,7 +14,14 @@ class FileAnalyzer:
   """Pass 1: Parse file into logical statements"""
 
   def analyzeFile(self, lines: list[str]) -> list[Statement]:
-    """Parse file into logical statements"""
+    """Parse file into logical statements
+
+    :param lines: List of file lines to analyze
+    :type lines: list[str]
+    :rtype: list[Statement]
+    :return: List of Statement objects representing logical code blocks
+    :raises TypeError: If lines contains non-string elements (via MultilineParser.processLine)
+    """
 
     statements = []
     parser = MultilineParser()
@@ -22,9 +29,8 @@ class FileAnalyzer:
     statementStart = 0
 
     for i, line in enumerate(lines):
-      stripped = line.strip()
-
       # If we're in a multiline statement (like a docstring), just add the line
+      # Skip stripping for performance since we don't use stripped in this branch
       if currentStatement and parser.inString:
         currentStatement.append(line)
         parser.processLine(line)
@@ -38,6 +44,9 @@ class FileAnalyzer:
           parser.reset()
 
         continue
+
+      # Only strip when needed (not in a string)
+      stripped = line.strip()
 
       # Handle blank lines (only when not in a string or brackets)
       if not stripped:

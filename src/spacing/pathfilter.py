@@ -37,7 +37,11 @@ def shouldExcludePath(path, config, useDefaults=True):
 
   # Convert to Path if string
   if not isinstance(path, Path):
-    path = Path(path)
+    try:
+      path = Path(path)
+    except (TypeError, ValueError) as e:
+      # Invalid path string - treat as excluded to avoid errors
+      raise ValueError(f'Invalid path: {path}. Error: {e}')
 
   # Check if path is hidden (starts with .)
   if not config.includeHidden:
@@ -83,7 +87,10 @@ def discoverPythonFiles(rootPath, config):
 
   # Convert to Path if string
   if not isinstance(rootPath, Path):
-    rootPath = Path(rootPath)
+    try:
+      rootPath = Path(rootPath)
+    except (TypeError, ValueError) as e:
+      raise ValueError(f'Invalid root path: {rootPath}. Error: {e}')
 
   if not rootPath.is_dir():
     return []

@@ -4,7 +4,7 @@ build-backend = 'hatchling.build'
 
 [project]
 name = 'spacing'
-version = '0.7.4'
+version = '0.7.5'
 description = 'Python blank line formatter enforcing spacing rules for clean, readable code'
 authors = [{name = 'Greg Smethells'}]
 license = {text = 'GPL-3.0-or-later'}
