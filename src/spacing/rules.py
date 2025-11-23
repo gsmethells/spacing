@@ -11,11 +11,6 @@ from .types import BlockType, Statement
 class BlankLineRuleEngine:
   """Pass 2: Apply blank line rules"""
 
-  def __init__(self):
-    """Initialize rule engine with global configuration"""
-
-    pass
-
   def applyRules(self, statements):
     """Return list indicating how many blank lines should exist before each statement"""
 

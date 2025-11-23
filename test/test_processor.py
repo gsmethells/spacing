@@ -104,18 +104,23 @@ x = 1"""
       f.write(original_content)
       f.flush()
 
-      # Mock open to raise an exception on write
-      def mock_open(*args, **kwargs):
-        if 'w' in args[1]:  # Write mode
-          raise OSError('Mock write error')
+      filepath = Path(f.name)
 
-        return open(*args, **kwargs)
+    # Mock NamedTemporaryFile to raise OSError when trying to create temp file
+    def mock_tempfile(*args, **kwargs):
+      raise OSError('Mock tempfile creation error')
 
-      monkeypatch.setattr('builtins.open', mock_open)
+    monkeypatch.setattr('tempfile.NamedTemporaryFile', mock_tempfile)
 
-      result = FileProcessor.processFile(Path(f.name), checkOnly=False)
+    result = FileProcessor.processFile(filepath, checkOnly=False)
 
-      assert not result  # Should return False on write error
+    assert not result  # Should return False on write error
+
+    # Clean up test file
+    try:
+      filepath.unlink()
+    except Exception:
+      pass
 
   def testEmptyFile(self):
     """Test processing empty file"""
@@ -243,6 +248,27 @@ y = 2"""
 
       assert changed
       assert summary is not None
+      assert diff is not None
+
+  def testReturnDetailsRemovedBlankLines(self):
+    """Test returnDetails shows 'removed' when blank lines are deleted"""
+
+    content = """import sys
+
+
+x = 1"""
+    expected = """import sys
+
+x = 1"""
+
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+      f.write(content)
+      f.flush()
+
+      changed, (summary, diff) = FileProcessor.processFile(Path(f.name), checkOnly=True, returnDetails=True)
+
+      assert changed
+      assert 'removed 1 blank line' in summary
       assert diff is not None
 
   def testWriteErrorDuringFileProcessing(self, monkeypatch):
