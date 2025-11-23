@@ -39,15 +39,18 @@ class MultilineParser:
     if not isinstance(line, str):
       raise TypeError(f'Expected str, got {type(line).__name__}')
 
-    if self.DECORATOR_PATTERN.match(line.strip()):
-      # Check for decorator
-      self.expectingDefinition = True
-    elif self.DEFINITION_PATTERN.match(line.strip()):
-      # Check for function/class definition (including async def)
-      self.expectingDefinition = False
-    else:
-      # Regular line - no action needed for expectingDefinition
-      pass
+    # Only check for decorators/definitions when NOT inside a string
+    # Otherwise we'll incorrectly match patterns inside multiline strings
+    if not self.inString:
+      if self.DECORATOR_PATTERN.match(line.strip()):
+        # Check for decorator
+        self.expectingDefinition = True
+      elif self.DEFINITION_PATTERN.match(line.strip()):
+        # Check for function/class definition (including async def)
+        self.expectingDefinition = False
+      else:
+        # Regular line - no action needed for expectingDefinition
+        pass
 
     i = 0
 
