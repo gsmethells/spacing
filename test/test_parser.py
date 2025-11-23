@@ -148,3 +148,31 @@ class TestMultilineParser:
     parser.processLine("func()  # Comment with unmatched quote '")
     assert parser.isComplete()
     assert not parser.inString
+
+  def testDecoratorPatternInMultilineString(self):
+    """
+    Test that decorator patterns inside multiline strings don't set expectingDefinition.
+
+    Regression test for MAJOR-1 bug: Parser was checking for decorators (@foo)
+    even when inside a multiline string, causing it to wait for a def/class statement
+    that would never come, making the parser think the statement was incomplete.
+    """
+
+    parser = MultilineParser()
+
+    # Start multiline string with decorator-like pattern inside
+    parser.processLine("x = '''@decorator")
+    assert parser.inString
+    assert not parser.isComplete()  # String not closed yet
+    assert not parser.expectingDefinition  # Should NOT be set when inside string
+
+    # Continue string with more lines
+    parser.processLine('@another_decorator')
+    assert parser.inString
+    assert not parser.expectingDefinition
+
+    # Close the string
+    parser.processLine("'''")
+    assert not parser.inString
+    assert parser.isComplete()  # Should be complete now
+    assert not parser.expectingDefinition
