@@ -1,5 +1,77 @@
 # Changelog
 
+## [0.8.2] - 2025-11-23
+
+**Code Quality Improvements**
+
+- Improved test coverage from 89.50% to 90.30% (201 tests, up from 198)
+- Added tests for configuration validation:
+  - Unknown configuration section validation
+  - Indent width validation (valid/invalid values)
+  - TOML indent_width range checking
+  - Removed blank lines detection in change summary
+- Enhanced README for professionalism and clarity:
+  - Added Overview and "Why Spacing?" sections explaining the gap Black/Ruff leave
+  - Strengthened comparison section with clear differentiation
+  - Added recommended workflow showing complementary usage with Black/Ruff
+  - Maintained professional tone while clearly communicating value proposition
+
+## [0.8.1] - 2025-11-23
+
+**Minor Issue Fixes**
+
+- Fixed indentWidth validation to use proper range (1-8 instead of 0-3)
+  - Added MIN_INDENT_WIDTH and MAX_INDENT_WIDTH constants
+  - Created dedicated _validateIndentWidth() method
+- Added validation for unknown configuration sections
+  - Catches typos in top-level sections (e.g., "unknow_section")
+  - Validates keys within blank_lines section
+- Improved error handling consistency:
+  - Documented sys.exit() usage patterns with inline comments
+  - Standardized error output (already using stderr correctly)
+- All error messages already use stderr appropriately
+
+## [0.8.0] - 2025-11-23
+
+**MAJOR BUG FIX: Decorator Pattern in Multiline Strings**
+
+- Fixed critical bug where decorator patterns inside multiline strings were incorrectly detected
+  - Bug caused blank lines to be added after control statements (try:, for:, if:) when followed by comments
+  - Parser was checking for @decorator patterns even inside string literals
+  - Added guard to prevent decorator/definition matching when inside strings
+  - Fixes conflicts with ruff formatter
+- Added regression test: testDecoratorPatternInMultilineString
+- Verified fix on real-world projects (sigil, secmetrics)
+- All 192 tests passing
+
+## [0.7.5] - 2025-11-23
+
+**Critical and Major Issue Fixes**
+
+- Fixed path traversal vulnerability:
+  - Added Path.resolve(strict=True) for path validation
+  - Detects and handles broken symlinks
+  - Canonicalizes paths before processing
+- Fixed resource cleanup guarantee:
+  - Added try/finally blocks for temporary file cleanup
+  - Cleanup always attempted even on exceptions
+  - Failures logged but don't crash program
+- Fixed overly broad exception handling:
+  - Replaced `except Exception` with specific `except (OSError, IOError)`
+  - Better error specificity for debugging
+- Fixed error handling in file discovery mode:
+  - Added try/except for Path.cwd() errors
+  - Consistent error handling between discovery and explicit modes
+- Removed empty __init__ method from BlankLineRuleEngine
+  - Eliminated misleading code that suggested initialization work
+- Code deduplication in CLI:
+  - Created processFileAndUpdateCounts() helper function
+  - Reduced code duplication from 3 instances to 1
+- Improved error output:
+  - Replaced print() with logger.error() in processor.py
+  - Added logging.basicConfig() to CLI main()
+- All 198 tests passing with 89.50% coverage
+
 ## [0.7.4] - 2025-11-18
 
 **Code Quality and Bug Fixes**

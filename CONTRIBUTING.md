@@ -69,7 +69,7 @@ pip install pytest pytest-cov ruff
 
 4. **Update documentation**:
    - Update README.md if adding user-facing features
-   - Update design.md for architectural changes
+   - Update DESIGN.md for architectural changes
    - Add entry to CHANGELOG.md
 
 5. **Run quality checks**:
@@ -84,10 +84,10 @@ pip install pytest pytest-cov ruff
    ruff format src/spacing/ test/
 
    # Format blank lines with spacing (dogfooding!)
-   PYTHONPATH=src python -m spacing.cli
+   python -m spacing.cli
 
    # Check blank lines with spacing
-   PYTHONPATH=src python -m spacing.cli --check
+   python -m spacing.cli --check
 
    # Check coverage
    PYTHONPATH=src pytest test/ --cov=spacing --cov-report=term-missing
@@ -200,10 +200,10 @@ We use spacing to format its own codebase! This ensures:
 
 ```bash
 # Format the spacing codebase
-PYTHONPATH=src python -m spacing.cli
+python -m spacing.cli
 
 # Check if formatting is needed (this runs in CI)
-PYTHONPATH=src python -m spacing.cli --check
+python -m spacing.cli --check
 
 # The CI pipeline will fail if spacing's code doesn't follow spacing's rules!
 ```
@@ -234,7 +234,7 @@ spacing/
 │   ├── test_processor.py
 │   ├── test_rules.py
 │   └── test_types.py
-├── design.md             # Architecture documentation
+├── DESIGN.md             # Architecture documentation
 ├── CLAUDE.md             # Detailed coding standards
 └── pyproject.toml        # Project configuration
 ```
@@ -247,7 +247,7 @@ Spacing uses a three-pass processing pipeline:
 2. **Pass 2 (BlankLineRuleEngine)**: Applies configurable blank line rules
 3. **Pass 3 (FileProcessor)**: Writes formatted output atomically
 
-See `design.md` for detailed architecture documentation.
+See `DESIGN.md` for detailed architecture documentation.
 
 ## Getting Help
 
