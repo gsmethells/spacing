@@ -179,6 +179,29 @@ class BlankLineRuleEngine:
 
     return self._hasBodyBetween(statements, prevIdx, beforeIdx, targetIndent)
 
+  def _hasCompletedDefinitionBeforeComment(self, statements, currentIdx):
+    """Check if there's a completed definition before the most recent module-level comment
+
+    :param statements: List of statements
+    :param currentIdx: Current statement index
+    :return: True if completed definition exists before most recent comment
+    """
+
+    # Find the most recent module-level comment
+    commentIdx = None
+
+    for k in range(currentIdx - 1, -1, -1):
+      if statements[k].isComment and statements[k].indentLevel == 0:
+        commentIdx = k
+
+        break
+
+    if commentIdx is None:
+      return False
+
+    # Use existing helper to check for completed definition before comment
+    return self._hasCompletedDefinitionBlock(statements, commentIdx, 0)
+
   def _applyCommentRules(
     self,
     completedDefinitionBlock,
@@ -354,31 +377,7 @@ class BlankLineRuleEngine:
         # definition before the comment, apply PEP 8 spacing (2 blank lines)
         if stmt.indentLevel == 0 and stmt.blockType == BlockType.DEFINITION:
           # Check if there's a completed definition before the most recent comment
-          hasCompletedDefBeforeComment = False
-
-          # Find the most recent comment
-          for k in range(currentIdx - 1, -1, -1):
-            if statements[k].isComment and statements[k].indentLevel == 0:
-              # Found the comment, now check what came before it
-              for m in range(k - 1, -1, -1):
-                if statements[m].isBlank:
-                  continue
-
-                if statements[m].indentLevel == 0:
-                  if statements[m].blockType == BlockType.DEFINITION:
-                    # Check if this definition had a body
-                    for n in range(m + 1, k):
-                      if statements[n].indentLevel > 0:
-                        hasCompletedDefBeforeComment = True
-
-                        break
-
-                  break
-
-                if statements[m].indentLevel > 0:
-                  continue
-
-              break
+          hasCompletedDefBeforeComment = self._hasCompletedDefinitionBeforeComment(statements, currentIdx)
 
           # Only add blank lines if there's NO completed definition before the comment
           if not hasCompletedDefBeforeComment:

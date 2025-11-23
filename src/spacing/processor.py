@@ -5,8 +5,11 @@ See the accompanying AUTHORS file for a complete list of authors.
 This file is subject to the terms and conditions defined in LICENSE.
 """
 
+import logging
 from .analyzer import FileAnalyzer
 from .rules import BlankLineRuleEngine
+
+logger = logging.getLogger(__name__)
 
 
 class FileProcessor:
@@ -28,19 +31,19 @@ class FileProcessor:
       with open(filepath, encoding='utf-8') as f:
         originalLines = f.readlines()
     except UnicodeDecodeError as e:
-      print(f'Encoding error reading {filepath}: {e}. Try specifying encoding or convert to UTF-8.')
+      logger.error(f'Encoding error reading {filepath}: {e} Try specifying encoding or convert to UTF-8')
 
       return False
     except FileNotFoundError:
-      print(f'File not found: {filepath}')
+      logger.error(f'File not found: {filepath}')
 
       return False
     except PermissionError:
-      print(f'Permission denied reading {filepath}')
+      logger.error(f'Permission denied reading {filepath}')
 
       return False
     except Exception as e:
-      print(f'Unexpected error reading {filepath}: {e}')
+      logger.error(f'Unexpected error reading {filepath}: {e}')
 
       return False
 
@@ -104,7 +107,7 @@ class FileProcessor:
         except Exception:
           pass
 
-      print(f'Error writing {filepath}: {e}')
+      logger.error(f'Error writing {filepath}: {e}')
 
       if returnDetails:
         return (False, None)

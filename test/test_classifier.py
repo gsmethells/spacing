@@ -297,3 +297,9 @@ class TestClassifierRegressions:
     # Regular with/for should still work
     assert StatementClassifier.classifyStatement(['with open(file):']) == BlockType.CONTROL
     assert StatementClassifier.classifyStatement(['for i in range(10):']) == BlockType.CONTROL
+
+  def testEmptyLinesListReturnsCall(self):
+    """Test that classifyStatement returns CALL for empty lines list"""
+
+    # Edge case: empty lines should default to CALL
+    assert StatementClassifier.classifyStatement([]) == BlockType.CALL

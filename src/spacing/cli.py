@@ -6,6 +6,7 @@ This file is subject to the terms and conditions defined in LICENSE.
 """
 
 import argparse
+import logging
 import sys
 from pathlib import Path
 
@@ -97,6 +98,9 @@ def _processFile(filepath, args):
 def main():
   """CLI entry point"""
 
+  # Configure logging to output to stderr
+  logging.basicConfig(level=logging.ERROR, format='%(message)s', stream=sys.stderr)
+
   parser = argparse.ArgumentParser(description='Python blank line formatter enforcing spacing rules')
 
   # Add version argument
@@ -156,6 +160,19 @@ def main():
     print(f'Configuration error: {e}', file=sys.stderr)
     sys.exit(1)
 
+  def processFileAndUpdateCounts(filePath):
+    """Process a single file and update counters
+
+    :param filePath: Path to the Python file to process
+    :type filePath: Path
+    :return: Tuple of (processed_count, changed_count, exit_code)
+    :rtype: tuple[int, int, int]
+    """
+
+    changed, fileExitCode = _processFile(filePath, args)
+
+    return (1, 1 if changed else 0, fileExitCode if changed else 0)
+
   exitCode = 0
   processedCount = 0
   changedCount = 0
@@ -165,32 +182,26 @@ def main():
     pythonFiles = discoverPythonFiles(Path.cwd(), config)
 
     for pyFile in pythonFiles:
-      processedCount += 1
-      changed, fileExitCode = _processFile(pyFile, args)
-
-      if changed:
-        changedCount += 1
-        exitCode = max(exitCode, fileExitCode)
+      processed, changed, fileExitCode = processFileAndUpdateCounts(pyFile)
+      processedCount += processed
+      changedCount += changed
+      exitCode = max(exitCode, fileExitCode)
   else:
     # Process explicitly provided paths (no exclusions applied)
     for pathStr in args.paths:
       path = Path(pathStr)
 
       if path.is_file() and path.suffix == '.py':
-        processedCount += 1
-        changed, fileExitCode = _processFile(path, args)
-
-        if changed:
-          changedCount += 1
-          exitCode = max(exitCode, fileExitCode)
+        processed, changed, fileExitCode = processFileAndUpdateCounts(path)
+        processedCount += processed
+        changedCount += changed
+        exitCode = max(exitCode, fileExitCode)
       elif path.is_dir():
         for pyFile in path.rglob('*.py'):
-          processedCount += 1
-          changed, fileExitCode = _processFile(pyFile, args)
-
-          if changed:
-            changedCount += 1
-            exitCode = max(exitCode, fileExitCode)
+          processed, changed, fileExitCode = processFileAndUpdateCounts(pyFile)
+          processedCount += processed
+          changedCount += changed
+          exitCode = max(exitCode, fileExitCode)
       else:
         if path.exists():
           print(f'Skipping {path}: not a Python file or directory', file=sys.stderr)
@@ -297,8 +308,8 @@ def validateBlankLineCount(value: int, option: str):
   :raises: ValueError if invalid
   """
 
-  if value < 0 or value > 3:
-    raise ValueError(f'{option} must be between 0 and 3, got: {value}')
+  if value < 0 or value > MAX_BLANK_LINES:
+    raise ValueError(f'{option} must be between 0 and {MAX_BLANK_LINES}, got: {value}')
 
 
 def parseBlockTypeName(name: str) -> BlockType:

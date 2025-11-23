@@ -244,3 +244,41 @@ y = 2"""
       assert changed
       assert summary is not None
       assert diff is not None
+
+  def testWriteErrorDuringFileProcessing(self, monkeypatch):
+    """Test that write errors during file processing are handled correctly"""
+
+    import builtins
+    import os
+
+    content = """import sys
+x = 1
+y = 2"""
+
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+      f.write(content)
+      f.flush()
+      filePath = Path(f.name)
+
+    originalOpen = builtins.open
+
+    def mockOpen(path, *args, **kwargs):
+      # Allow reading original file
+      if 'r' in args or kwargs.get('mode', '').startswith('r'):
+        return originalOpen(path, *args, **kwargs)
+
+      # Raise error when trying to write temp file
+      raise OSError('Simulated write error')
+
+    monkeypatch.setattr(builtins, 'open', mockOpen)
+
+    # Should handle write error gracefully
+    result = FileProcessor.processFile(filePath, checkOnly=False)
+
+    assert not result  # Should return False on write error
+
+    # Clean up
+    try:
+      os.unlink(filePath)
+    except Exception:
+      pass

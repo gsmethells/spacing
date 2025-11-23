@@ -164,3 +164,15 @@ def test_discoverPythonFilesEmpty():
   files = discoverPythonFiles(Path('/nonexistent'), config)
 
   assert files == []
+
+
+def test_shouldExcludePathInvalidPath():
+  """Test that shouldExcludePath raises ValueError for invalid path"""
+
+  import pytest
+
+  config = BlankLineConfig.fromDefaults()
+
+  # Test with invalid path object
+  with pytest.raises(ValueError, match='Invalid path'):
+    shouldExcludePath(None, config)

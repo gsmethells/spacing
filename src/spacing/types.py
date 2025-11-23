@@ -10,7 +10,21 @@ from enum import Enum
 
 
 class BlockType(Enum):
-  """Block types in precedence order"""
+  """Block types for statement classification
+
+  Enum values represent different Python statement categories used
+  for determining blank line placement between code blocks.
+
+  - ASSIGNMENT: Variable assignments, comprehensions, lambdas
+  - CALL: Function calls, del, assert, pass, raise statements
+  - IMPORT: Import and from-import statements
+  - CONTROL: Control flow structures (if, for, while, try, with)
+  - DEFINITION: Function and class definitions (including decorators)
+  - DECLARATION: Variable scope declarations (global, nonlocal)
+  - DOCSTRING: Triple-quoted documentation strings
+  - COMMENT: Single-line comments starting with #
+  - FLOW_CONTROL: Return and yield statements
+  """
 
   ASSIGNMENT = 1
   CALL = 2
@@ -21,6 +35,10 @@ class BlockType(Enum):
   DOCSTRING = 7
   COMMENT = 8
   FLOW_CONTROL = 9  # return, yield, yield from
+
+
+# Sentinel value for indentation level of blank lines
+BLANK_LINE_INDENT = -1
 
 
 @dataclass

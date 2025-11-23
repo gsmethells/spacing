@@ -5,6 +5,7 @@ See the accompanying AUTHORS file for a complete list of authors.
 This file is subject to the terms and conditions defined in LICENSE.
 """
 
+import pytest
 from spacing.parser import MultilineParser
 
 
@@ -176,3 +177,14 @@ class TestMultilineParser:
     assert not parser.inString
     assert parser.isComplete()  # Should be complete now
     assert not parser.expectingDefinition
+
+  def testProcessLineTypeError(self):
+    """Test that processLine raises TypeError for non-string input"""
+
+    parser = MultilineParser()
+
+    with pytest.raises(TypeError, match='Expected str, got int'):
+      parser.processLine(123)
+
+    with pytest.raises(TypeError, match='Expected str, got list'):
+      parser.processLine(['not', 'a', 'string'])

@@ -5,6 +5,7 @@ See the accompanying AUTHORS file for a complete list of authors.
 This file is subject to the terms and conditions defined in LICENSE.
 """
 
+import pytest
 from spacing.analyzer import FileAnalyzer
 from spacing.types import BlockType
 
@@ -230,3 +231,11 @@ class TestFileAnalyzer:
     assert statements[0].blockType == BlockType.ASSIGNMENT  # result = some_function(...)
     assert len(statements[0].lines) == 4  # All bracket lines grouped
     assert statements[1].blockType == BlockType.ASSIGNMENT  # x = 1
+
+  def testCreateStatementWithEmptyLines(self):
+    """Test that _createStatement raises ValueError for empty lines list"""
+
+    analyzer = FileAnalyzer()
+
+    with pytest.raises(ValueError, match='Cannot create statement from empty lines list'):
+      analyzer._createStatement([], 0, 0)
