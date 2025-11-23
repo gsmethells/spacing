@@ -6,9 +6,9 @@ We actively support the latest major version of Spacing with security updates.
 
 | Version | Supported          |
 | ------- | ------------------ |
+| 0.8.x   | :white_check_mark: |
 | 0.7.x   | :white_check_mark: |
-| 0.6.x   | :white_check_mark: |
-| < 0.6   | :x:                |
+| < 0.7   | :x:                |
 
 ## Reporting a Vulnerability
 
@@ -85,7 +85,14 @@ To stay informed about security updates:
 
 ## Vulnerability History
 
-No security vulnerabilities have been reported as of version 0.7.0.
+### Fixed Vulnerabilities
+
+**Path Traversal Vulnerability** - Fixed in version 0.7.5 (2025-11-23)
+- **Severity**: Medium
+- **Description**: User-provided paths were not validated, allowing potential path traversal attacks
+- **Fix**: Added `Path.resolve(strict=True)` for path canonicalization and symlink detection
+- **CVE**: None assigned (discovered internally during code review)
+- **Credit**: Internal security review
 
 ## Questions?
 

@@ -129,7 +129,7 @@ exclude_patterns = ["**/old_*.py"]
 include_hidden = false
 ```
 
-Block type names: `assignment`, `call`, `import`, `control`, `definition`, `declaration`, `comment`
+Block type names: `assignment`, `call`, `import`, `control`, `definition`, `declaration`, `docstring`, `comment`
 
 ## Error Handling
 
@@ -153,11 +153,12 @@ Block type names: `assignment`, `call`, `import`, `control`, `definition`, `decl
 
 ## Testing
 
-Comprehensive test suite (191 tests) covering:
+Comprehensive test suite (201 tests, 90.30% coverage) covering:
 - Unit tests per component (parser, classifier, rules, analyzer, processor, config)
 - Integration tests (end-to-end, configuration-driven, docstrings, class methods, nested scopes)
 - Bug regression tests
 - CLI tests
+- Configuration validation tests
 
 See `test/` directory for details.
 
