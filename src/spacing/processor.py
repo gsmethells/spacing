@@ -42,8 +42,9 @@ class FileProcessor:
       logger.error(f'Permission denied reading {filepath}')
 
       return False
-    except Exception as e:
-      logger.error(f'Unexpected error reading {filepath}: {e}')
+    except (OSError, IOError) as e:
+      # Handle other I/O errors (disk errors, network filesystem issues, etc.)
+      logger.error(f'I/O error reading {filepath}: {e}')
 
       return False
 
@@ -81,10 +82,10 @@ class FileProcessor:
     import os
     import tempfile
 
+    tempFile = None
+
     try:
       # Write to temporary file first
-      tempFile = None
-
       with tempfile.NamedTemporaryFile(
         mode='w', encoding='utf-8', dir=filepath.parent, prefix=f'.{filepath.name}.tmp', delete=False
       ) as f:
@@ -99,20 +100,24 @@ class FileProcessor:
         return (True, (summary, diff))
       else:
         return True
-    except Exception as e:
-      # Clean up temp file if it exists
-      if tempFile and os.path.exists(tempFile):
-        try:
-          os.unlink(tempFile)
-        except Exception:
-          pass
-
+    except (OSError, IOError) as e:
       logger.error(f'Error writing {filepath}: {e}')
 
       if returnDetails:
         return (False, None)
       else:
         return False
+    finally:
+      # Guarantee cleanup attempt if temp file was created but not moved
+      if tempFile:
+        try:
+          os.unlink(tempFile)
+        except FileNotFoundError:
+          # File was successfully moved or already cleaned up
+          pass
+        except OSError as e:
+          # Log but don't fail if we can't clean up temp file
+          logger.warning(f'Failed to clean up temporary file {tempFile}: {e}')
 
   @staticmethod
   def _reconstructFile(statements, blankLineCounts, originalLines):

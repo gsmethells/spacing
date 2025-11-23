@@ -136,6 +136,32 @@ default_between_different = 5
       with pytest.raises(ValueError, match='must be between 0 and 3'):
         BlankLineConfig.fromToml(Path(f.name))
 
+    # Invalid indent_width - below minimum
+    tomlContent = """
+[blank_lines]
+indent_width = 0
+"""
+
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.toml', delete=False) as f:
+      f.write(tomlContent)
+      f.flush()
+
+      with pytest.raises(ValueError, match='must be between 1 and 8'):
+        BlankLineConfig.fromToml(Path(f.name))
+
+    # Invalid indent_width - above maximum
+    tomlContent = """
+[blank_lines]
+indent_width = 9
+"""
+
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.toml', delete=False) as f:
+      f.write(tomlContent)
+      f.flush()
+
+      with pytest.raises(ValueError, match='must be between 1 and 8'):
+        BlankLineConfig.fromToml(Path(f.name))
+
   def testFromTomlInvalidBlockType(self):
     """Test TOML with invalid block type names"""
 
@@ -187,6 +213,21 @@ invalid toml syntax
       with pytest.raises(ValueError, match='Failed to parse TOML'):
         BlankLineConfig.fromToml(Path(f.name))
 
+  def testFromTomlUnknownSection(self):
+    """Test TOML with unknown top-level section"""
+
+    tomlContent = """
+[unknown_section]
+some_value = 1
+"""
+
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.toml', delete=False) as f:
+      f.write(tomlContent)
+      f.flush()
+
+      with pytest.raises(ValueError, match='Unknown configuration sections: unknown_section'):
+        BlankLineConfig.fromToml(Path(f.name))
+
   def testParseBlockType(self):
     """Test block type parsing"""
 
@@ -218,6 +259,27 @@ invalid toml syntax
 
     with pytest.raises(ValueError, match='must be an integer'):
       BlankLineConfig._validateBlankLineCount('1', 'test')
+
+  def testValidateIndentWidth(self):
+    """Test indent width validation"""
+
+    # Valid values
+    BlankLineConfig._validateIndentWidth(1, 'test')
+    BlankLineConfig._validateIndentWidth(2, 'test')
+    BlankLineConfig._validateIndentWidth(4, 'test')
+    BlankLineConfig._validateIndentWidth(8, 'test')
+
+    # Invalid values - below minimum
+    with pytest.raises(ValueError, match='must be between 1 and 8'):
+      BlankLineConfig._validateIndentWidth(0, 'test')
+
+    # Invalid values - above maximum
+    with pytest.raises(ValueError, match='must be between 1 and 8'):
+      BlankLineConfig._validateIndentWidth(9, 'test')
+
+    # Invalid type
+    with pytest.raises(ValueError, match='must be an integer'):
+      BlankLineConfig._validateIndentWidth('2', 'test')
 
   def testAllBlockTypeCombinations(self):
     """Test all valid block type combinations"""

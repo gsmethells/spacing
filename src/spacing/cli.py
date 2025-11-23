@@ -158,6 +158,8 @@ def main():
     setConfig(config)  # Set as global config for singleton access
   except (ValueError, FileNotFoundError) as e:
     print(f'Configuration error: {e}', file=sys.stderr)
+
+    # Fatal error: Cannot proceed without valid configuration
     sys.exit(1)
 
   def processFileAndUpdateCounts(filePath):
@@ -179,36 +181,71 @@ def main():
 
   # If no paths provided, discover Python files in current directory with exclusions
   if not args.paths:
-    pythonFiles = discoverPythonFiles(Path.cwd(), config)
+    try:
+      currentDir = Path.cwd()
+      pythonFiles = discoverPythonFiles(currentDir, config)
 
-    for pyFile in pythonFiles:
-      processed, changed, fileExitCode = processFileAndUpdateCounts(pyFile)
-      processedCount += processed
-      changedCount += changed
-      exitCode = max(exitCode, fileExitCode)
-  else:
-    # Process explicitly provided paths (no exclusions applied)
-    for pathStr in args.paths:
-      path = Path(pathStr)
+      if not pythonFiles and not args.quiet:
+        print(f'No Python files found in {currentDir}', file=sys.stderr)
 
-      if path.is_file() and path.suffix == '.py':
-        processed, changed, fileExitCode = processFileAndUpdateCounts(path)
+      for pyFile in pythonFiles:
+        processed, changed, fileExitCode = processFileAndUpdateCounts(pyFile)
         processedCount += processed
         changedCount += changed
         exitCode = max(exitCode, fileExitCode)
-      elif path.is_dir():
-        for pyFile in path.rglob('*.py'):
-          processed, changed, fileExitCode = processFileAndUpdateCounts(pyFile)
+    except (OSError, PermissionError) as e:
+      print(f'Error accessing current directory: {e}', file=sys.stderr)
+
+      # Fatal error: Cannot discover files in current directory
+      sys.exit(1)
+  else:
+    # Process explicitly provided paths (no exclusions applied)
+    for pathStr in args.paths:
+      try:
+        # Resolve path to absolute, canonical form to prevent path traversal
+        path = Path(pathStr).resolve(strict=False)
+
+        # Check if path exists first
+        if not path.exists():
+          print(f'Error: Path not found: {pathStr}', file=sys.stderr)
+
+          exitCode = 1
+
+          continue
+
+        # Validate path is safe (resolve again with strict=True to detect broken symlinks)
+        try:
+          path = path.resolve(strict=True)
+        except (OSError, RuntimeError) as e:
+          print(f'Error: Invalid path {pathStr}: {e}', file=sys.stderr)
+
+          exitCode = 1
+
+          continue
+
+        if path.is_file() and path.suffix == '.py':
+          processed, changed, fileExitCode = processFileAndUpdateCounts(path)
           processedCount += processed
           changedCount += changed
           exitCode = max(exitCode, fileExitCode)
-      else:
-        if path.exists():
-          print(f'Skipping {path}: not a Python file or directory', file=sys.stderr)
+        elif path.is_dir():
+          for pyFile in path.rglob('*.py'):
+            # Resolve each discovered file to detect symlinks
+            try:
+              resolvedFile = pyFile.resolve(strict=True)
+              processed, changed, fileExitCode = processFileAndUpdateCounts(resolvedFile)
+              processedCount += processed
+              changedCount += changed
+              exitCode = max(exitCode, fileExitCode)
+            except (OSError, RuntimeError) as e:
+              print(f'Warning: Skipping {pyFile}: {e}', file=sys.stderr)
+              continue
         else:
-          print(f'Error: Path not found: {path}', file=sys.stderr)
+          print(f'Skipping {pathStr}: not a Python file or directory', file=sys.stderr)
+      except (ValueError, OSError) as e:
+        print(f'Error processing path {pathStr}: {e}', file=sys.stderr)
 
-          exitCode = 1
+        exitCode = 1
 
   if not args.quiet:
     if args.check and exitCode == 0:
@@ -222,6 +259,7 @@ def main():
       # In these cases, individual file messages were already printed above
       pass
 
+  # Normal program exit: 0 for success, 1 if --check found files needing formatting
   sys.exit(exitCode)
 
 

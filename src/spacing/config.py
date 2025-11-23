@@ -14,6 +14,12 @@ from dataclasses import dataclass, field
 # PEP 8 recommends maximum of 2 blank lines, we allow 3 for flexibility.
 MAX_BLANK_LINES = 3
 
+# Valid range for indent width (spaces per tab character)
+# Rationale: Standard Python indentation is 2, 4, or 8 spaces.
+# We allow 1-8 for flexibility while preventing unreasonable values.
+MIN_INDENT_WIDTH = 1
+MAX_INDENT_WIDTH = 8
+
 
 @dataclass
 class BlankLineConfig:
@@ -50,6 +56,15 @@ class BlankLineConfig:
     except OSError as e:
       raise ValueError(f'Failed to read TOML file {configPath}: {e}')
 
+    # Validate top-level sections
+    validSections = {'blank_lines', 'paths'}
+    unknownSections = set(data.keys()) - validSections
+
+    if unknownSections:
+      raise ValueError(
+        f'Unknown configuration sections: {", ".join(sorted(unknownSections))}. Valid sections: {", ".join(sorted(validSections))}'
+      )
+
     blankLinesConfig = data.get('blank_lines', {})
     pathsConfig = data.get('paths', {})
 
@@ -70,21 +85,23 @@ class BlankLineConfig:
     # Parse indent width
     indentWidth = blankLinesConfig.get('indent_width', 2)
 
-    cls._validateBlankLineCount(indentWidth, 'indent_width')
+    cls._validateIndentWidth(indentWidth, 'indent_width')
 
     # Parse transition overrides
     transitions = {}
+    validBlankLinesKeys = {
+      'default_between_different',
+      'consecutive_control',
+      'consecutive_definition',
+      'after_docstring',
+      'indent_width',
+    }
 
     for key, value in blankLinesConfig.items():
-      if key in [
-        'default_between_different',
-        'consecutive_control',
-        'consecutive_definition',
-        'after_docstring',
-        'indent_width',
-      ]:
+      if key in validBlankLinesKeys:
         continue
 
+      # Validate this is a properly formatted transition key
       # Parse transition key (e.g., "assignment_to_call")
       parts = key.split('_to_')
 
@@ -236,6 +253,22 @@ class BlankLineConfig:
 
     if value < 0 or value > MAX_BLANK_LINES:
       raise ValueError(f'{key} must be between 0 and {MAX_BLANK_LINES}, got: {value}')
+
+  @staticmethod
+  def _validateIndentWidth(value: int, key: str):
+    """Validate indent width is in valid range (MIN_INDENT_WIDTH-MAX_INDENT_WIDTH)
+    :param value: Indent width to validate (spaces per tab)
+    :type value: int
+    :param key: Configuration key name for error messages
+    :type key: str
+    :raises: ValueError if value is invalid
+    """
+
+    if not isinstance(value, int):
+      raise ValueError(f'{key} must be an integer, got {type(value).__name__}: {value}')
+
+    if value < MIN_INDENT_WIDTH or value > MAX_INDENT_WIDTH:
+      raise ValueError(f'{key} must be between {MIN_INDENT_WIDTH} and {MAX_INDENT_WIDTH}, got: {value}')
 
 
 # Global configuration instance available for import
