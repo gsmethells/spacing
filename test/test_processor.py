@@ -258,6 +258,7 @@ y = 2"""
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
       f.write(content)
       f.flush()
+
       filePath = Path(f.name)
 
     originalOpen = builtins.open
