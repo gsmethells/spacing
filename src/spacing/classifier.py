@@ -54,7 +54,22 @@ class StatementClassifier:
 
   @classmethod
   def classifyStatement(cls, lines: list[str]) -> BlockType:
-    """Classify multi-line statement by combining all lines"""
+    """Classify multi-line statement by combining all lines
+
+    Classification precedence (highest to lowest):
+    1. Docstring - Triple-quoted strings
+    2. Assignment - Variable assignments (=), comprehensions, lambdas
+    3. Call - Function calls, del, assert, pass, raise, yield, return
+    4. Import - Import statements
+    5. Control - if/for/while/try/with structures
+    6. Definition - def/class structures
+    7. Declaration - global/nonlocal statements
+
+    :param lines: Lines comprising the statement
+    :type lines: list[str]
+    :rtype: BlockType
+    :return: Classified block type based on statement content
+    """
 
     if not lines:
       return BlockType.CALL

@@ -9,6 +9,11 @@ import tomllib
 from .types import BlockType
 from dataclasses import dataclass, field
 
+# Maximum number of blank lines allowed in configuration
+# Rationale: More than 3 blank lines is excessive and likely unintentional.
+# PEP 8 recommends maximum of 2 blank lines, we allow 3 for flexibility.
+MAX_BLANK_LINES = 3
+
 
 @dataclass
 class BlankLineConfig:
@@ -218,7 +223,7 @@ class BlankLineConfig:
 
   @staticmethod
   def _validateBlankLineCount(value: int, key: str):
-    """Validate blank line count is in valid range (0-3)
+    """Validate blank line count is in valid range (0-MAX_BLANK_LINES)
     :param value: Blank line count to validate
     :type value: int
     :param key: Configuration key name for error messages
@@ -229,8 +234,8 @@ class BlankLineConfig:
     if not isinstance(value, int):
       raise ValueError(f'{key} must be an integer, got {type(value).__name__}: {value}')
 
-    if value < 0 or value > 3:
-      raise ValueError(f'{key} must be between 0 and 3, got: {value}')
+    if value < 0 or value > MAX_BLANK_LINES:
+      raise ValueError(f'{key} must be between 0 and {MAX_BLANK_LINES}, got: {value}')
 
 
 # Global configuration instance available for import

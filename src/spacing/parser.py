@@ -5,9 +5,18 @@ See the accompanying AUTHORS file for a complete list of authors.
 This file is subject to the terms and conditions defined in LICENSE.
 """
 
+import re
+
 
 class MultilineParser:
   """Handles multiline statement parsing with bracket tracking"""
+
+  # Pre-compiled regex patterns for performance
+  DECORATOR_PATTERN = re.compile(r'^\s*@\w+')
+  DEFINITION_PATTERN = re.compile(r'^\s*(async\s+)?(def|class)\s+')
+
+  # Bracket matching pairs
+  BRACKET_PAIRS = {'(': ')', '[': ']', '{': '}'}
 
   def __init__(self):
     self.reset()
@@ -19,14 +28,21 @@ class MultilineParser:
     self.expectingDefinition = False
 
   def processLine(self, line: str):
-    """Process line and update bracket state"""
+    """Process line and update bracket state
 
-    import re
+    :param line: Line to process
+    :type line: str
+    :raises TypeError: If line is not a string
+    """
 
-    if re.match(r'^\s*@\w+', line.strip()):
+    # Input validation
+    if not isinstance(line, str):
+      raise TypeError(f'Expected str, got {type(line).__name__}')
+
+    if self.DECORATOR_PATTERN.match(line.strip()):
       # Check for decorator
       self.expectingDefinition = True
-    elif re.match(r'^\s*(async\s+)?(def|class)\s+', line.strip()):
+    elif self.DEFINITION_PATTERN.match(line.strip()):
       # Check for function/class definition (including async def)
       self.expectingDefinition = False
     else:
@@ -79,14 +95,21 @@ class MultilineParser:
           self.bracketStack.append(char)
         elif char in ')]}':
           if self.bracketStack:
-            expected = {'(': ')', '[': ']', '{': '}'}
-
-            if expected.get(self.bracketStack[-1]) == char:
+            if self.BRACKET_PAIRS.get(self.bracketStack[-1]) == char:
               self.bracketStack.pop()
 
       i += 1
 
   def isComplete(self) -> bool:
-    """Returns True if all brackets are closed and not in string"""
+    """Check if current statement is complete
+
+    A statement is considered complete when all of these conditions are met:
+    - All opening brackets ( [ { have matching closing brackets ) ] }
+    - Not currently inside a string literal (single/double/triple quoted)
+    - Not expecting a definition after a decorator (@decorator)
+
+    :rtype: bool
+    :return: True if statement is complete, False if more lines needed
+    """
 
     return len(self.bracketStack) == 0 and not self.inString and not self.expectingDefinition

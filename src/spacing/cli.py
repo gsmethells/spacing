@@ -15,7 +15,7 @@ except ImportError:
   # Python < 3.8
   from importlib_metadata import PackageNotFoundError, version
 
-from .config import BlankLineConfig, setConfig
+from .config import BlankLineConfig, MAX_BLANK_LINES, setConfig
 from .pathfilter import discoverPythonFiles
 from .processor import FileProcessor
 from .types import BlockType
@@ -115,7 +115,10 @@ def main():
   parser.add_argument('--config', type=Path, help='Path to configuration file (default: ./spacing.toml)')
   parser.add_argument('--no-config', action='store_true', help='Ignore configuration file')
   parser.add_argument(
-    '--blank-lines-default', type=int, metavar='N', help='Default blank lines between different block types (0-3)'
+    '--blank-lines-default',
+    type=int,
+    metavar='N',
+    help=f'Default blank lines between different block types (0-{MAX_BLANK_LINES})',
   )
   parser.add_argument(
     '--blank-lines',
@@ -127,19 +130,19 @@ def main():
     '--blank-lines-consecutive-control',
     type=int,
     metavar='N',
-    help='Blank lines between consecutive control blocks (0-3)',
+    help=f'Blank lines between consecutive control blocks (0-{MAX_BLANK_LINES})',
   )
   parser.add_argument(
     '--blank-lines-consecutive-definition',
     type=int,
     metavar='N',
-    help='Blank lines between consecutive definition blocks (0-3)',
+    help=f'Blank lines between consecutive definition blocks (0-{MAX_BLANK_LINES})',
   )
   parser.add_argument(
     '--blank-lines-after-docstring',
     type=int,
     metavar='N',
-    help='Blank lines after docstrings (0-3, default: 1 for PEP 257 compliance)',
+    help=f'Blank lines after docstrings (0-{MAX_BLANK_LINES}, default: 1 for PEP 257 compliance)',
   )
 
   args = parser.parse_args()

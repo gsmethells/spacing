@@ -163,10 +163,8 @@ See `test/` directory for details.
 
 ## Outstanding Issues
 
-See `HANDOFF.md` for current issues and technical debt. Key items:
+See `HANDOFF.md` for current issues and technical debt. Key item:
 - MAJOR-1 (blocking): Blank lines incorrectly added after control statements before comments
-- MAJOR-2: Global mutable state in configuration
-- MAJOR-3: Complex blank line preservation logic
 
 ## Strategic Direction
 
