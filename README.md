@@ -6,24 +6,42 @@
 [![Python Versions](https://img.shields.io/pypi/pyversions/spacing.svg)](https://pypi.org/project/spacing/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-A Python code formatter that enforces configurable blank line rules.
+A Python code formatter that enforces configurable blank line rules between code blocks.
 
 ## Overview
 
-Spacing is a code formatting tool that intelligently manages blank lines in Python code, similar to how `black` handles code formatting. It applies sophisticated rules to ensure consistent spacing between different types of code blocks while preserving your code's logical structure and documentation.
+While tools like Black and Ruff excel at formatting code (line length, quotes, imports), they apply fixed, non-configurable rules for blank lines. This leaves a gap: teams often want different blank line styles, and existing tools don't handle scope-aware spacing well.
+
+**Spacing fills this gap.** It provides:
+- **Configurable blank line rules** - Define exactly how many blank lines between any block type transition
+- **Scope-aware processing** - Rules apply independently at each indentation level (module, function, class, control block)
+- **Works with your style** - Detects your existing indentation; never reformats it
+
+**The result:** Consistent, readable blank line formatting that matches your team's preferences, without fighting your existing formatter.
+
+## Why Spacing?
+
+**Problem**: You use Black or Ruff for formatting, but you want:
+- Zero blank lines between imports and the first statement
+- Two blank lines before all class definitions (not just top-level)
+- One blank line between consecutive `if` statements
+- Different rules at different scope levels
+
+**Solution**: Black and Ruff don't support this level of configurability. Spacing does.
+
+**Use case**: Run Spacing alongside Black/Ruff. Black handles general formatting, Spacing handles blank lines. They complement each other.
 
 ## Features
 
 - **Configurable blank line rules** - Customize spacing between different code block types
-- **Smart block detection** - Identifies assignments, function calls, imports, control structures, definitions, and more
+- **Smart block detection** - Identifies assignments, calls, imports, control structures, definitions, and comments
 - **Multiline statement support** - Properly handles statements spanning multiple lines
 - **Docstring preservation** - Never modifies content within docstrings
-- **Nested scope handling** - Applies rules independently at each indentation level
-- **Comment-aware processing** - Preserves existing spacing around comment blocks
-- **Atomic file operations** - Safe file writing with automatic rollback on errors
+- **Scope-aware processing** - Applies rules independently at each indentation level
+- **Comment-aware** - Preserves intentional spacing around comment blocks
+- **Safe file operations** - Atomic writes with automatic rollback on errors
 - **Change detection** - Only modifies files that need formatting
-- **Dry-run mode** - Preview changes without modifying files
-- **Check mode** - Verify formatting without making changes
+- **Preview modes** - Dry-run and check modes for verification
 
 ## Installation
 
@@ -49,22 +67,22 @@ pip install -e .
 ## Quick Start
 
 ```bash
-# Format all Python files in current directory (automatic discovery with smart exclusions)
+# Format all Python files in current directory
 spacing
 
 # Format a single file
 spacing myfile.py
 
-# Format all Python files in a specific directory
+# Format all Python files in a directory
 spacing src/
 
-# Check if files need formatting (exit 1 if changes needed)
+# Check if files need formatting (exit code 1 if changes needed)
 spacing --check
 
 # Preview changes without applying them
 spacing --dry-run
 
-# Show detailed processing information
+# Show detailed output
 spacing --verbose
 
 # Show version
@@ -73,73 +91,66 @@ spacing --version
 
 ### Automatic File Discovery
 
-When you run `spacing` without any path arguments, it automatically:
-- Discovers all `.py` files in the current directory (recursively)
-- Excludes common directories you don't want to format:
-  - Hidden directories (starting with `.`)
-  - Virtual environments (`venv`, `env`, `virtualenv`)
-  - Build artifacts (`build`, `dist`, `__pycache__`, `*.egg-info`, `*.egg`)
-- Respects custom exclusions defined in `spacing.toml` (see Configuration section below)
+When run without path arguments, `spacing` automatically:
+- Discovers all `.py` files in the current directory recursively
+- Excludes common directories: hidden folders (`.git`, `.venv`), virtual environments (`venv`, `env`), and build artifacts (`build`, `dist`, `__pycache__`, `*.egg-info`)
+- Respects custom exclusions in `spacing.toml`
+
+**Note**: Exclusions only apply during automatic discovery. Explicitly specified paths (e.g., `spacing venv/`) bypass exclusions.
 
 ## Configuration
 
 ### Default Behavior
 
-By default, spacing uses these rules (aligned with PEP 8):
+Spacing uses these defaults (PEP 8 compliant):
 - **1 blank line** between different block types
 - **1 blank line** between consecutive control structures (`if`, `for`, `while`, `try`, etc.)
-- **2 blank lines** between consecutive top-level (module level) function/class definitions
-- **1 blank line** between consecutive method definitions inside classes
-- **0 blank lines** between statements of the same type
-  - Exception: **1 blank line** between consecutive control blocks at the same scope 
+- **2 blank lines** between top-level (module-level) function/class definitions
+- **1 blank line** between method definitions inside classes
+- **0 blank lines** between statements of the same type (except 1 between consecutive control blocks)
 
 ### Configuration File
 
-Create a `spacing.toml` file in your project root to customize blank line rules:
+Create `spacing.toml` in your project root:
 
 ```toml
 [blank_lines]
-# Default spacing between different block types (0-3 blank lines)
+# Default spacing between different block types (0-3)
 default_between_different = 1
 
-# Spacing between consecutive control blocks (if, for, while, try, with)
+# Spacing between consecutive control blocks
 consecutive_control = 1
 
-# Spacing between consecutive definitions (def, class)
+# Spacing between consecutive definitions
 consecutive_definition = 1
 
-# Blank lines after function/method docstrings (0-3, default: 1)
-# Note: Module and class docstrings always have 1 blank line (non-configurable per PEP 257)
+# Blank lines after function/method docstrings (0-3)
+# Note: Module and class docstrings always get 1 blank line (PEP 257)
 after_docstring = 1
 
-# Indent width for indentation detection (default: 2 spaces)
+# Indent width for scope detection (spaces per indent level)
 indent_width = 2
 
 # Fine-grained transition overrides
 # Format: <from_block>_to_<to_block> = <count>
 assignment_to_call = 2
 call_to_assignment = 2
-import_to_assignment = 0
-control_to_definition = 2
+import_to_definition = 0
 
 [paths]
-# Additional directory/file names to exclude during automatic discovery
-exclude_names = ["my_generated_code", "legacy"]
+# Additional exclusions for automatic discovery
+exclude_names = ["generated", "legacy"]
+exclude_patterns = ["**/old_*.py"]
 
-# Glob patterns for more specific exclusions
-exclude_patterns = ["**/old_*.py", "**/test_old_*.py"]
-
-# Set to true to include hidden directories (overrides default exclusion)
+# Include hidden directories (default: false)
 include_hidden = false
 ```
-
-**Note**: Path exclusions only apply when running `spacing` without arguments (automatic discovery). They are ignored when you explicitly specify paths like `spacing src/` or `spacing venv/` - this gives you full control when needed.
 
 ### Block Types
 
 Spacing recognizes these code block types (in precedence order):
 
-1. **`assignment`** - Variable assignments, list/dict comprehensions, lambda expressions
+1. **`assignment`** - Variable assignments, comprehensions, lambda expressions
    ```python
    x = 42
    items = [i for i in range(10)]
@@ -149,7 +160,6 @@ Spacing recognizes these code block types (in precedence order):
 2. **`call`** - Function/method calls, `del`, `assert`, `pass`, `raise`, `yield`, `return`
    ```python
    print('hello')
-   someFunction()
    return result
    ```
 
@@ -159,17 +169,13 @@ Spacing recognizes these code block types (in precedence order):
    from pathlib import Path
    ```
 
-4. **`control`** - Control structures (`if`/`elif`/`else`, `for`/`else`, `while`/`else`, `try`/`except`/`finally`, `with`)
+4. **`control`** - Control structures with blocks (`if`, `for`, `while`, `try`, `with`)
    ```python
    if condition:
-       x = 1
-       y = 0
+       process()
 
    for item in items:
-       prologue(item)
-       process(item)
-       epilogue(item)
-
+       handle(item)
    ```
 
 5. **`definition`** - Function and class definitions
@@ -187,14 +193,28 @@ Spacing recognizes these code block types (in precedence order):
    nonlocal count
    ```
 
-7. **`comment`** - Comment lines
+7. **`docstring`** - Module, class, and function docstrings
+   ```python
+   """Module docstring."""
+
+   def func():
+       """Function docstring."""
+       pass
+   ```
+
+8. **`comment`** - Comment lines
    ```python
    # This is a comment
    ```
 
+**Precedence**: When a statement matches multiple types, the first matching type is used:
+```python
+x = someFunction()  # Assignment takes precedence over Call
+```
+
 ### Configuration Examples
 
-#### Minimal spacing (compact style)
+#### Compact style
 ```toml
 [blank_lines]
 default_between_different = 0
@@ -202,7 +222,7 @@ consecutive_control = 1
 consecutive_definition = 1
 ```
 
-#### Extra spacing (airy style)
+#### Spacious style
 ```toml
 [blank_lines]
 default_between_different = 2
@@ -213,125 +233,90 @@ consecutive_definition = 2
 #### Custom transitions
 ```toml
 [blank_lines]
-# Default: 1 blank line between different types
 default_between_different = 1
-
-# But no blank lines between imports and assignments
-import_to_assignment = 0
-
-# And 2 blank lines between import blocks and definitions such as a `class`
-import_to_definition = 2
+import_to_assignment = 0  # No blank line after imports
+import_to_definition = 2  # Two blank lines before classes
 ```
 
-### Using Custom Configuration
+### CLI Overrides
 
 ```bash
-# Use a specific config file
+# Use specific config file
 spacing --config custom.toml myfile.py
 
-# Use default configuration (ignore spacing.toml if it exists)
+# Ignore configuration file
 spacing --no-config myfile.py
+
+# Override specific rules
+spacing --blank-lines-default=2 myfile.py
+spacing --blank-lines assignment_to_call=2 myfile.py
 ```
 
-## Block Classification Rules
-
-### Precedence
-
-When a statement could match multiple block types, spacing uses precedence:
-
-```python
-x = someFunction()  # Assignment (precedence over Call)
-result = [i for i in range(10)]  # Assignment (comprehension)
-```
+## How It Works
 
 ### Multiline Statements
 
-Multiline statements are classified as a single unit:
+Statements spanning multiple lines are treated as a single block:
 
 ```python
 result = complexFunction(
     arg1,
     arg2,
     arg3
-)  # Entire statement is classified as Assignment
+)  # Entire statement is one Assignment block
 ```
 
 ### Docstrings
 
-Docstring content is never modified - all internal formatting, blank lines, and special characters are preserved exactly:
+Docstring content is never modified - all internal formatting and blank lines are preserved:
 
 ```python
 def example():
     """
-    This docstring content is preserved exactly.
+    This content is preserved exactly.
 
-    # This is NOT treated as a comment
+    # Not treated as a comment
 
-    All blank lines inside are preserved.
+    All internal blank lines preserved.
     """
     pass
 ```
 
-## Comment Handling
+### Comment Handling
 
-Spacing has special rules for comments:
-
-1. **Consecutive comments** - No blank lines inserted between comment lines
+1. **Consecutive comments** - No blank lines between comment lines
    ```python
-   # Copyright header line 1
-   # Copyright header line 2
-   # Copyright header line 3
+   # Copyright line 1
+   # Copyright line 2
    ```
 
-2. **Comment breaks** - Blank line added before a comment (unless previous line was also a comment)
+2. **Comment breaks** - Blank line added before a comment (unless preceded by another comment)
    ```python
    x = 1
 
-   # This comment gets a blank line before it
+   # Comment gets blank line before it
    y = 2
    ```
 
-3. **After comments** - Existing spacing preserved (leave-as-is policy)
-   ```python
-   # Comment
+### Scope-Aware Processing
 
-   import os  # Existing blank line preserved
-
-   # Comment
-   x = 1  # No blank line (preserved)
-   ```
-
-## Scope and Blank Lines
-
-Spacing applies rules independent of scope:
+Rules apply independently at each indentation level:
 
 ```python
+# Module level (indent 0): 2 blank lines between definitions
 def outer():
-  x = 1
-  y = 0
-  z = 0
-
-  print('Level 1')
-
-  def inner():
-    y += 1
-
-    print('Level 2')
+    # Function level (indent 2): 1 blank line between different blocks
+    x = 1
 
     if condition:
-      z += 1
+        # Control block level (indent 4): rules apply here too
+        process()
 ```
-
-Rules are applied separately for:
-- Module level (indent 0)
-- Inside `outer()` function (indent 2)
-- Inside `inner()` function (indent 4)
-- Inside `if` block (indent 6)
 
 ## Exit Codes
 
-- **0** - Success: No changes needed or changes applied successfully
-- **1** - Failure: Changes needed (in `--check` mode) or processing error occurred
+- **0** - Success (no changes needed or changes applied)
+- **1** - Failure (changes needed in `--check` mode, or processing error)
 
 ## Integration
 
@@ -354,22 +339,15 @@ repos:
 
 ```bash
 # Check formatting in CI
-spacing --check src/
-if [ $? -ne 0 ]; then
+spacing --check src/ || {
     echo "Code needs formatting. Run: spacing src/"
     exit 1
-fi
+}
 ```
-
-### Editor Integration
-
-Most editors can be configured to run spacing on save or as a format command.
 
 ## Examples
 
-### Before and After
-
-**Before:**
+### Before
 ```python
 import os
 import sys
@@ -378,15 +356,11 @@ def main():
     y = 2
     if x > 0:
         print(x)
-    else:
-        print(y)
     for i in range(10):
         process(i)
-    class Helper:
-        pass
 ```
 
-**After (with default config):**
+### After (default config)
 ```python
 import os
 import sys
@@ -396,84 +370,83 @@ y = 2
 
 if x > 0:
     print(x)
-else:
-    print(y)
 
 for i in range(10):
     process(i)
-
-class Helper:
-    pass
 ```
 
 ## Comparison with Other Tools
 
-| Feature                 | Spacing           | Black                 | Ruff                  |
-|-------------------------|-----------------|-----------------------|-----------------------|
-| Blank line rules        | ✅ Configurable | ✅ Fixed              | ✅ Fixed              |
-| Scope-aware spacing     | ✅ Yes          | ⚠️  Limited            | ⚠️  Limited            |
-| Indentation handling    | ✅ Configurable | ⚠️  Enforces/reformats | ⚠️  Enforces/reformats |
+### What Spacing Does Differently
 
-**Spacing's Focus**: Spacing solves **one problem exceptionally well** - scope-aware, configurable blank line enforcement. This is a unique capability that Black and Ruff don't provide comprehensively.
+| Capability                          | Spacing      | Black        | Ruff         |
+|-------------------------------------|--------------|--------------|--------------|
+| Configure blank lines by block type | ✓ Yes        | ✗ No         | ✗ No         |
+| Scope-aware blank line rules        | ✓ Full       | ◐ Partial    | ◐ Partial    |
+| Custom transition rules             | ✓ Yes        | ✗ No         | ✗ No         |
+| Works with any indentation style    | ✓ Yes        | ✗ Reformats  | ✗ Reformats  |
 
-**Key Differentiators**:
-- **Configurable blank line rules** - Control spacing between any block type transition
-- **Independent scope-level processing** - Rules applied within each scope equally
-- **Works with your indentation** - Detects existing style, never reformats it
+### Why Use Spacing with Black or Ruff?
 
-**Philosophy**: Spacing is designed to work **alongside** Black or Ruff, not replace them. Use Black/Ruff for general formatting (line length, quotes, imports) and Spacing for blank line intelligence.
+**Black and Ruff** are excellent general-purpose formatters that handle:
+- Line length wrapping
+- Quote normalization
+- Import sorting
+- Trailing commas
+- Overall code structure
+
+**But they don't offer**:
+- Configurable blank line rules (you get what they give you)
+- Fine-grained control over spacing between block types
+- Different rules at different scope levels
+
+**Spacing specializes in blank line management**, providing the configurability and scope-awareness that Black and Ruff intentionally don't support.
+
+### Recommended Workflow
+
+```bash
+# 1. Run Black or Ruff for general formatting
+black src/
+# or: ruff format src/
+
+# 2. Run Spacing for blank line enforcement
+spacing src/
+```
+
+**Result**: You get Black/Ruff's battle-tested formatting for everything else, plus exactly the blank line style your team wants.
 
 ## Troubleshooting
 
-### Files Not Being Modified
+**Files not being modified?**
+- Check if files already comply: `spacing --check file.py`
+- Use verbose mode: `spacing --verbose file.py`
+- Verify `spacing.toml` syntax
 
-1. Check if files already match the rules: `spacing --check file.py`
-2. Use verbose mode to see what's happening: `spacing --verbose file.py`
-3. Verify your configuration: check `spacing.toml` syntax
+**Unexpected blank lines?**
+- Review your `spacing.toml` configuration
+- Preview changes: `spacing --dry-run file.py`
+- Verify indentation consistency (tabs vs spaces)
 
-### Unexpected Blank Lines
-
-1. Review your configuration file (`spacing.toml`)
-2. Use `--dry-run` to preview changes: `spacing --dry-run file.py`
-3. Check for comment blocks that may trigger special rules
-4. Verify indentation consistency (tabs vs spaces)
-
-### Configuration Not Being Applied
-
-1. Ensure `spacing.toml` is in the current directory or specify with `--config`
-2. Check TOML syntax is valid
-3. Verify values are in valid range (0-3)
-4. Check block type names match documentation
+**Configuration not working?**
+- Ensure `spacing.toml` is in the current directory or use `--config`
+- Verify TOML syntax is valid
+- Check values are in range (0-3 for blank lines, 1-8 for indent_width)
+- Verify block type names match documentation
 
 ## Contributing
 
-Contributions are welcome! We appreciate bug reports, feature requests, and code contributions.
-
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on:
-- Reporting bugs
-- Suggesting features
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for:
+- Bug reporting guidelines
+- Feature request process
 - Development setup
 - Coding standards
 - Testing requirements
-- Submitting merge requests
-
-### Quick Start for Contributors
-
-1. Fork the repository
-2. Create a feature branch
-3. Add tests for any new functionality
-4. Ensure all tests pass: `PYTHONPATH=src pytest test/`
-5. Run code quality checks: `ruff check` and `ruff format`
-6. Submit a merge request
+- Merge request procedures
 
 ## Security
 
-For security vulnerabilities, please see [SECURITY.md](SECURITY.md) for our security policy and reporting procedures.
+For security vulnerabilities, see [SECURITY.md](SECURITY.md).
 
 ## License
 
-See the LICENSE file for details.
-
-## Acknowledgments
-
-Spacing was inspired by the philosophy of tools like Black and Ruff - that automated formatting allows developers to focus on logic rather than style.
+This project is licensed under the GNU General Public License v3.0 or later. See LICENSE for details.
