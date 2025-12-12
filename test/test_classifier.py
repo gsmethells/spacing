@@ -53,6 +53,25 @@ class TestStatementClassifier:
     assert StatementClassifier.isSecondaryClause('finally:')
     assert not StatementClassifier.isSecondaryClause('if condition:')
 
+  def testTypeAnnotationClassification(self):
+    # Type annotations without default values
+    assert StatementClassifier.classifyStatement(['name: str']) == BlockType.TYPE_ANNOTATION
+    assert StatementClassifier.classifyStatement(['count: int']) == BlockType.TYPE_ANNOTATION
+    assert StatementClassifier.classifyStatement(['items: List[str]']) == BlockType.TYPE_ANNOTATION
+
+    # Type annotations with default values
+    assert StatementClassifier.classifyStatement(["name: str = ''"]) == BlockType.TYPE_ANNOTATION
+    assert StatementClassifier.classifyStatement(['count: int = 0']) == BlockType.TYPE_ANNOTATION
+
+    assert (
+      StatementClassifier.classifyStatement(['items: List[Dict] = field(default_factory=list)'])
+      == BlockType.TYPE_ANNOTATION
+    )
+
+    # Verify regular assignments are still ASSIGNMENT, not TYPE_ANNOTATION
+    assert StatementClassifier.classifyStatement(['x = 1']) == BlockType.ASSIGNMENT
+    assert StatementClassifier.classifyStatement(['result = func()']) == BlockType.ASSIGNMENT
+
 
 class TestClassifierRegressions:
   """Regression tests for classifier bugs"""

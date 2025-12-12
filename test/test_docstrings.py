@@ -76,10 +76,18 @@ class TestDocstringPreservation:
   def testSingleQuoteDocstring(self):
     """Test that single-quoted docstrings are preserved"""
 
+    # Set afterDocstring = 0 for this test (compact docstring formatting)
+    from spacing.config import BlankLineConfig, setConfig
+
+    config = BlankLineConfig.fromDefaults()
+    config.afterDocstring = 0
+
+    setConfig(config)
+
     input_code = """def my_function():
   '''
   This is a docstring with single quotes.
-  
+
   It has blank lines inside.
   '''
   return 42
@@ -131,13 +139,21 @@ class TestDocstringPreservation:
   def testDocstringWithHashSymbol(self):
     """Test that # symbols inside docstrings are not treated as comments"""
 
+    # Set afterDocstring = 0 for this test (compact docstring formatting)
+    from spacing.config import BlankLineConfig, setConfig
+
+    config = BlankLineConfig.fromDefaults()
+    config.afterDocstring = 0
+
+    setConfig(config)
+
     input_code = '''def parse_markdown():
   """
   Parse markdown with headers.
-  
+
   # This is not a comment, it's part of the docstring
   ## This is also part of the docstring
-  
+
   Returns parsed content.
   """
   pass
@@ -189,13 +205,21 @@ class TestDocstringPreservation:
   def testNestedQuotesInDocstring(self):
     """Test docstrings containing nested quotes"""
 
+    # Set afterDocstring = 0 for this test (compact docstring formatting)
+    from spacing.config import BlankLineConfig, setConfig
+
+    config = BlankLineConfig.fromDefaults()
+    config.afterDocstring = 0
+
+    setConfig(config)
+
     input_code = '''def example():
   """
   This docstring contains "quotes" and 'apostrophes'.
-  
+
   It also has a code example:
       print("Hello, world!")
-  
+
   And it's preserved correctly.
   """
   pass
@@ -342,6 +366,14 @@ class TestDocstringPreservation:
 
   def testMultilineDocstringFollowedByImport(self):
     """Test blank lines after docstring and between different block types"""
+
+    # Set afterDocstring = 0 for this test (compact docstring formatting)
+    from spacing.config import BlankLineConfig, setConfig
+
+    config = BlankLineConfig.fromDefaults()
+    config.afterDocstring = 0
+
+    setConfig(config)
 
     input_code = '''def suggestUserNeedId(featureFile):
     """

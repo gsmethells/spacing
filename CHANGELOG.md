@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.9.0] - 2025-12-10
+
+**New Feature: `# spacing: skip` Directive**
+
+- Added `# spacing: skip` directive to skip blank line rules for specific code blocks
+  - Case-insensitive and whitespace-tolerant pattern matching
+  - Directive persists in output for idempotency (like Black's `# fmt: skip`)
+  - Applies to consecutive statements (block ends at first blank line)
+  - Works at any indentation level (module, class, function)
+- Implementation details:
+  - Added `skipBlankLineRules` field to Statement dataclass
+  - Directive detection in FileAnalyzer with regex pattern matching
+  - Two-track prevBlockType system in rule engine for correct PEP 8 compliance
+  - Preserves existing blank lines with `max(1, calculated)` to respect PEP 8
+- Comprehensive test suite:
+  - 16 new directive tests (6 unit tests, 10 integration tests)
+  - Tests cover detection, case-insensitivity, whitespace tolerance, idempotency, edge cases
+- Documentation:
+  - Added Directives section to README.md with examples
+  - Updated DESIGN.md with directive architecture notes
+- Test isolation improvements:
+  - Added conftest.py with resetConfig fixture for proper test isolation
+  - Fixed 4 docstring tests that relied on config state from previous tests
+- All 217 tests passing
+
 ## [0.8.2] - 2025-11-23
 
 **Code Quality Improvements**

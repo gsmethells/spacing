@@ -31,6 +31,9 @@ class StatementClassifier:
     BlockType.FLOW_CONTROL: [
       r'^\s*(return|yield)(\s|$)',  # return, yield, yield from
     ],
+    BlockType.TYPE_ANNOTATION: [
+      r'^\s*\w+\s*:\s*[\w\[\], \.]+',  # Type annotation (with or without default value)
+    ],
     BlockType.ASSIGNMENT: [
       r'^\s*[\w\s\[\]\'.{}():+&?;@#%*|/",-]+\s*=(?!=)',  # Variable/tuple assignment (includes f-strings, method calls, and common string characters, but not ==)
       r'^\s*[\w.\[\]]+\s*[+\-*/%@&|^]=',  # Augmented assignment (+=, -=, *=, etc.)

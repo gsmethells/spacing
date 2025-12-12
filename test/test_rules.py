@@ -523,3 +523,38 @@ class DICOMPushRequest:
     result = FileProcessor._reconstructFile(statements, blankLineCounts, input)
 
     assert result == expected, f'Expected 2 blank lines before comment between definitions, got:\n{result}'
+
+  def testPep8TwoBlankLinesAfterCommentBeforeDefinition(self):
+    """Regression: 2 blank lines after comment when followed by module-level definition
+
+    This tests the case where a comment appears BETWEEN two top-level definitions.
+    PEP 8 requires 2 blank lines between top-level definitions, even with a comment.
+    """
+
+    input = [
+      'class TestReconciler(unittest.TestCase):\n',
+      '  pass\n',
+      '\n',
+      '# Hash tests moved to test_algorithms.py\n',
+      '\n',  # Only 1 blank line initially
+      'class TestDuplicateRuleValidation(TestReconciler):\n',
+      '  pass\n',
+    ]
+    expected = [
+      'class TestReconciler(unittest.TestCase):\n',
+      '  pass\n',
+      '\n',
+      '\n',
+      '# Hash tests moved to test_algorithms.py\n',
+      '\n',
+      '\n',  # Should add another blank line here (2 total after comment)
+      'class TestDuplicateRuleValidation(TestReconciler):\n',
+      '  pass\n',
+    ]
+    analyzer = FileAnalyzer()
+    statements = analyzer.analyzeFile(input)
+    ruleEngine = BlankLineRuleEngine()
+    blankLineCounts = ruleEngine.applyRules(statements)
+    result = FileProcessor._reconstructFile(statements, blankLineCounts, input)
+
+    assert result == expected, f'Expected 2 blank lines after comment before definition, got:\n{result}'

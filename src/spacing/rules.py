@@ -18,7 +18,7 @@ class BlankLineRuleEngine:
       return []
 
     shouldHaveBlankLine = [False] * len(statements)
-    preserveExistingBlank = [False] * len(statements)  # Track blank lines after comments to preserve
+    doNotAlterExistingNumberOfBlankLines = [False] * len(statements)  # Track blank lines after comments to not alter
 
     # Track which indices start new scopes (first statement after control/def block)
     startsNewScope = [False] * len(statements)
@@ -61,61 +61,62 @@ class BlankLineRuleEngine:
             break
 
         if nextNonBlankIdx is not None:
-          # Use helper to determine if this blank should be preserved
-          if self._shouldPreserveBlankAfterComment(statements, i, nextNonBlankIdx):
-            preserveExistingBlank[nextNonBlankIdx] = True
+          # Use helper to determine if this blank should not be altered
+          if self._shouldNotAlterBlankLinesAfterComment(statements, i, nextNonBlankIdx):
+            doNotAlterExistingNumberOfBlankLines[nextNonBlankIdx] = True
 
     # Apply rules at each indentation level independently
-    shouldHaveBlankLine = self._applyRulesAtLevel(statements, shouldHaveBlankLine, startsNewScope, 0)
+    shouldHaveBlankLine = self._applyRulesAtLevel(
+      statements, shouldHaveBlankLine, doNotAlterExistingNumberOfBlankLines, startsNewScope, 0
+    )
 
     # Convert boolean list to actual blank line counts
-    return self._convertToBlankLineCounts(statements, shouldHaveBlankLine, preserveExistingBlank, startsNewScope)
+    return self._convertToBlankLineCounts(
+      statements, shouldHaveBlankLine, doNotAlterExistingNumberOfBlankLines, startsNewScope
+    )
 
-  def _shouldPreserveBlankAfterComment(self, statements, beforeIdx, afterIdx):
-    """Determine if blank line between statements should be preserved
+  def _shouldNotAlterBlankLinesAfterComment(self, statements, beforeIdx, afterIdx):
+    """Determine if blank lines between statements should not be altered
 
     Philosophy: Trust user's intent with blank lines adjacent to comments.
-    Preserve blank lines when directly before or after a comment.
-    EXCEPTION: Don't preserve if PEP 8 requires 2 blank lines (module-level definitions).
+    Don't alter blank lines when directly before or after a comment.
+    EXCEPTION: Do alter if PEP 8 requires 2 blank lines (module-level definitions).
 
     :param statements: List of statements
     :param beforeIdx: Index of statement before blank line
     :param afterIdx: Index of statement after blank line
-    :return: True if blank line should be preserved
+    :return: True if blank lines should not be altered
     """
 
     beforeStmt = statements[beforeIdx]
     afterStmt = statements[afterIdx]
 
-    # Only preserve blank lines adjacent to comments
+    # Only avoid altering blank lines adjacent to comments
     if not (beforeStmt.isComment or afterStmt.isComment):
       return False
 
-    shouldPreserve = True
+    shouldNotAlterExisting = True
 
-    # Case 1: comment after module-level definition - don't preserve (let PEP 8 apply)
+    # Case 1: comment after module-level definition - do alter (let PEP 8 apply)
     if afterStmt.isComment and afterStmt.indentLevel == 0:
       # Check if there's a module-level definition immediately before
       prevStmt, prevIdx = self._findPreviousNonBlankAtLevel(statements, beforeIdx + 1, 0)
 
       if prevStmt and prevStmt.blockType == BlockType.DEFINITION:
-        shouldPreserve = False
+        shouldNotAlterExisting = False
 
     # Case 2: module-level definition after comment
-    # If there's a completed definition before the comment, preserve blank after comment
-    # If NOT, don't preserve - PEP 8 requires 2 blank lines before definition
+    # XXX: Do alter existing blank lines after comment before module-level definition
+    # Always apply PEP 8 rule: 2 blank lines between top-level definitions (even with comments)
     if (
       beforeStmt.isComment
       and beforeStmt.indentLevel == 0
       and afterStmt.blockType == BlockType.DEFINITION
       and afterStmt.indentLevel == 0
     ):
-      hasCompletedDefBefore = self._hasCompletedDefinitionBlock(statements, beforeIdx, 0)
+      shouldNotAlterExisting = False
 
-      if not hasCompletedDefBefore:
-        shouldPreserve = False
-
-    return shouldPreserve
+    return shouldNotAlterExisting
 
   def _findPreviousNonBlankAtLevel(self, statements, fromIdx, targetIndent):
     """Find previous non-blank statement at target indentation level
@@ -368,17 +369,32 @@ class BlankLineRuleEngine:
         )
       else:
         # After comment blocks, leave-as-is (no blank line added here)
-        # EXCEPT: at module level, if next statement is a definition AND there's NO completed
-        # definition before the comment, apply PEP 8 spacing (2 blank lines)
+        # EXCEPT: at module level, if next statement is a definition
         if stmt.indentLevel == 0 and stmt.blockType == BlockType.DEFINITION:
-          # Check if there's a completed definition before the most recent comment
-          hasCompletedDefBeforeComment = self._hasCompletedDefinitionBeforeComment(statements, currentIdx)
+          # XXX: Check if there's a blank line between the comment and this definition
+          # If there IS a blank line, always apply PEP 8 (2 blanks total)
+          # If there's NO blank line, only add if no completed def before comment
+          hasBlankAfterComment = False
 
-          # Only add blank lines if there's NO completed definition before the comment
-          if not hasCompletedDefBeforeComment:
+          for j in range(currentIdx - 1, -1, -1):
+            if statements[j].isBlank:
+              hasBlankAfterComment = True
+
+              break
+            elif statements[j].isComment:
+              break
+
+          if hasBlankAfterComment:
+            # There's already a blank after the comment - ensure we have 2 total
             return self._needsBlankLineBetween(BlockType.COMMENT, stmt.blockType, stmt.indentLevel) > 0
           else:
-            return False
+            # No blank after comment - only add if no completed def before comment
+            hasCompletedDefBeforeComment = self._hasCompletedDefinitionBeforeComment(statements, currentIdx)
+
+            if not hasCompletedDefBeforeComment:
+              return self._needsBlankLineBetween(BlockType.COMMENT, stmt.blockType, stmt.indentLevel) > 0
+            else:
+              return False
         else:
           return False
 
@@ -397,12 +413,14 @@ class BlankLineRuleEngine:
     self,
     statements: list[Statement],
     shouldHaveBlankLine: list[bool],
+    doNotAlterExistingNumberOfBlankLines: list[bool],
     startsNewScope: list[bool],
     targetIndent: int,
   ):
     """Apply rules at specific indentation level"""
 
-    prevBlockType = None
+    prevBlockType = None  # Includes skip-marked statements (for PEP 8 when skip at start)
+    prevNonSkipBlockType = None  # Excludes skip-marked statements (for normal rule application)
     prevStmtIdx = None  # Track index of previous statement for class docstring detection
 
     for i, stmt in enumerate(statements):
@@ -414,21 +432,54 @@ class BlankLineRuleEngine:
       if stmt.isBlank:
         continue
 
+      # Handle spacing skip directive - preserve existing blank lines
+      if stmt.skipBlankLineRules:
+        # Count blank lines before this statement in original
+        blankCount = 0
+
+        for j in range(i - 1, -1, -1):
+          if statements[j].isBlank:
+            blankCount += 1
+          else:
+            break
+
+        shouldHaveBlankLine[i] = blankCount > 0
+
+        # Update prevBlockType so statements after the skip block can be properly compared
+        # This is important when skip blocks are at the start of the file
+        prevBlockType = stmt.blockType
+        prevStmtIdx = i
+
+        # Check if the NEXT non-blank statement should preserve its leading blank line
+        # (to preserve blank lines after skip blocks)
+        for j in range(i + 1, len(statements)):
+          if not statements[j].isBlank:
+            if not statements[j].skipBlankLineRules:  # Only if next is not also skip-marked
+              # Check if there's a blank line before it
+              if j > i + 1:  # There's at least one blank between them
+                doNotAlterExistingNumberOfBlankLines[j] = True
+
+            break
+
+        continue
+
       # For comments, we need to check completedDefinitionBlock BEFORE the early exit
       # Check for completed definition blocks (needed for comments too)
       completedDefinitionBlock = self._hasCompletedDefinitionBlock(statements, i, targetIndent)
 
       if stmt.isComment:
+        # Use prevNonSkipBlockType if available, else prevBlockType
+        effectivePrevBlockType = prevNonSkipBlockType if prevNonSkipBlockType is not None else prevBlockType
         shouldHaveBlankLine[i] = self._applyCommentRules(
           completedDefinitionBlock,
-          prevBlockType,
+          effectivePrevBlockType,
           stmt,
           startsNewScope[i],
         )
 
-        # Comments cause a break - set prevBlockType to COMMENT so next statement
-        # can decide whether it needs a blank line after the comment
+        # Comments cause a break - set both prev types to COMMENT
         prevBlockType = BlockType.COMMENT
+        prevNonSkipBlockType = BlockType.COMMENT
         prevStmtIdx = i
 
         continue
@@ -455,7 +506,8 @@ class BlankLineRuleEngine:
       completedControlBlock = self._hasCompletedControlBlock(statements, i, targetIndent)
       returningFromNestedLevel = self._isReturningFromNestedLevel(statements, i, targetIndent)
 
-      # Main blank line rules
+      # Main blank line rules - use prevNonSkipBlockType if available, else prevBlockType
+      effectivePrevBlockType = prevNonSkipBlockType if prevNonSkipBlockType is not None else prevBlockType
       shouldHaveBlankLine[i] = self._determineBlankLineForStatement(
         statements,
         i,
@@ -464,11 +516,12 @@ class BlankLineRuleEngine:
         completedDefinitionBlock,
         completedControlBlock,
         returningFromNestedLevel,
-        prevBlockType,
+        effectivePrevBlockType,
         prevStmtIdx,
         targetIndent,
       )
       prevBlockType = stmt.blockType
+      prevNonSkipBlockType = stmt.blockType  # Normal statements update both
       prevStmtIdx = i
 
     # Recursively process nested indentation levels
@@ -477,7 +530,9 @@ class BlankLineRuleEngine:
     for stmt in statements:
       if stmt.indentLevel > targetIndent and stmt.indentLevel not in processedIndents:
         processedIndents.add(stmt.indentLevel)
-        self._applyRulesAtLevel(statements, shouldHaveBlankLine, startsNewScope, stmt.indentLevel)
+        self._applyRulesAtLevel(
+          statements, shouldHaveBlankLine, doNotAlterExistingNumberOfBlankLines, startsNewScope, stmt.indentLevel
+        )
 
     return shouldHaveBlankLine
 
@@ -485,7 +540,7 @@ class BlankLineRuleEngine:
     self,
     statements: list[Statement],
     shouldHaveBlankLine: list[bool],
-    preserveExistingBlank: list[bool],
+    doNotAlterExistingNumberOfBlankLines: list[bool],
     startsNewScope: list[bool],
   ) -> list[int]:
     """Convert boolean blank line indicators to actual counts
@@ -493,8 +548,8 @@ class BlankLineRuleEngine:
     :type statements: list[Statement]
     :param shouldHaveBlankLine: Boolean indicators of where blank lines should exist
     :type shouldHaveBlankLine: list[bool]
-    :param preserveExistingBlank: Boolean indicators of existing blank lines to preserve
-    :type preserveExistingBlank: list[bool]
+    :param doNotAlterExistingNumberOfBlankLines: Boolean indicators of existing blank lines to not alter
+    :type doNotAlterExistingNumberOfBlankLines: list[bool]
     :param startsNewScope: Boolean indicators of statements that start a new scope
     :type startsNewScope: list[bool]
     :rtype: list[int]
@@ -512,11 +567,19 @@ class BlankLineRuleEngine:
 
         continue
 
-      # Preserve existing blank lines after comments (leave-as-is rule)
-      if preserveExistingBlank[i]:
-        blankLineCounts[i] = 1
+      # Don't alter existing blank lines after comments (leave-as-is rule)
+      # BUT: if rules require MORE blank lines (e.g., PEP 8's 2 blanks), use those instead
+      if doNotAlterExistingNumberOfBlankLines[i]:
+        if shouldHaveBlankLine[i]:
+          # Calculate what blank lines would normally be required
+          # (continue with normal processing to get the count, then take max)
+          # Fall through to normal processing
+          pass
+        else:
+          # No blank line required by rules, keep the single blank
+          blankLineCounts[i] = 1
 
-        continue
+          continue
 
       if not shouldHaveBlankLine[i]:
         continue
@@ -526,11 +589,25 @@ class BlankLineRuleEngine:
       immediatelyPrevIdx = -1
 
       # First, find the immediately preceding non-blank statement
+      # For shouldHaveBlankLine determination, we skip over skip-marked statements
+      # But for blank line COUNT determination (when shouldHaveBlankLine[i] is True),
+      # we need to look at the immediate previous (even if skip-marked) to get the type
+      skipPrevIdx = -1  # Previous statement skipping over skip-marked ones
+      immediatePrevIdx = -1  # Immediate previous (including skip-marked)
+
       for j in range(i - 1, -1, -1):
         if not statements[j].isBlank:
-          immediatelyPrevIdx = j
+          if immediatePrevIdx == -1:
+            immediatePrevIdx = j
 
-          break
+          if not statements[j].skipBlankLineRules and skipPrevIdx == -1:
+            skipPrevIdx = j
+
+          if immediatePrevIdx != -1 and skipPrevIdx != -1:
+            break
+
+      # Use skipPrevIdx for finding the "real" previous, fall back to immediatePrevIdx if no non-skip found
+      immediatelyPrevIdx = skipPrevIdx if skipPrevIdx != -1 else immediatePrevIdx
 
       # For determining blank line count, we need to find the right "previous" statement
       # If we're returning from a nested level, use the last statement at the same level
@@ -566,7 +643,12 @@ class BlankLineRuleEngine:
         blankLineCount = self._needsBlankLineBetween(
           prevBlockType, currentBlockType, stmt.indentLevel, isClassDocstring, isModuleLevelDocstring
         )
-        blankLineCounts[i] = blankLineCount
+
+        # If doNotAlterExistingNumberOfBlankLines is set and we fell through, use max(1, calculated)
+        if doNotAlterExistingNumberOfBlankLines[i]:
+          blankLineCounts[i] = max(1, blankLineCount)
+        else:
+          blankLineCounts[i] = blankLineCount
 
     return blankLineCounts
 
