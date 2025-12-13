@@ -72,13 +72,14 @@ Python code formatter enforcing configurable blank line rules. Processes files i
 ### 6. Block Classification Priority
 
 Precedence (highest to lowest):
-1. Assignment (assignments, comprehensions, lambdas)
-2. Call (function calls, del, assert, pass, raise, yield, return)
-3. Import
-4. Control (if/for/while/try/with structures)
-5. Definition (def/class)
-6. Declaration (global/nonlocal)
-7. Comment
+1. Type Annotation (PEP 526 type annotations with or without default values)
+2. Assignment (assignments, comprehensions, lambdas)
+3. Call (function calls, del, assert, pass, raise, yield, return)
+4. Import
+5. Control (if/for/while/try/with structures)
+6. Definition (def/class)
+7. Declaration (global/nonlocal)
+8. Comment
 
 ### 7. Scope-Aware Processing
 - Rules applied independently at each indentation level
@@ -94,6 +95,24 @@ Precedence (highest to lowest):
 - Transitioning from non-comment to comment: Add blank line (comment break rule)
 - Scope boundaries override: Never preserve blank lines at scope start
 - Implementation: `preserveExistingBlank` flag + `startsNewScope` precedence check
+
+### 9. Directive System
+
+**`# spacing: skip` Directive**:
+- Standalone comment marks following consecutive statements to skip blank line rules
+- Directive comment kept in output for idempotency (like Black's `# fmt: skip`)
+- Case-insensitive and whitespace-tolerant pattern matching
+- Block ends at first blank line or end of file
+
+**Implementation Details**:
+- `Statement.skipBlankLineRules` flag added to dataclass
+- Detection in `FileAnalyzer._processDirectives()` after initial parsing
+- Rule engine uses two-track prevBlockType system:
+  - `prevBlockType`: Includes skip statements (for PEP 8 when skip at file start)
+  - `prevNonSkipBlockType`: Excludes skip statements (for normal rule application)
+- Skip statements preserve existing blank line count
+- Statements after skip blocks use `preserveExistingBlank` with `max(1, calculated)` to respect PEP 8
+- `_convertToBlankLineCounts()` skips over skip-marked statements when finding previous statement
 
 ## Configuration
 
@@ -129,7 +148,7 @@ exclude_patterns = ["**/old_*.py"]
 include_hidden = false
 ```
 
-Block type names: `assignment`, `call`, `import`, `control`, `definition`, `declaration`, `docstring`, `comment`
+Block type names: `type_annotation` (or `annotation`), `assignment`, `call`, `import`, `control`, `definition`, `declaration`, `docstring`, `comment`
 
 ## Error Handling
 
@@ -153,9 +172,10 @@ Block type names: `assignment`, `call`, `import`, `control`, `definition`, `decl
 
 ## Testing
 
-Comprehensive test suite (201 tests, 90.30% coverage) covering:
+Comprehensive test suite (217 tests, >90% coverage) covering:
 - Unit tests per component (parser, classifier, rules, analyzer, processor, config)
 - Integration tests (end-to-end, configuration-driven, docstrings, class methods, nested scopes)
+- Directive tests (16 tests): Detection, idempotency, edge cases, integration
 - Bug regression tests
 - CLI tests
 - Configuration validation tests

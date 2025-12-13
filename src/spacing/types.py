@@ -24,6 +24,7 @@ class BlockType(Enum):
   - DOCSTRING: Triple-quoted documentation strings
   - COMMENT: Single-line comments starting with #
   - FLOW_CONTROL: Return and yield statements
+  - TYPE_ANNOTATION: Type annotations (PEP 526) with or without default values
   """
 
   ASSIGNMENT = 1
@@ -35,6 +36,7 @@ class BlockType(Enum):
   DOCSTRING = 7
   COMMENT = 8
   FLOW_CONTROL = 9  # return, yield, yield from
+  TYPE_ANNOTATION = 10  # Type annotations (name: Type or name: Type = value)
 
 
 # Sentinel value for indentation level of blank lines
@@ -50,7 +52,7 @@ class Statement:
   endLineIndex: int
   blockType: BlockType
   indentLevel: int
-
   isComment: bool = False
   isBlank: bool = False
   isSecondaryClause: bool = False
+  skipBlankLineRules: bool = False

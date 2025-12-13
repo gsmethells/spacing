@@ -229,6 +229,8 @@ class BlankLineConfig:
       'declaration': BlockType.DECLARATION,
       'docstring': BlockType.DOCSTRING,
       'comment': BlockType.COMMENT,
+      'type_annotation': BlockType.TYPE_ANNOTATION,
+      'annotation': BlockType.TYPE_ANNOTATION,  # Allow shorter alias
     }
 
     if blockTypeName not in blockTypeMap:

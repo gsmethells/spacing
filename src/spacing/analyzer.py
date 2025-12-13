@@ -5,9 +5,13 @@ See the accompanying AUTHORS file for a complete list of authors.
 This file is subject to the terms and conditions defined in LICENSE.
 """
 
+import re
 from .classifier import StatementClassifier
 from .parser import MultilineParser
 from .types import BLANK_LINE_INDENT, BlockType, Statement
+
+# Regex pattern to detect spacing skip directive (case-insensitive)
+SPACING_SKIP_PATTERN = re.compile(r'#\s*spacing:\s*skip\b', re.IGNORECASE)
 
 
 class FileAnalyzer:
@@ -127,6 +131,9 @@ class FileAnalyzer:
     if currentStatement:
       statements.append(self._createStatement(currentStatement, statementStart, len(lines) - 1))
 
+    # Process spacing directives (e.g., # spacing: skip)
+    statements = self._processDirectives(statements)
+
     return statements
 
   def _createStatement(self, lines: list[str], startIdx: int, endIdx: int) -> Statement:
@@ -183,3 +190,61 @@ class FileAnalyzer:
         break
 
     return indent
+
+  def _processDirectives(self, statements: list[Statement]) -> list[Statement]:
+    """Process spacing directives like # spacing: skip
+
+    Scans for standalone # spacing: skip comments and marks all consecutive
+    statements (no blank lines between them) with skipBlankLineRules flag.
+    The directive statement itself is removed from the list.
+
+    :param statements: List of statements to process
+    :type statements: list[Statement]
+    :rtype: list[Statement]
+    :return: Modified list with directives processed and applied
+    """
+
+    result = []
+    skipDirectiveActive = False
+
+    for stmt in statements:
+      # Check if this is a spacing skip directive
+      if stmt.isComment and self._hasSpacingSkipDirective(stmt):
+        # Activate skip mode for following consecutive statements
+        skipDirectiveActive = True
+
+        # Keep the directive comment in the output (for idempotency)
+        result.append(stmt)
+        continue
+
+      # If skip is active and this is not a blank line, mark the statement
+      if skipDirectiveActive and not stmt.isBlank:
+        stmt.skipBlankLineRules = True
+
+        result.append(stmt)
+
+      # If we hit a blank line, deactivate skip mode
+      elif stmt.isBlank:
+        skipDirectiveActive = False
+
+        result.append(stmt)
+      # Normal statement
+      else:
+        result.append(stmt)
+
+    return result
+
+  def _hasSpacingSkipDirective(self, stmt: Statement) -> bool:
+    """Check if statement contains spacing skip directive
+
+    :param stmt: Statement to check
+    :type stmt: Statement
+    :rtype: bool
+    :return: True if statement contains # spacing: skip directive
+    """
+
+    if not stmt.lines:
+      return False
+
+    # Check the first (and typically only) line of the comment
+    return bool(SPACING_SKIP_PATTERN.search(stmt.lines[0]))

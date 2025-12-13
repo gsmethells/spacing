@@ -252,6 +252,61 @@ spacing --blank-lines-default=2 myfile.py
 spacing --blank-lines assignment_to_call=2 myfile.py
 ```
 
+## Directives
+
+### `# spacing: skip`
+
+Skip blank line rules for a specific block of code:
+
+```python
+import sys
+
+# spacing: skip
+x = 1
+y = 2
+z = 3
+
+# Normal rules resume after blank line
+a = 4
+```
+
+**How it works**:
+- Place `# spacing: skip` on its own line immediately before the block you want to preserve
+- The directive applies to all consecutive statements (no blank lines between them)
+- The block ends at the first blank line
+- Existing spacing within the block is preserved exactly as-is
+- The directive comment remains in the output for idempotency
+
+**Features**:
+- **Case-insensitive**: `# SPACING: SKIP` and `# Spacing: Skip` both work
+- **Whitespace-tolerant**: `#  spacing:  skip` works too
+- **Scope-aware**: Works at any indentation level (module, class, function)
+
+**Example use cases**:
+```python
+# Preserve compact initialization
+# spacing: skip
+x = 1
+y = 2
+z = 3
+
+# Preserve aligned assignments
+# spacing: skip
+name    = 'John'
+age     = 30
+city    = 'NYC'
+
+# Keep related statements together
+def configure():
+  # spacing: skip
+  setupLogging()
+  initDatabase()
+  loadConfig()
+
+  # Normal spacing resumes here
+  processData()
+```
+
 ## How It Works
 
 ### Multiline Statements
