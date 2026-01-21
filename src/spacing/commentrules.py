@@ -6,7 +6,6 @@ This file is subject to the terms and conditions defined in LICENSE.
 """
 
 from .types import BlockType
-from .config import config
 
 
 class CommentRuleHandler:
@@ -60,6 +59,8 @@ class CommentRuleHandler:
     :return: Number of blank lines needed
     """
 
+    from .config import config
+
     # Guard: No blank line at start of new scope (highest priority)
     if startsNewScope:
       return 0
@@ -104,6 +105,8 @@ class CommentRuleHandler:
     :rtype: int
     :return: Number of blank lines needed
     """
+
+    from .config import config
 
     hasBlankAfterComment = self._hasBlankAfterComment(statements, currentIdx)
 

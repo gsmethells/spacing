@@ -6,7 +6,6 @@ This file is subject to the terms and conditions defined in LICENSE.
 """
 
 from .types import BlockType
-from .config import config
 from .helpers import isClassDefinition
 
 
@@ -35,6 +34,8 @@ class DefinitionRuleHandler:
     :return: Number of blank lines needed
     """
 
+    from .config import config
+
     isClassDocstring = self._isClassDocstring(statements, prevStmtIdx, prevStmt.blockType)
     isModuleLevelDocstring = self._isModuleLevelDocstring(statements, prevStmtIdx, prevStmt.blockType)
 
@@ -50,6 +51,8 @@ class DefinitionRuleHandler:
     :rtype: int
     :return: Number of blank lines needed
     """
+
+    from .config import config
 
     return config.getBlankLines(BlockType.CONTROL, currentStmt.blockType, currentStmt.indentLevel)
 
@@ -67,6 +70,8 @@ class DefinitionRuleHandler:
     :rtype: int
     :return: Number of blank lines needed
     """
+
+    from .config import config
 
     isClassDocstring = self._isClassDocstring(statements, prevStmtIdx, prevBlockType)
     isModuleLevelDocstring = self._isModuleLevelDocstring(statements, prevStmtIdx, prevBlockType)
