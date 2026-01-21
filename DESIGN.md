@@ -10,12 +10,16 @@ Python code formatter enforcing configurable blank line rules. Processes files i
 
 1. **MultilineParser** (`parser.py`): Line-by-line reading with bracket/quote tracking for multiline statements
 2. **StatementClassifier** (`classifier.py`): Statement type identification with pre-compiled regex patterns
-3. **BlankLineRuleEngine** (`rules.py`): Configurable blank line rules based on block transitions
-4. **FileAnalyzer** (`analyzer.py`): File structure parsing and analysis
-5. **BlankLineConfig** (`config.py`): Singleton configuration system (TOML-based)
-6. **PathFilter** (`pathfilter.py`): Smart path discovery with configurable exclusions
-7. **CLI Interface** (`cli.py`): Command-line interface with check/dry-run modes
-8. **FileProcessor** (`processor.py`): Atomic file I/O with change detection
+3. **FileAnalyzer** (`analyzer.py`): File structure parsing and analysis
+4. **ContextBuilder** (`context.py`): Pre-compute statement relationships in O(n) (new in v1.1)
+5. **BlankLineRuleEngine** (`rules.py`): Context-based rule application with specialized handlers
+6. **CommentRuleHandler** (`commentrules.py`): Comment-specific blank line rules
+7. **DefinitionRuleHandler** (`definitionrules.py`): PEP 8/257 definition and docstring rules
+8. **Helper Functions** (`helpers.py`): Pure stateless functions for statement analysis
+9. **BlankLineConfig** (`config.py`): Singleton configuration system (TOML-based)
+10. **PathFilter** (`pathfilter.py`): Smart path discovery with configurable exclusions
+11. **CLI Interface** (`cli.py`): Command-line interface with check/dry-run modes
+12. **FileProcessor** (`processor.py`): Atomic file I/O with change detection
 
 ### Processing Pipeline
 
@@ -23,10 +27,16 @@ Python code formatter enforcing configurable blank line rules. Processes files i
 
 **Path Discovery**: Automatic `.py` file discovery with smart exclusions (hidden dirs, venv, build artifacts)
 
-**Three-Pass Processing**:
-1. **FileAnalyzer**: MultilineParser + StatementClassifier → Statement list with block types
-2. **BlankLineRuleEngine**: Apply configuration-driven rules per indentation level
-3. **FileProcessor**: Atomic write (tempfile + rename) only if changes detected
+**Two-Pass Processing** (refactored for O(n) performance):
+1. **Pass 1 - Analyze + Build Context**:
+   - `FileAnalyzer`: MultilineParser + StatementClassifier → Statement list with block types
+   - `ContextBuilder`: Pre-compute all relational info (prev/next statements, scope changes, completed blocks) in single O(n) pass
+2. **Pass 2 - Apply Rules + Reconstruct**:
+   - `BlankLineRuleEngine`: Apply configuration-driven rules using pre-computed context (no backward scanning)
+   - Specialized handlers: `CommentRuleHandler`, `DefinitionRuleHandler`
+   - `FileProcessor`: Atomic write (tempfile + rename) only if changes detected
+
+**Key Innovation**: `StatementContext` caches all relational data, eliminating O(n²) backward scanning during rule application
 
 ## Key Design Decisions
 
@@ -86,7 +96,31 @@ Precedence (highest to lowest):
 - Secondary clauses (elif/else/except/finally): No blank lines before
 - Scope boundaries: Always 0 blank lines at start/end (non-configurable)
 
-### 8. Comment Handling
+### 8. Performance Optimization (v1.1 Refactoring)
+
+**Problem**: Original implementation had O(n²)-O(n³) complexity with deep nesting (6-7 levels) and 692-line monolithic `rules.py`
+
+**Solution**: Context-based architecture with pre-computation:
+
+**StatementContext Pattern**:
+- Pre-compute all relational information (prev/next statements, scope changes, completed blocks) in ONE O(n) pass
+- Cache in `StatementContext` dataclass attached to each statement
+- Eliminates O(n²) backward scanning during rule application
+
+**Specialized Handlers**:
+- `CommentRuleHandler`: Comment-specific rules (guard clauses, max 3-level nesting)
+- `DefinitionRuleHandler`: PEP 8/257 rules for definitions and docstrings
+- `HelperFunctions`: Pure stateless functions for statement analysis
+
+**Results**:
+- Complexity: O(n²)-O(n³) → O(n)
+- Code size: 692 lines → 248 lines (64% reduction)
+- Max nesting: 6-7 levels → 3 levels max
+- Max parameters: 10 → 4
+- Passes: 3+ → exactly 2
+- Maintainability: 1 monolithic file → 5 focused modules
+
+### 9. Comment Handling
 
 **Philosophy**: Comments are paragraph markers - preserve user intent for adjacent blank lines
 
@@ -96,7 +130,7 @@ Precedence (highest to lowest):
 - Scope boundaries override: Never preserve blank lines at scope start
 - Implementation: `preserveExistingBlank` flag + `startsNewScope` precedence check
 
-### 9. Directive System
+### 10. Directive System
 
 **`# spacing: skip` Directive**:
 - Standalone comment marks following consecutive statements to skip blank line rules
@@ -107,12 +141,9 @@ Precedence (highest to lowest):
 **Implementation Details**:
 - `Statement.skipBlankLineRules` flag added to dataclass
 - Detection in `FileAnalyzer._processDirectives()` after initial parsing
-- Rule engine uses two-track prevBlockType system:
-  - `prevBlockType`: Includes skip statements (for PEP 8 when skip at file start)
-  - `prevNonSkipBlockType`: Excludes skip statements (for normal rule application)
 - Skip statements preserve existing blank line count
-- Statements after skip blocks use `preserveExistingBlank` with `max(1, calculated)` to respect PEP 8
-- `_convertToBlankLineCounts()` skips over skip-marked statements when finding previous statement
+- Statements after skip blocks use `max(existing, calculated)` to respect PEP 8
+- `StatementContext.preserveBlankLines` flag marks statements that should preserve their blank lines
 
 ## Configuration
 

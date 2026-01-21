@@ -161,6 +161,7 @@ class CommentRuleHandler:
     for k in range(currentIdx - 1, -1, -1):
       if statements[k].isComment and statements[k].indentLevel == 0:
         commentIdx = k
+
         break
 
     if commentIdx is None:

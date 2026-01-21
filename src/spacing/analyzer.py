@@ -228,6 +228,7 @@ class FileAnalyzer:
         skipDirectiveActive = False
 
         result.append(stmt)
+
       # Normal statement
       else:
         result.append(stmt)

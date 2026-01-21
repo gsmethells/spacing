@@ -23,6 +23,7 @@ class BlankLineRuleEngine:
 
   def __init__(self):
     """Initialize rule engine with specialized handlers"""
+
     self.contextBuilder = ContextBuilder()
     self.commentHandler = CommentRuleHandler()
     self.definitionHandler = DefinitionRuleHandler()
@@ -72,6 +73,7 @@ class BlankLineRuleEngine:
       # Secondary clauses (else, elif, except, finally) - no blank before
       if ctx.statement.isSecondaryClause:
         blankLineCounts[ctx.index] = 0
+
         continue
 
       # Determine blank lines using context
@@ -103,8 +105,10 @@ class BlankLineRuleEngine:
     # Use max of existing and calculated to ensure PEP 8 compliance
     if ctx.preserveBlankLines:
       existingBlanks = self._countExistingBlanks(statements, ctx.index)
+
       # Calculate what the rule would normally require
       calculatedBlanks = self._determineBlankLineWithoutPreserve(ctx, statements)
+
       return max(existingBlanks, calculatedBlanks)
 
     # Rule 3: After completed definition block
@@ -126,6 +130,7 @@ class BlankLineRuleEngine:
     # Rule 5: Handle comments specially
     if stmt.isComment:
       prevBlockType = prevAtSameLevel.blockType if prevAtSameLevel else None
+
       return self.commentHandler.needsBlankBeforeComment(stmt, False, prevBlockType, ctx.startsNewScope)
 
     # Rule 6: After comment (at same level)
@@ -135,6 +140,7 @@ class BlankLineRuleEngine:
     # Rule 7: After other block types (at same level)
     if prevAtSameLevel:
       prevBlockType = prevAtSameLevel.blockType
+
       return self.definitionHandler.needsBlankAfterBlockType(prevBlockType, stmt, statements, prevAtSameLevelIdx)
 
     # Rule 8: Returning from nested level
@@ -182,6 +188,7 @@ class BlankLineRuleEngine:
     # Rule 5: Handle comments specially
     if stmt.isComment:
       prevBlockType = prevAtSameLevel.blockType if prevAtSameLevel else None
+
       return self.commentHandler.needsBlankBeforeComment(stmt, False, prevBlockType, ctx.startsNewScope)
 
     # Rule 6: After comment (at same level)
@@ -191,6 +198,7 @@ class BlankLineRuleEngine:
     # Rule 7: After other block types (at same level)
     if prevAtSameLevel:
       prevBlockType = prevAtSameLevel.blockType
+
       return self.definitionHandler.needsBlankAfterBlockType(prevBlockType, stmt, statements, prevAtSameLevelIdx)
 
     # Rule 8: Returning from nested level
@@ -245,4 +253,3 @@ class BlankLineRuleEngine:
     from .config import config
 
     return config.getBlankLines(prevType, currentType, indentLevel, isClassDocstring, isModuleLevelDocstring)
-

@@ -37,10 +37,12 @@ class ContextBuilder:
     """
 
     contexts = self._initializeContexts(statements)
+
     self._computePrevNext(statements, contexts)
     self._computeScopeInfo(statements, contexts)
     self._computeCompletedBlocks(statements, contexts)
     self._computeCommentPreservation(statements, contexts)
+
     return contexts
 
   def _initializeContexts(self, statements):
@@ -73,6 +75,7 @@ class ContextBuilder:
         if lastNonBlankIdx >= 0:
           contexts[i].prevNonBlank = statements[lastNonBlankIdx]
           contexts[i].prevNonBlankIdx = lastNonBlankIdx
+
           # Back-link: set next for previous
           contexts[lastNonBlankIdx].nextNonBlank = stmt
           contexts[lastNonBlankIdx].nextNonBlankIdx = i
@@ -120,6 +123,7 @@ class ContextBuilder:
         # Found deeper indent - we're returning from nested
         if statements[j].indentLevel > targetIndent:
           contexts[i].returningFromNestedLevel = True
+
           break
 
         # Found same or shallower - stop looking
@@ -177,6 +181,7 @@ class ContextBuilder:
         for j in range(i + 2, len(statements)):
           if not statements[j].isBlank:
             nextNonBlankIdx = j
+
             break
 
         if nextNonBlankIdx is not None:

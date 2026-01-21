@@ -1,5 +1,34 @@
 # Changelog
 
+## [1.1.0] - 2026-01-20
+
+**Major Performance Refactoring**
+
+- Reduced time complexity from O(n²)-O(n³) to O(n) through context-based architecture
+- Reduced code size by 64% (692 lines → 248 lines in rules.py)
+- Reduced processing passes from 3+ to exactly 2
+- Reduced maximum nesting from 6-7 levels to 3 levels
+- Improved maintainability through separation of concerns (1 monolithic file → 5 focused modules)
+
+**New Components**:
+- `StatementContext` dataclass: Pre-computed statement relationships
+- `ContextBuilder`: O(n) pre-computation of all relational data
+- `CommentRuleHandler`: Specialized comment blank line rules
+- `DefinitionRuleHandler`: PEP 8/257 definition and docstring rules
+- `helpers.py`: Pure stateless helper functions
+
+**Technical Details**:
+- Eliminated O(n²) backward scanning by caching prev/next statements, scope changes, and completed blocks
+- Replaced recursive rule application with single-pass context-based approach
+- Specialized handlers use guard clauses to maintain flat control flow (max 3-level nesting)
+- All 262 tests passing with identical behavior to previous implementation
+
+**Benefits**:
+- Faster processing on large files
+- Easier to understand and modify rule logic
+- Better separation of concerns for future enhancements
+- Improved code quality metrics (reduced cyclomatic complexity)
+
 ## [0.9.0] - 2025-12-10
 
 **New Feature: `# spacing: skip` Directive**
