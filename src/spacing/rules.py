@@ -6,6 +6,7 @@ This file is subject to the terms and conditions defined in LICENSE.
 """
 
 from .types import BlockType, Statement
+from .helpers import findPreviousNonBlankAtLevel, hasBodyBetween, isClassDefinition
 
 
 class BlankLineRuleEngine:
@@ -100,7 +101,7 @@ class BlankLineRuleEngine:
     # Case 1: comment after module-level definition - do alter (let PEP 8 apply)
     if afterStmt.isComment and afterStmt.indentLevel == 0:
       # Check if there's a module-level definition immediately before
-      prevStmt, prevIdx = self._findPreviousNonBlankAtLevel(statements, beforeIdx + 1, 0)
+      prevStmt, prevIdx = findPreviousNonBlankAtLevel(statements, beforeIdx + 1, 0)
 
       if prevStmt and prevStmt.blockType == BlockType.DEFINITION:
         shouldNotAlterExisting = False
@@ -118,44 +119,6 @@ class BlankLineRuleEngine:
 
     return shouldNotAlterExisting
 
-  def _findPreviousNonBlankAtLevel(self, statements, fromIdx, targetIndent):
-    """Find previous non-blank statement at target indentation level
-
-    :param statements: List of statements
-    :param fromIdx: Index to start searching backwards from
-    :param targetIndent: Indentation level to match
-    :return: Tuple of (statement, index) or (None, None) if not found
-    """
-
-    for j in range(fromIdx - 1, -1, -1):
-      stmt = statements[j]
-
-      if stmt.isBlank or stmt.indentLevel > targetIndent:
-        continue
-
-      if stmt.indentLevel == targetIndent:
-        return (stmt, j)
-
-      break
-
-    return (None, None)
-
-  def _hasBodyBetween(self, statements, defIdx, endIdx, targetIndent):
-    """Check if definition has indented body between two indices
-
-    :param statements: List of statements
-    :param defIdx: Index of definition statement
-    :param endIdx: Index to search up to
-    :param targetIndent: Base indentation level
-    :return: True if body exists
-    """
-
-    for k in range(defIdx + 1, endIdx):
-      if statements[k].indentLevel > targetIndent:
-        return True
-
-    return False
-
   def _hasCompletedDefinitionBlock(self, statements, beforeIdx, targetIndent):
     """Check if there's a completed definition block before given index
 
@@ -165,7 +128,7 @@ class BlankLineRuleEngine:
     :return: True if completed definition block exists
     """
 
-    prevStmt, prevIdx = self._findPreviousNonBlankAtLevel(statements, beforeIdx, targetIndent)
+    prevStmt, prevIdx = findPreviousNonBlankAtLevel(statements, beforeIdx, targetIndent)
 
     if prevStmt is None:
       return False
@@ -173,7 +136,7 @@ class BlankLineRuleEngine:
     if prevStmt.blockType != BlockType.DEFINITION:
       return False
 
-    return self._hasBodyBetween(statements, prevIdx, beforeIdx, targetIndent)
+    return hasBodyBetween(statements, prevIdx, beforeIdx, targetIndent)
 
   def _hasCompletedDefinitionBeforeComment(self, statements, currentIdx):
     """Check if there's a completed definition before the most recent module-level comment
@@ -264,12 +227,12 @@ class BlankLineRuleEngine:
     :return: True if completed control block exists
     """
 
-    prevStmt, prevIdx = self._findPreviousNonBlankAtLevel(statements, beforeIdx, targetIndent)
+    prevStmt, prevIdx = findPreviousNonBlankAtLevel(statements, beforeIdx, targetIndent)
 
     if prevStmt is None or prevStmt.blockType != BlockType.CONTROL:
       return False
 
-    return self._hasBodyBetween(statements, prevIdx, beforeIdx, targetIndent)
+    return hasBodyBetween(statements, prevIdx, beforeIdx, targetIndent)
 
   def _isClassDocstring(self, statements, docstringIdx, prevBlockType):
     """Check if statement at index is a class docstring
@@ -286,7 +249,7 @@ class BlankLineRuleEngine:
     # Look back from the docstring to see if it follows a class definition
     for j in range(docstringIdx - 1, -1, -1):
       if not statements[j].isBlank:
-        return self._isClassDefinition(statements[j])
+        return isClassDefinition(statements[j])
 
     return False
 
@@ -651,24 +614,6 @@ class BlankLineRuleEngine:
           blankLineCounts[i] = blankLineCount
 
     return blankLineCounts
-
-  def _isClassDefinition(self, statement):
-    """Check if a statement is a class definition
-    :param statement: Statement to check
-    :type statement: Statement
-    :rtype: bool
-    """
-
-    if statement.blockType != BlockType.DEFINITION:
-      return False
-
-    # Check if any line starts with 'class ' (handles decorators)
-    if statement.lines:
-      for line in statement.lines:
-        if line.strip().startswith('class '):
-          return True
-
-    return False
 
   def _needsBlankLineBetween(
     self, prevType, currentType, indentLevel=None, isClassDocstring=False, isModuleLevelDocstring=False
