@@ -32,7 +32,6 @@ class TestCommentRuleHandler:
     handler = CommentRuleHandler()
     prevStmt = createStatement(BlockType.ASSIGNMENT, 0)
     currentStmt = createStatement(BlockType.ASSIGNMENT, 0)
-
     result = handler.needsBlankAfterComment(prevStmt, currentStmt, [], 1)
 
     assert result == 0
@@ -45,7 +44,6 @@ class TestCommentRuleHandler:
       createStatement(BlockType.COMMENT, 0, isComment=True),  # # comment
       createStatement(BlockType.DEFINITION, 0),  # def foo():
     ]
-
     result = handler.needsBlankAfterComment(statements[0], statements[1], statements, 1)
 
     # Should return PEP 8 requirement (2 blank lines for module-level definitions)
@@ -59,7 +57,6 @@ class TestCommentRuleHandler:
       createStatement(BlockType.COMMENT, 2, isComment=True),  # Indented comment
       createStatement(BlockType.DEFINITION, 2),  # Indented def
     ]
-
     result = handler.needsBlankAfterComment(statements[0], statements[1], statements, 1)
 
     assert result == 0  # Not module-level, so no special handling
@@ -69,7 +66,6 @@ class TestCommentRuleHandler:
 
     handler = CommentRuleHandler()
     currentStmt = createStatement(BlockType.COMMENT, 2, isComment=True)
-
     result = handler.needsBlankBeforeComment(currentStmt, False, None, startsNewScope=True)
 
     assert result == 0
@@ -79,7 +75,6 @@ class TestCommentRuleHandler:
 
     handler = CommentRuleHandler()
     currentStmt = createStatement(BlockType.COMMENT, 0, isComment=True)
-
     result = handler.needsBlankBeforeComment(currentStmt, True, None, startsNewScope=False)
 
     # Should return config value for definition -> comment
@@ -90,7 +85,6 @@ class TestCommentRuleHandler:
 
     handler = CommentRuleHandler()
     currentStmt = createStatement(BlockType.COMMENT, 2, isComment=True)
-
     result = handler.needsBlankBeforeComment(currentStmt, False, BlockType.DOCSTRING, startsNewScope=False)
 
     # Should return config value for docstring -> comment
@@ -101,7 +95,6 @@ class TestCommentRuleHandler:
 
     handler = CommentRuleHandler()
     currentStmt = createStatement(BlockType.COMMENT, 0, isComment=True)
-
     result = handler.needsBlankBeforeComment(currentStmt, False, BlockType.ASSIGNMENT, startsNewScope=False)
 
     assert result == 1  # Universal rule: blank before comment
@@ -111,7 +104,6 @@ class TestCommentRuleHandler:
 
     handler = CommentRuleHandler()
     currentStmt = createStatement(BlockType.COMMENT, 0, isComment=True)
-
     result = handler.needsBlankBeforeComment(currentStmt, False, BlockType.COMMENT, startsNewScope=False)
 
     assert result == 0  # No blank between consecutive comments
@@ -125,7 +117,6 @@ class TestCommentRuleHandler:
       createStatement(BlockType.ASSIGNMENT, 0, isBlank=True),
       createStatement(BlockType.DEFINITION, 0),
     ]
-
     result = handler._hasBlankAfterComment(statements, 2)
 
     assert result is True
@@ -138,7 +129,6 @@ class TestCommentRuleHandler:
       createStatement(BlockType.COMMENT, 0, isComment=True),
       createStatement(BlockType.DEFINITION, 0),
     ]
-
     result = handler._hasBlankAfterComment(statements, 1)
 
     assert result is False
@@ -153,7 +143,6 @@ class TestCommentRuleHandler:
       createStatement(BlockType.COMMENT, 0, isComment=True),  # # comment
       createStatement(BlockType.DEFINITION, 0),  # def bar():
     ]
-
     result = handler._hasCompletedDefinitionBeforeComment(statements, 3)
 
     assert result is True  # foo() is complete before comment
@@ -166,7 +155,6 @@ class TestCommentRuleHandler:
       createStatement(BlockType.COMMENT, 0, isComment=True),  # # comment
       createStatement(BlockType.DEFINITION, 0),  # def foo():
     ]
-
     result = handler._hasCompletedDefinitionBeforeComment(statements, 1)
 
     assert result is False  # No definition before comment
@@ -176,7 +164,6 @@ class TestCommentRuleHandler:
 
     handler = CommentRuleHandler()
     stmt = createStatement(BlockType.DEFINITION, 0)
-
     result = handler._isModuleLevelDefinitionAfterComment(stmt)
 
     assert result is True
@@ -186,7 +173,6 @@ class TestCommentRuleHandler:
 
     handler = CommentRuleHandler()
     stmt = createStatement(BlockType.DEFINITION, 2)
-
     result = handler._isModuleLevelDefinitionAfterComment(stmt)
 
     assert result is False
@@ -196,7 +182,6 @@ class TestCommentRuleHandler:
 
     handler = CommentRuleHandler()
     stmt = createStatement(BlockType.ASSIGNMENT, 0)
-
     result = handler._isModuleLevelDefinitionAfterComment(stmt)
 
     assert result is False

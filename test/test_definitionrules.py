@@ -33,7 +33,6 @@ class TestDefinitionRuleHandler:
     handler = DefinitionRuleHandler()
     prevStmt = createStatement(BlockType.DEFINITION, 0)
     currentStmt = createStatement(BlockType.ASSIGNMENT, 0)
-
     result = handler.needsBlankAfterDefinition(prevStmt, currentStmt, [], 0)
 
     assert result >= 0  # Should return config value
@@ -43,7 +42,6 @@ class TestDefinitionRuleHandler:
 
     handler = DefinitionRuleHandler()
     currentStmt = createStatement(BlockType.ASSIGNMENT, 0)
-
     result = handler.needsBlankAfterControl(currentStmt)
 
     assert result >= 0  # Should return config value
@@ -53,7 +51,6 @@ class TestDefinitionRuleHandler:
 
     handler = DefinitionRuleHandler()
     currentStmt = createStatement(BlockType.ASSIGNMENT, 0)
-
     result = handler.needsBlankAfterBlockType(BlockType.IMPORT, currentStmt, [], 0)
 
     assert result >= 0  # Should return config value
@@ -66,7 +63,6 @@ class TestDefinitionRuleHandler:
       createStatement(BlockType.DEFINITION, 0, lines=['class Foo:']),
       createStatement(BlockType.DOCSTRING, 2),
     ]
-
     result = handler._isClassDocstring(statements, 1, BlockType.DOCSTRING)
 
     assert result is True
@@ -79,7 +75,6 @@ class TestDefinitionRuleHandler:
       createStatement(BlockType.DEFINITION, 0, lines=['def foo():']),
       createStatement(BlockType.DOCSTRING, 2),
     ]
-
     result = handler._isClassDocstring(statements, 1, BlockType.DOCSTRING)
 
     assert result is False
@@ -92,7 +87,6 @@ class TestDefinitionRuleHandler:
       createStatement(BlockType.DEFINITION, 0, lines=['class Foo:']),
       createStatement(BlockType.ASSIGNMENT, 2),
     ]
-
     result = handler._isClassDocstring(statements, 1, BlockType.ASSIGNMENT)
 
     assert result is False
@@ -102,7 +96,6 @@ class TestDefinitionRuleHandler:
 
     handler = DefinitionRuleHandler()
     statements = []
-
     result = handler._isClassDocstring(statements, None, BlockType.DOCSTRING)
 
     assert result is False
@@ -114,7 +107,6 @@ class TestDefinitionRuleHandler:
     statements = [
       createStatement(BlockType.DOCSTRING, 0),  # First statement
     ]
-
     result = handler._isModuleLevelDocstring(statements, 0, BlockType.DOCSTRING)
 
     assert result is True
@@ -135,7 +127,6 @@ class TestDefinitionRuleHandler:
       ),
       createStatement(BlockType.DOCSTRING, 0),  # Module-level docstring
     ]
-
     result = handler._isModuleLevelDocstring(statements, 2, BlockType.DOCSTRING)
 
     assert result is True
@@ -148,7 +139,6 @@ class TestDefinitionRuleHandler:
       createStatement(BlockType.ASSIGNMENT, 0),  # x = 1
       createStatement(BlockType.DOCSTRING, 0),  # Not module-level
     ]
-
     result = handler._isModuleLevelDocstring(statements, 1, BlockType.DOCSTRING)
 
     assert result is False
@@ -160,7 +150,6 @@ class TestDefinitionRuleHandler:
     statements = [
       createStatement(BlockType.ASSIGNMENT, 0),
     ]
-
     result = handler._isModuleLevelDocstring(statements, 0, BlockType.ASSIGNMENT)
 
     assert result is False
@@ -170,7 +159,6 @@ class TestDefinitionRuleHandler:
 
     handler = DefinitionRuleHandler()
     statements = []
-
     result = handler._isModuleLevelDocstring(statements, None, BlockType.DOCSTRING)
 
     assert result is False
