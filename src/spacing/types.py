@@ -56,3 +56,37 @@ class Statement:
   isBlank: bool = False
   isSecondaryClause: bool = False
   skipBlankLineRules: bool = False
+
+
+@dataclass
+class StatementContext:
+  """Pre-computed context for a statement to eliminate backward scanning
+
+  This dataclass caches all relational information about a statement that
+  would otherwise require O(n) backward scanning during rule application.
+  Built once in O(n) time by ContextBuilder, enabling O(1) rule lookups.
+
+  :param index: Index of this statement in the statements list
+  :param statement: The Statement object this context describes
+  :param prevNonBlank: Previous non-blank statement, or None if first
+  :param prevNonBlankIdx: Index of previous non-blank statement, or -1
+  :param nextNonBlank: Next non-blank statement, or None if last
+  :param nextNonBlankIdx: Index of next non-blank statement, or -1
+  :param startsNewScope: True if this statement starts a new scope
+  :param returningFromNestedLevel: True if returning from nested indent level
+  :param hasCompletedDefBefore: True if completed definition block before this
+  :param hasCompletedControlBefore: True if completed control block before this
+  :param preserveBlankLines: True if blank lines before this should be preserved
+  """
+
+  index: int
+  statement: Statement
+  prevNonBlank: Statement | None = None
+  prevNonBlankIdx: int = -1
+  nextNonBlank: Statement | None = None
+  nextNonBlankIdx: int = -1
+  startsNewScope: bool = False
+  returningFromNestedLevel: bool = False
+  hasCompletedDefBefore: bool = False
+  hasCompletedControlBefore: bool = False
+  preserveBlankLines: bool = False
