@@ -5,7 +5,6 @@ See the accompanying AUTHORS file for a complete list of authors.
 This file is subject to the terms and conditions defined in LICENSE.
 """
 
-import pytest
 from spacing.context import ContextBuilder
 from spacing.types import BlockType, Statement
 

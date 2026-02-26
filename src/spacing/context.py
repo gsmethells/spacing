@@ -5,8 +5,8 @@ See the accompanying AUTHORS file for a complete list of authors.
 This file is subject to the terms and conditions defined in LICENSE.
 """
 
-from .types import BlockType, Statement, StatementContext
 from .helpers import findPreviousNonBlankAtLevel, hasBodyBetween
+from .types import BlockType, StatementContext
 
 
 class ContextBuilder:
