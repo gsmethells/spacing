@@ -11,7 +11,7 @@ from spacing.processor import FileProcessor
 
 
 class TestFileProcessor:
-  def testProcessFileNoChanges(self):
+  def test_processFileNoChanges(self):
     """Test processing file that doesn't need changes"""
 
     # Create a perfectly formatted file (PEP 8 compliant)
@@ -34,21 +34,21 @@ def func():
       assert not result
 
       # Content should remain unchanged
-      with open(f.name) as result_file:
-        final_content = result_file.read()
+      with open(f.name) as resultFile:
+        finalContent = resultFile.read()
 
-      assert final_content == content
+      assert finalContent == content
 
-  def testProcessFileWithChanges(self):
+  def test_processFileWithChanges(self):
     """Test processing file that needs changes"""
 
-    original_content = """import sys
+    originalContent = """import sys
 x = 1
 def func():
   pass"""
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(original_content)
+      f.write(originalContent)
       f.flush()
 
       # Should return True (changes made)
@@ -57,22 +57,22 @@ def func():
       assert result
 
       # Content should be changed
-      with open(f.name) as result_file:
-        final_content = result_file.read()
+      with open(f.name) as resultFile:
+        finalContent = resultFile.read()
 
-      assert final_content != original_content
-      assert '\n\n' in final_content  # Should have blank lines
+      assert finalContent != originalContent
+      assert '\n\n' in finalContent  # Should have blank lines
 
-  def testCheckOnlyMode(self):
+  def test_checkOnlyMode(self):
     """Test check-only mode doesn't modify files"""
 
-    original_content = """import sys
+    originalContent = """import sys
 x = 1
 def func():
   pass"""
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(original_content)
+      f.write(originalContent)
       f.flush()
 
       # Check-only should return True (changes needed) but not modify file
@@ -81,36 +81,36 @@ def func():
       assert result
 
       # Content should be unchanged
-      with open(f.name) as result_file:
-        final_content = result_file.read()
+      with open(f.name) as resultFile:
+        finalContent = resultFile.read()
 
-      assert final_content == original_content
+      assert finalContent == originalContent
 
-  def testFileReadError(self):
+  def test_fileReadError(self):
     """Test handling of file read errors"""
 
-    nonexistent_path = Path('/nonexistent/file.py')
-    result = FileProcessor.processFile(nonexistent_path, checkOnly=False)
+    nonexistentPath = Path('/nonexistent/file.py')
+    result = FileProcessor.processFile(nonexistentPath, checkOnly=False)
 
     assert not result
 
-  def testFileWriteError(self, monkeypatch):
+  def test_fileWriteError(self, monkeypatch):
     """Test handling of file write errors"""
 
-    original_content = """import sys
+    originalContent = """import sys
 x = 1"""
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(original_content)
+      f.write(originalContent)
       f.flush()
 
       filepath = Path(f.name)
 
     # Mock NamedTemporaryFile to raise OSError when trying to create temp file
-    def mock_tempfile(*args, **kwargs):
+    def mockTempfile(*args, **kwargs):
       raise OSError('Mock tempfile creation error')
 
-    monkeypatch.setattr('tempfile.NamedTemporaryFile', mock_tempfile)
+    monkeypatch.setattr('tempfile.NamedTemporaryFile', mockTempfile)
 
     result = FileProcessor.processFile(filepath, checkOnly=False)
 
@@ -122,7 +122,7 @@ x = 1"""
     except Exception:
       pass
 
-  def testEmptyFile(self):
+  def test_emptyFile(self):
     """Test processing empty file"""
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
@@ -133,12 +133,12 @@ x = 1"""
 
       assert not result  # Empty file doesn't need changes
 
-      with open(f.name) as result_file:
-        final_content = result_file.read()
+      with open(f.name) as resultFile:
+        finalContent = resultFile.read()
 
-      assert final_content == ''
+      assert finalContent == ''
 
-  def testFileWithOnlyBlankLines(self):
+  def test_fileWithOnlyBlankLines(self):
     """Test processing file with only blank lines - should be cleaned to empty"""
 
     content = '\n\n\n'
@@ -151,12 +151,12 @@ x = 1"""
 
       assert result  # Blank lines should be removed
 
-      with open(f.name) as result_file:
-        final_content = result_file.read()
+      with open(f.name) as resultFile:
+        finalContent = resultFile.read()
 
-      assert final_content == ''  # Should be empty file
+      assert finalContent == ''  # Should be empty file
 
-  def testFileWithOnlyComments(self):
+  def test_fileWithOnlyComments(self):
     """Test processing file with only comments"""
 
     content = """# Header comment
@@ -174,13 +174,13 @@ x = 1"""
       result = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
       # This depends on our comment rules implementation
-      with open(f.name) as result_file:
-        final_content = result_file.read()
+      with open(f.name) as resultFile:
+        finalContent = resultFile.read()
 
       # Verify it's syntactically valid (no exceptions during processing)
-      assert len(final_content) > 0
+      assert len(finalContent) > 0
 
-  def testFileWithEncodingError(self):
+  def test_fileWithEncodingError(self):
     """Test handling of UnicodeDecodeError when reading file"""
 
     with tempfile.NamedTemporaryFile(mode='wb', suffix='.py', delete=False) as f:
@@ -192,7 +192,7 @@ x = 1"""
 
       assert not result  # Should return False on encoding error
 
-  def testFileWithPermissionError(self, monkeypatch):
+  def test_fileWithPermissionError(self, monkeypatch):
     """Test handling of PermissionError when reading file"""
 
     import builtins
@@ -211,7 +211,7 @@ x = 1"""
 
       assert not result  # Should return False on permission error
 
-  def testReturnDetailsWithChanges(self):
+  def test_returnDetailsWithChanges(self):
     """Test returnDetails parameter returns summary and diff when changes are made"""
 
     content = """import sys
@@ -233,7 +233,7 @@ y = 2"""
       assert diff is not None
       assert len(summary) > 0
 
-  def testReturnDetailsCheckOnlyMode(self):
+  def test_returnDetailsCheckOnlyMode(self):
     """Test returnDetails parameter in checkOnly mode"""
 
     content = """import sys
@@ -250,7 +250,7 @@ y = 2"""
       assert summary is not None
       assert diff is not None
 
-  def testReturnDetailsRemovedBlankLines(self):
+  def test_returnDetailsRemovedBlankLines(self):
     """Test returnDetails shows 'removed' when blank lines are deleted"""
 
     content = """import sys
@@ -271,7 +271,7 @@ x = 1"""
       assert 'removed 1 blank line' in summary
       assert diff is not None
 
-  def testWriteErrorDuringFileProcessing(self, monkeypatch):
+  def test_writeErrorDuringFileProcessing(self, monkeypatch):
     """Test that write errors during file processing are handled correctly"""
 
     import builtins

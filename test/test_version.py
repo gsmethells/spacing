@@ -11,7 +11,7 @@ from spacing.cli import getVersion
 
 
 class TestVersion:
-  def testGetVersion(self):
+  def test_getVersion(self):
     """Test that getVersion returns a version string"""
 
     ver = getVersion()
@@ -24,7 +24,7 @@ class TestVersion:
     # In development or installed, should not be 'unknown'
     assert 'unknown' not in ver or 'development' in ver
 
-  def testVersionFlag(self):
+  def test_versionFlag(self):
     """Test that --version flag works from command line"""
 
     # Run spacing --version as a subprocess
@@ -46,7 +46,7 @@ class TestVersion:
 
     assert len(output) > 5  # At least "spacing X"
 
-  def testVersionInHelp(self):
+  def test_versionInHelp(self):
     """Test that --version is listed in help"""
 
     result = subprocess.run([sys.executable, '-m', 'spacing.cli', '--help'], capture_output=True, text=True, cwd='src')

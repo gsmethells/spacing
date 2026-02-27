@@ -10,7 +10,7 @@ from spacing.parser import MultilineParser
 
 
 class TestMultilineParser:
-  def testSimpleComplete(self):
+  def test_simpleComplete(self):
     """Test parser with simple complete lines"""
 
     parser = MultilineParser()
@@ -18,7 +18,7 @@ class TestMultilineParser:
     parser.processLine('x = 1')
     assert parser.isComplete()
 
-  def testParenthesesTracking(self):
+  def test_parenthesesTracking(self):
     """Test bracket tracking with parentheses"""
 
     parser = MultilineParser()
@@ -30,7 +30,7 @@ class TestMultilineParser:
     parser.processLine(')')
     assert parser.isComplete()
 
-  def testSquareBrackets(self):
+  def test_squareBrackets(self):
     """Test bracket tracking with square brackets"""
 
     parser = MultilineParser()
@@ -42,7 +42,7 @@ class TestMultilineParser:
     parser.processLine(']')
     assert parser.isComplete()
 
-  def testCurlyBraces(self):
+  def test_curlyBraces(self):
     """Test bracket tracking with curly braces"""
 
     parser = MultilineParser()
@@ -54,7 +54,7 @@ class TestMultilineParser:
     parser.processLine('}')
     assert parser.isComplete()
 
-  def testNestedBrackets(self):
+  def test_nestedBrackets(self):
     """Test nested bracket tracking"""
 
     parser = MultilineParser()
@@ -66,7 +66,7 @@ class TestMultilineParser:
     parser.processLine('])')
     assert parser.isComplete()
 
-  def testStringLiterals(self):
+  def test_stringLiterals(self):
     """Test string literals don't interfere with bracket tracking"""
 
     parser = MultilineParser()
@@ -74,7 +74,7 @@ class TestMultilineParser:
     parser.processLine('text = "this has (brackets) inside"')
     assert parser.isComplete()
 
-  def testStringWithBrackets(self):
+  def test_stringWithBrackets(self):
     """Test bracket inside string doesn't affect parsing"""
 
     parser = MultilineParser()
@@ -84,7 +84,7 @@ class TestMultilineParser:
     parser.processLine('     "another param")')
     assert parser.isComplete()
 
-  def testTripleQuotes(self):
+  def test_tripleQuotes(self):
     """Test triple quoted strings"""
 
     parser = MultilineParser()
@@ -98,7 +98,7 @@ class TestMultilineParser:
     parser.processLine('"""')
     assert parser.isComplete()
 
-  def testEscapedQuotes(self):
+  def test_escapedQuotes(self):
     """Test escaped quotes in strings"""
 
     parser = MultilineParser()
@@ -106,7 +106,7 @@ class TestMultilineParser:
     parser.processLine('text = "escaped \\" quote"')
     assert parser.isComplete()
 
-  def testReset(self):
+  def test_reset(self):
     """Test parser reset functionality"""
 
     parser = MultilineParser()
@@ -118,7 +118,7 @@ class TestMultilineParser:
     parser.processLine('x = 1')
     assert parser.isComplete()
 
-  def testMismatchedBrackets(self):
+  def test_mismatchedBrackets(self):
     """Test handling of mismatched brackets"""
 
     parser = MultilineParser()
@@ -128,7 +128,7 @@ class TestMultilineParser:
     # Should still track as incomplete because opening bracket not properly closed
     assert not parser.isComplete()
 
-  def testApostropheInComment(self):
+  def test_apostropheInComment(self):
     """Test that apostrophes in comments don't start string tracking"""
 
     parser = MultilineParser()
@@ -137,7 +137,7 @@ class TestMultilineParser:
     assert parser.isComplete()
     assert not parser.inString
 
-  def testQuotesInCommentsIgnored(self):
+  def test_quotesInCommentsIgnored(self):
     """Test that both single and double quotes in comments are ignored"""
 
     parser = MultilineParser()
@@ -150,7 +150,7 @@ class TestMultilineParser:
     assert parser.isComplete()
     assert not parser.inString
 
-  def testDecoratorPatternInMultilineString(self):
+  def test_decoratorPatternInMultilineString(self):
     """
     Test that decorator patterns inside multiline strings don't set expectingDefinition.
 
@@ -178,7 +178,7 @@ class TestMultilineParser:
     assert parser.isComplete()  # Should be complete now
     assert not parser.expectingDefinition
 
-  def testProcessLineTypeError(self):
+  def test_processLineTypeError(self):
     """Test that processLine raises TypeError for non-string input"""
 
     parser = MultilineParser()

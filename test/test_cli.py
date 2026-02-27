@@ -15,7 +15,7 @@ from spacing.types import BlockType
 
 
 class TestCLIConfiguration:
-  def testLoadConfigurationDefaults(self):
+  def test_loadConfigurationDefaults(self):
     """Test loading default configuration"""
 
     # Create mock args with no configuration
@@ -36,7 +36,7 @@ class TestCLIConfiguration:
     assert config.consecutiveDefinition == 1
     assert len(config.transitions) == 0
 
-  def testLoadConfigurationWithTomlFile(self):
+  def test_loadConfigurationWithTomlFile(self):
     """Test loading configuration from TOML file"""
 
     tomlContent = """
@@ -65,7 +65,7 @@ assignment_to_call = 0
     assert config.consecutiveControl == 3
     assert config.transitions[(BlockType.ASSIGNMENT, BlockType.CALL)] == 0
 
-  def testLoadConfigurationWithCliOverrides(self):
+  def test_loadConfigurationWithCliOverrides(self):
     """Test CLI overrides of configuration"""
 
     args = argparse.Namespace(
@@ -85,7 +85,7 @@ assignment_to_call = 0
     assert config.transitions[(BlockType.ASSIGNMENT, BlockType.CALL)] == 0
     assert config.transitions[(BlockType.IMPORT, BlockType.CONTROL)] == 3
 
-  def testLoadConfigurationNoConfig(self):
+  def test_loadConfigurationNoConfig(self):
     """Test --no-config flag"""
 
     # Create a config file that should be ignored
@@ -112,7 +112,7 @@ default_between_different = 5
     # Should use defaults, not file values
     assert config.defaultBetweenDifferent == 1
 
-  def testLoadConfigurationInvalidCliValues(self):
+  def test_loadConfigurationInvalidCliValues(self):
     """Test validation of CLI values"""
 
     # Invalid default value
@@ -129,7 +129,7 @@ default_between_different = 5
     with pytest.raises(ValueError, match='must be between 0 and 3'):
       loadConfiguration(args)
 
-  def testLoadConfigurationInvalidBlankLinesFormat(self):
+  def test_loadConfigurationInvalidBlankLinesFormat(self):
     """Test invalid --blank-lines format"""
 
     args = argparse.Namespace(
@@ -145,7 +145,7 @@ default_between_different = 5
     with pytest.raises(ValueError, match='Invalid format for --blank-lines'):
       loadConfiguration(args)
 
-  def testParseBlockTypeName(self):
+  def test_parseBlockTypeName(self):
     """Test block type name parsing for CLI"""
 
     assert parseBlockTypeName('assignment') == BlockType.ASSIGNMENT
@@ -155,7 +155,7 @@ default_between_different = 5
     with pytest.raises(ValueError, match='Unknown block type'):
       parseBlockTypeName('invalid')
 
-  def testValidateBlankLineCountCli(self):
+  def test_validateBlankLineCountCli(self):
     """Test CLI blank line count validation"""
 
     # Valid values
@@ -171,7 +171,7 @@ default_between_different = 5
 
 
 class TestCLIFormatting:
-  def testCLIModuleBlankLineFormatting(self):
+  def test_cliModuleBlankLineFormatting(self):
     """Test that CLI module has been manually corrected by the user"""
 
     # Read the current CLI file
@@ -192,7 +192,7 @@ class TestCLIFormatting:
       # This test documents that the CLI file has been manually corrected
       assert True, 'User manually corrected CLI module - their formatting is always correct'
 
-  def testCLIArgumentParserFormatting(self):
+  def test_cliArgumentParserFormatting(self):
     """Test that CLI argument parser patterns are formatted correctly"""
 
     # Your fix ensures the CLI follows correct rules despite classifier bug
@@ -233,8 +233,8 @@ def main():
       # This will fail with current classifier bug, but passes with manual fixes
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
       # Test should pass when classifier is fixed to properly handle method calls
       # For now, this documents the expected behavior
@@ -244,7 +244,7 @@ def main():
         # Classifier bug prevents proper formatting, but test documents expectation
         assert True, 'Test documents expected behavior despite classifier bug'
 
-  def testNoBlankLineAtStartOfNestedScope(self):
+  def test_noBlankLineAtStartOfNestedScope(self):
     """Test that blank lines are not added at the start of nested scopes (after else, elif, etc.)"""
 
     # This reproduces the bug where blank lines were incorrectly added after else/elif
@@ -282,14 +282,14 @@ def main():
 
       assert changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
       assert result == expectedCode
 
 
 class TestCLIProcessFile:
-  def testProcessFileDryRun(self):
+  def test_processFileDryRun(self):
     """Test _processFile in dry-run mode"""
 
     from spacing.cli import _processFile
@@ -308,7 +308,7 @@ y = 2"""
       assert changed
       assert exitCode == 0
 
-  def testProcessFileCheckMode(self):
+  def test_processFileCheckMode(self):
     """Test _processFile in check mode"""
 
     from spacing.cli import _processFile
@@ -326,7 +326,7 @@ x = 1"""
       assert changed
       assert exitCode == 1  # check mode returns exit code 1 when changes needed
 
-  def testProcessFileCheckModeNoChanges(self):
+  def test_processFileCheckModeNoChanges(self):
     """Test _processFile in check mode when no changes needed"""
 
     from spacing.cli import _processFile
@@ -345,7 +345,7 @@ x = 1"""
       assert not changed
       assert exitCode == 0
 
-  def testProcessFileDryRunVerbose(self):
+  def test_processFileDryRunVerbose(self):
     """Test _processFile in dry-run verbose mode"""
 
     from spacing.cli import _processFile
@@ -363,7 +363,7 @@ x = 1"""
       assert changed
       assert exitCode == 0
 
-  def testProcessFileQuietMode(self):
+  def test_processFileQuietMode(self):
     """Test _processFile in quiet mode"""
 
     from spacing.cli import _processFile
@@ -383,7 +383,7 @@ x = 1"""
 
 
 class TestCLIVersion:
-  def testGetVersion(self):
+  def test_getVersion(self):
     """Test getVersion returns a valid version string"""
 
     from spacing.cli import getVersion
@@ -398,7 +398,7 @@ class TestCLIVersion:
 
 
 class TestCLIMain:
-  def testMainWithSpecificFile(self, monkeypatch):
+  def test_mainWithSpecificFile(self, monkeypatch):
     """Test main() with specific file argument"""
 
     import sys
@@ -427,7 +427,7 @@ x = 1"""
       main()
       assert exitCode == 0
 
-  def testMainWithCheckMode(self, monkeypatch):
+  def test_mainWithCheckMode(self, monkeypatch):
     """Test main() with --check flag"""
 
     import sys
@@ -456,7 +456,7 @@ x = 1"""
       main()
       assert exitCode == 1  # Should exit with 1 when changes are needed
 
-  def testMainWithNonexistentPath(self, monkeypatch):
+  def test_mainWithNonexistentPath(self, monkeypatch):
     """Test main() with nonexistent path"""
 
     import sys
@@ -477,7 +477,7 @@ x = 1"""
     main()
     assert exitCode == 1  # Should exit with 1 on error
 
-  def testMainWithDirectory(self, monkeypatch):
+  def test_mainWithDirectory(self, monkeypatch):
     """Test main() with directory argument"""
 
     import sys
@@ -506,7 +506,7 @@ x = 1"""
       main()
       assert exitCode == 0
 
-  def testMainWithNoPathsAutoDiscovery(self, monkeypatch):
+  def test_mainWithNoPathsAutoDiscovery(self, monkeypatch):
     """Test main() with no paths (auto-discovery in current directory)"""
 
     import os
@@ -544,7 +544,7 @@ x = 1"""
       finally:
         os.chdir(originalCwd)
 
-  def testMainWithQuietFlag(self, monkeypatch):
+  def test_mainWithQuietFlag(self, monkeypatch):
     """Test main() with --quiet flag"""
 
     import sys
@@ -573,7 +573,7 @@ x = 1"""
       main()
       assert exitCode == 0
 
-  def testMainWithDryRunFlag(self, monkeypatch):
+  def test_mainWithDryRunFlag(self, monkeypatch):
     """Test main() with --dry-run flag"""
 
     import sys
@@ -602,7 +602,7 @@ x = 1"""
       main()
       assert exitCode == 0
 
-  def testMainWithNonPythonFile(self, monkeypatch):
+  def test_mainWithNonPythonFile(self, monkeypatch):
     """Test main() with non-Python file (should skip)"""
 
     import sys
@@ -630,7 +630,7 @@ x = 1"""
       # Should process 0 files but not error
       assert exitCode == 0
 
-  def testMainCheckModeAllFilesPass(self, monkeypatch):
+  def test_mainCheckModeAllFilesPass(self, monkeypatch):
     """Test main() with --check when all files are already formatted"""
 
     import sys
@@ -662,7 +662,7 @@ x = 1"""
       # Should exit with 0 when all checks pass
       assert exitCode == 0
 
-  def testMainDryRunNoChanges(self, monkeypatch):
+  def test_mainDryRunNoChanges(self, monkeypatch):
     """Test main() with --dry-run when files are already formatted"""
 
     import sys

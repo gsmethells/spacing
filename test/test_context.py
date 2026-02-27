@@ -41,8 +41,8 @@ def createStatement(blockType, indentLevel, isComment=False, isBlank=False, isSe
 class TestContextBuilder:
   """Test suite for ContextBuilder class"""
 
-  def test_initializeContexts(self):
-    """Test _initializeContexts creates correct number of contexts"""
+  def test_buildContextsCreatesCorrectNumberOfContexts(self):
+    """Test buildContexts creates correct number of contexts with proper indices and statements"""
 
     statements = [
       createStatement(BlockType.ASSIGNMENT, 0),
@@ -50,7 +50,7 @@ class TestContextBuilder:
       createStatement(BlockType.ASSIGNMENT, 0),
     ]
     builder = ContextBuilder()
-    contexts = builder._initializeContexts(statements)
+    contexts = builder.buildContexts(statements)
 
     assert len(contexts) == 3
     assert contexts[0].index == 0
@@ -60,8 +60,8 @@ class TestContextBuilder:
     assert contexts[2].index == 2
     assert contexts[2].statement == statements[2]
 
-  def test_computePrevNextBasic(self):
-    """Test _computePrevNext links statements correctly"""
+  def test_buildContextsPrevNextLinks(self):
+    """Test buildContexts links prev/next statements correctly"""
 
     statements = [
       createStatement(BlockType.ASSIGNMENT, 0),
@@ -69,9 +69,7 @@ class TestContextBuilder:
       createStatement(BlockType.ASSIGNMENT, 0),
     ]
     builder = ContextBuilder()
-    contexts = builder._initializeContexts(statements)
-
-    builder._computePrevNext(statements, contexts)
+    contexts = builder.buildContexts(statements)
 
     # First statement has no previous
     assert contexts[0].prevNonBlank is None
@@ -91,8 +89,8 @@ class TestContextBuilder:
     assert contexts[2].nextNonBlank is None
     assert contexts[2].nextNonBlankIdx == -1
 
-  def test_computePrevNextWithBlanks(self):
-    """Test _computePrevNext skips blank lines"""
+  def test_buildContextsPrevNextSkipsBlanks(self):
+    """Test buildContexts skips blank lines in prev/next links"""
 
     statements = [
       createStatement(BlockType.ASSIGNMENT, 0),
@@ -101,9 +99,7 @@ class TestContextBuilder:
       createStatement(BlockType.ASSIGNMENT, 0),
     ]
     builder = ContextBuilder()
-    contexts = builder._initializeContexts(statements)
-
-    builder._computePrevNext(statements, contexts)
+    contexts = builder.buildContexts(statements)
 
     # First non-blank links to last non-blank (skipping blanks)
     assert contexts[0].nextNonBlank == statements[3]
@@ -119,8 +115,8 @@ class TestContextBuilder:
     assert contexts[2].prevNonBlank is None
     assert contexts[2].nextNonBlank is None
 
-  def test_computeScopeInfoNewScope(self):
-    """Test _computeScopeInfo detects new scopes"""
+  def test_buildContextsDetectsNewScope(self):
+    """Test buildContexts detects new scopes after definitions"""
 
     statements = [
       createStatement(BlockType.DEFINITION, 0),  # def foo():
@@ -128,30 +124,26 @@ class TestContextBuilder:
       createStatement(BlockType.ASSIGNMENT, 2),  #   y = 2
     ]
     builder = ContextBuilder()
-    contexts = builder._initializeContexts(statements)
+    contexts = builder.buildContexts(statements)
 
-    builder._computePrevNext(statements, contexts)
-    builder._computeScopeInfo(statements, contexts)
     assert not contexts[0].startsNewScope
     assert contexts[1].startsNewScope  # First statement after definition
     assert not contexts[2].startsNewScope
 
-  def test_computeScopeInfoControlBlock(self):
-    """Test _computeScopeInfo detects new scopes after control blocks"""
+  def test_buildContextsDetectsNewScopeAfterControl(self):
+    """Test buildContexts detects new scopes after control blocks"""
 
     statements = [
       createStatement(BlockType.CONTROL, 0),  # if x:
       createStatement(BlockType.ASSIGNMENT, 2),  #   y = 1  <- starts new scope
     ]
     builder = ContextBuilder()
-    contexts = builder._initializeContexts(statements)
+    contexts = builder.buildContexts(statements)
 
-    builder._computePrevNext(statements, contexts)
-    builder._computeScopeInfo(statements, contexts)
     assert contexts[1].startsNewScope
 
-  def test_computeScopeInfoSecondaryClause(self):
-    """Test _computeScopeInfo detects new scopes after secondary clauses"""
+  def test_buildContextsDetectsNewScopeAfterSecondaryClause(self):
+    """Test buildContexts detects new scopes after secondary clauses"""
 
     statements = [
       createStatement(BlockType.CONTROL, 0),  # if x:
@@ -160,15 +152,13 @@ class TestContextBuilder:
       createStatement(BlockType.ASSIGNMENT, 2),  #   z = 2  <- starts new scope
     ]
     builder = ContextBuilder()
-    contexts = builder._initializeContexts(statements)
+    contexts = builder.buildContexts(statements)
 
-    builder._computePrevNext(statements, contexts)
-    builder._computeScopeInfo(statements, contexts)
     assert contexts[1].startsNewScope  # After if
     assert contexts[3].startsNewScope  # After else
 
-  def test_computeScopeInfoReturningFromNested(self):
-    """Test _computeScopeInfo detects returning from nested levels"""
+  def test_buildContextsDetectsReturningFromNested(self):
+    """Test buildContexts detects returning from nested levels"""
 
     statements = [
       createStatement(BlockType.DEFINITION, 0),  # def foo():
@@ -179,10 +169,8 @@ class TestContextBuilder:
       createStatement(BlockType.ASSIGNMENT, 0),  # a = 4  <- returning from nested
     ]
     builder = ContextBuilder()
-    contexts = builder._initializeContexts(statements)
+    contexts = builder.buildContexts(statements)
 
-    builder._computePrevNext(statements, contexts)
-    builder._computeScopeInfo(statements, contexts)
     assert not contexts[0].returningFromNestedLevel
     assert not contexts[1].returningFromNestedLevel
     assert not contexts[2].returningFromNestedLevel
@@ -190,8 +178,8 @@ class TestContextBuilder:
     assert contexts[4].returningFromNestedLevel  # Back to indent 2 from 4
     assert contexts[5].returningFromNestedLevel  # Back to indent 0 from 2
 
-  def test_computeCompletedBlocksDefinition(self):
-    """Test _computeCompletedBlocks identifies completed definition blocks"""
+  def test_buildContextsDetectsCompletedDefinition(self):
+    """Test buildContexts identifies completed definition blocks"""
 
     statements = [
       createStatement(BlockType.DEFINITION, 0),  # def foo():
@@ -199,16 +187,14 @@ class TestContextBuilder:
       createStatement(BlockType.DEFINITION, 0),  # def bar():  <- after completed def
     ]
     builder = ContextBuilder()
-    contexts = builder._initializeContexts(statements)
+    contexts = builder.buildContexts(statements)
 
-    builder._computePrevNext(statements, contexts)
-    builder._computeCompletedBlocks(statements, contexts)
     assert not contexts[0].hasCompletedDefBefore
     assert not contexts[1].hasCompletedDefBefore
     assert contexts[2].hasCompletedDefBefore  # foo() is complete
 
-  def test_computeCompletedBlocksControl(self):
-    """Test _computeCompletedBlocks identifies completed control blocks"""
+  def test_buildContextsDetectsCompletedControl(self):
+    """Test buildContexts identifies completed control blocks"""
 
     statements = [
       createStatement(BlockType.CONTROL, 0),  # if x:
@@ -216,31 +202,27 @@ class TestContextBuilder:
       createStatement(BlockType.ASSIGNMENT, 0),  # z = 2  <- after completed control
     ]
     builder = ContextBuilder()
-    contexts = builder._initializeContexts(statements)
+    contexts = builder.buildContexts(statements)
 
-    builder._computePrevNext(statements, contexts)
-    builder._computeCompletedBlocks(statements, contexts)
     assert not contexts[0].hasCompletedControlBefore
     assert not contexts[1].hasCompletedControlBefore
     assert contexts[2].hasCompletedControlBefore  # if block is complete
 
-  def test_computeCompletedBlocksNoBodyNoCompletion(self):
-    """Test _computeCompletedBlocks requires body to mark as completed"""
+  def test_buildContextsNoCompletionWithoutBody(self):
+    """Test buildContexts requires body to mark definition as completed"""
 
     statements = [
       createStatement(BlockType.DEFINITION, 0),  # def foo():
       createStatement(BlockType.DEFINITION, 0),  # def bar():  <- no body between
     ]
     builder = ContextBuilder()
-    contexts = builder._initializeContexts(statements)
+    contexts = builder.buildContexts(statements)
 
-    builder._computePrevNext(statements, contexts)
-    builder._computeCompletedBlocks(statements, contexts)
     assert not contexts[0].hasCompletedDefBefore
     assert not contexts[1].hasCompletedDefBefore  # No body, so not completed
 
-  def test_computeCommentPreservationBasic(self):
-    """Test _computeCommentPreservation marks blank lines adjacent to comments"""
+  def test_buildContextsPreservesBlankAfterComment(self):
+    """Test buildContexts marks blank lines adjacent to comments for preservation"""
 
     statements = [
       createStatement(BlockType.COMMENT, 0, isComment=True),  # # comment
@@ -248,14 +230,12 @@ class TestContextBuilder:
       createStatement(BlockType.ASSIGNMENT, 0),  # x = 1  <- preserve blank before
     ]
     builder = ContextBuilder()
-    contexts = builder._initializeContexts(statements)
+    contexts = builder.buildContexts(statements)
 
-    builder._computePrevNext(statements, contexts)
-    builder._computeCommentPreservation(statements, contexts)
     assert contexts[2].preserveBlankLines  # Blank after comment
 
-  def test_computeCommentPreservationModuleLevelDefException(self):
-    """Test _computeCommentPreservation does not preserve for module-level definitions after comments"""
+  def test_buildContextsNoPreserveForModuleLevelDef(self):
+    """Test buildContexts does not preserve blank lines for module-level definitions after comments"""
 
     statements = [
       createStatement(BlockType.COMMENT, 0, isComment=True),  # # comment
@@ -263,14 +243,12 @@ class TestContextBuilder:
       createStatement(BlockType.DEFINITION, 0),  # def foo():  <- don't preserve (PEP 8)
     ]
     builder = ContextBuilder()
-    contexts = builder._initializeContexts(statements)
+    contexts = builder.buildContexts(statements)
 
-    builder._computePrevNext(statements, contexts)
-    builder._computeCommentPreservation(statements, contexts)
     assert not contexts[2].preserveBlankLines  # PEP 8 overrides preservation
 
-  def test_computeCommentPreservationCommentAfterDef(self):
-    """Test _computeCommentPreservation does not preserve for comment after module-level definition"""
+  def test_buildContextsNoPreserveForCommentAfterDef(self):
+    """Test buildContexts does not preserve blank lines for comment after module-level definition"""
 
     statements = [
       createStatement(BlockType.DEFINITION, 0),  # def foo():
@@ -279,10 +257,8 @@ class TestContextBuilder:
       createStatement(BlockType.COMMENT, 0, isComment=True),  # # comment  <- don't preserve (PEP 8)
     ]
     builder = ContextBuilder()
-    contexts = builder._initializeContexts(statements)
+    contexts = builder.buildContexts(statements)
 
-    builder._computePrevNext(statements, contexts)
-    builder._computeCommentPreservation(statements, contexts)
     assert not contexts[3].preserveBlankLines  # PEP 8 overrides preservation
 
   def test_buildContextsIntegration(self):

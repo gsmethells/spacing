@@ -13,7 +13,7 @@ from spacing.types import BlockType
 
 
 class TestBlankLineConfig:
-  def testFromDefaults(self):
+  def test_fromDefaults(self):
     """Test default configuration creation"""
 
     config = BlankLineConfig.fromDefaults()
@@ -24,7 +24,7 @@ class TestBlankLineConfig:
     assert config.afterDocstring == 1
     assert len(config.transitions) == 0
 
-  def testGetBlankLinesSameType(self):
+  def test_getBlankLinesSameType(self):
     """Test blank lines for same block types"""
 
     config = BlankLineConfig.fromDefaults()
@@ -38,7 +38,7 @@ class TestBlankLineConfig:
     assert config.getBlankLines(BlockType.CONTROL, BlockType.CONTROL) == 1
     assert config.getBlankLines(BlockType.DEFINITION, BlockType.DEFINITION) == 1
 
-  def testGetBlankLinesDifferentTypes(self):
+  def test_getBlankLinesDifferentTypes(self):
     """Test blank lines for different block types"""
 
     config = BlankLineConfig.fromDefaults()
@@ -48,7 +48,7 @@ class TestBlankLineConfig:
     assert config.getBlankLines(BlockType.IMPORT, BlockType.CONTROL) == 1
     assert config.getBlankLines(BlockType.DEFINITION, BlockType.ASSIGNMENT) == 1
 
-  def testGetBlankLinesWithOverrides(self):
+  def test_getBlankLinesWithOverrides(self):
     """Test blank lines with transition overrides"""
 
     config = BlankLineConfig(
@@ -67,7 +67,7 @@ class TestBlankLineConfig:
     # Special rule should be used
     assert config.getBlankLines(BlockType.CONTROL, BlockType.CONTROL) == 2
 
-  def testFromTomlMinimal(self):
+  def test_fromTomlMinimal(self):
     """Test loading minimal TOML configuration"""
 
     tomlContent = """
@@ -87,7 +87,7 @@ default_between_different = 2
     assert config.afterDocstring == 1  # Default
     assert len(config.transitions) == 0
 
-  def testFromTomlComplete(self):
+  def test_fromTomlComplete(self):
     """Test loading complete TOML configuration"""
 
     tomlContent = """
@@ -120,7 +120,7 @@ import_to_definition = 0
 
     assert config.transitions == expected
 
-  def testFromTomlValidationErrors(self):
+  def test_fromTomlValidationErrors(self):
     """Test TOML validation errors"""
 
     # Invalid range
@@ -162,7 +162,7 @@ indent_width = 9
       with pytest.raises(ValueError, match='must be between 1 and 8'):
         BlankLineConfig.fromToml(Path(f.name))
 
-  def testFromTomlInvalidBlockType(self):
+  def test_fromTomlInvalidBlockType(self):
     """Test TOML with invalid block type names"""
 
     tomlContent = """
@@ -177,7 +177,7 @@ invalid_to_call = 1
       with pytest.raises(ValueError, match='Unknown block type: invalid'):
         BlankLineConfig.fromToml(Path(f.name))
 
-  def testFromTomlInvalidTransitionFormat(self):
+  def test_fromTomlInvalidTransitionFormat(self):
     """Test TOML with invalid transition format"""
 
     tomlContent = """
@@ -192,13 +192,13 @@ assignment_call = 1
       with pytest.raises(ValueError, match='Invalid transition key format'):
         BlankLineConfig.fromToml(Path(f.name))
 
-  def testFromTomlFileNotFound(self):
+  def test_fromTomlFileNotFound(self):
     """Test TOML file not found error"""
 
     with pytest.raises(FileNotFoundError):
       BlankLineConfig.fromToml(Path('/nonexistent/file.toml'))
 
-  def testFromTomlInvalidToml(self):
+  def test_fromTomlInvalidToml(self):
     """Test invalid TOML syntax"""
 
     tomlContent = """
@@ -213,7 +213,7 @@ invalid toml syntax
       with pytest.raises(ValueError, match='Failed to parse TOML'):
         BlankLineConfig.fromToml(Path(f.name))
 
-  def testFromTomlUnknownSection(self):
+  def test_fromTomlUnknownSection(self):
     """Test TOML with unknown top-level section"""
 
     tomlContent = """
@@ -228,60 +228,7 @@ some_value = 1
       with pytest.raises(ValueError, match='Unknown configuration sections: unknown_section'):
         BlankLineConfig.fromToml(Path(f.name))
 
-  def testParseBlockType(self):
-    """Test block type parsing"""
-
-    assert BlankLineConfig._parseBlockType('assignment') == BlockType.ASSIGNMENT
-    assert BlankLineConfig._parseBlockType('call') == BlockType.CALL
-    assert BlankLineConfig._parseBlockType('import') == BlockType.IMPORT
-    assert BlankLineConfig._parseBlockType('control') == BlockType.CONTROL
-    assert BlankLineConfig._parseBlockType('definition') == BlockType.DEFINITION
-    assert BlankLineConfig._parseBlockType('declaration') == BlockType.DECLARATION
-    assert BlankLineConfig._parseBlockType('comment') == BlockType.COMMENT
-
-    with pytest.raises(ValueError, match='Unknown block type: invalid'):
-      BlankLineConfig._parseBlockType('invalid')
-
-  def testValidateBlankLineCount(self):
-    """Test blank line count validation"""
-
-    # Valid values
-    BlankLineConfig._validateBlankLineCount(0, 'test')
-    BlankLineConfig._validateBlankLineCount(1, 'test')
-    BlankLineConfig._validateBlankLineCount(3, 'test')
-
-    # Invalid values
-    with pytest.raises(ValueError, match='must be between 0 and 3'):
-      BlankLineConfig._validateBlankLineCount(-1, 'test')
-
-    with pytest.raises(ValueError, match='must be between 0 and 3'):
-      BlankLineConfig._validateBlankLineCount(4, 'test')
-
-    with pytest.raises(ValueError, match='must be an integer'):
-      BlankLineConfig._validateBlankLineCount('1', 'test')
-
-  def testValidateIndentWidth(self):
-    """Test indent width validation"""
-
-    # Valid values
-    BlankLineConfig._validateIndentWidth(1, 'test')
-    BlankLineConfig._validateIndentWidth(2, 'test')
-    BlankLineConfig._validateIndentWidth(4, 'test')
-    BlankLineConfig._validateIndentWidth(8, 'test')
-
-    # Invalid values - below minimum
-    with pytest.raises(ValueError, match='must be between 1 and 8'):
-      BlankLineConfig._validateIndentWidth(0, 'test')
-
-    # Invalid values - above maximum
-    with pytest.raises(ValueError, match='must be between 1 and 8'):
-      BlankLineConfig._validateIndentWidth(9, 'test')
-
-    # Invalid type
-    with pytest.raises(ValueError, match='must be an integer'):
-      BlankLineConfig._validateIndentWidth('2', 'test')
-
-  def testAllBlockTypeCombinations(self):
+  def test_allBlockTypeCombinations(self):
     """Test all valid block type combinations"""
 
     blockTypes = [
@@ -303,7 +250,7 @@ some_value = 1
         assert isinstance(result, int)
         assert 0 <= result <= 3
 
-  def testAfterDocstringConfiguration(self):
+  def test_afterDocstringConfiguration(self):
     """Test afterDocstring configuration controls blank lines after docstrings"""
 
     # Default: 1 blank line after docstring (PEP 257)
@@ -324,7 +271,7 @@ some_value = 1
     assert configDefault.getBlankLines(BlockType.DOCSTRING, BlockType.DOCSTRING) == 0
     assert configCompact.getBlankLines(BlockType.DOCSTRING, BlockType.DOCSTRING) == 0
 
-  def testInvalidPathConfigTypes(self):
+  def test_invalidPathConfigTypes(self):
     """Test that invalid types for path config raise ValueError"""
 
     import tempfile

@@ -12,10 +12,10 @@ from spacing.processor import FileProcessor
 
 
 class TestDocstringPreservation:
-  def testMultilineDocstringWithBlankLines(self):
+  def test_multilineDocstringWithBlankLines(self):
     """Test that multiline docstrings with blank lines are preserved"""
 
-    input_code = '''class AIService:
+    inputCode = '''class AIService:
   """
   **DESIGN REFERENCE: Layer 0: Foundational Services - LLM Service**
 
@@ -31,7 +31,7 @@ class TestDocstringPreservation:
 '''
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
@@ -39,15 +39,15 @@ class TestDocstringPreservation:
       # Should not change - docstring should be preserved as-is
       assert not changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == input_code
+      assert result == inputCode
 
-  def testMultilineDocstringFollowedByImport(self):
-    """Test that blank line is added after docstring per PEP 257 and import"""
+  def test_multilineDocstringFollowedByImport(self):
+    """Test that blank line is added after docstring per PEP 257 and between block types"""
 
-    input_code = '''def suggestUserNeedId(featureFile):
+    inputCode = '''def suggestUserNeedId(featureFile):
     """
     Suggests the most appropriate User Need ID.
 
@@ -59,21 +59,36 @@ class TestDocstringPreservation:
     result_un_id = None
     return result_un_id, 0.0
 '''
+    expectedCode = '''def suggestUserNeedId(featureFile):
+    """
+    Suggests the most appropriate User Need ID.
+
+    Returns:
+      tuple[str|None, float]: A tuple containing the suggested User Need ID
+      (or None) and the confidence score (0.0 to 1.0).
+    """
+
+    from fcheck.parser.featureextractor import extractCompleteFeatureData
+
+    result_un_id = None
+
+    return result_un_id, 0.0
+'''
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      # Should add blank line after docstring per PEP 257
-      assert result == input_code
-      assert not changed
+      # Should add blank lines: after docstring, between import/assignment/return
+      assert changed
+      assert result == expectedCode
 
-  def testSingleQuoteDocstring(self):
+  def test_singleQuoteDocstring(self):
     """Test that single-quoted docstrings are preserved"""
 
     # Set afterDocstring = 0 for this test (compact docstring formatting)
@@ -84,7 +99,7 @@ class TestDocstringPreservation:
 
     setConfig(config)
 
-    input_code = """def my_function():
+    inputCode = """def my_function():
   '''
   This is a docstring with single quotes.
 
@@ -94,7 +109,7 @@ class TestDocstringPreservation:
 """
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
@@ -102,41 +117,12 @@ class TestDocstringPreservation:
       # Should not change
       assert not changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == input_code
+      assert result == inputCode
 
-  def testMultilineDocstringFollowedByImport(self):
-    """Test that blank line is added after docstring per PEP 257 and import"""
-
-    input_code = '''def suggestUserNeedId(featureFile):
-    """
-    Suggests the most appropriate User Need ID.
-
-    Returns:
-      tuple[str|None, float]: A tuple containing the suggested User Need ID
-      (or None) and the confidence score (0.0 to 1.0).
-    """
-    from fcheck.parser.featureextractor import extractCompleteFeatureData
-    result_un_id = None
-    return result_un_id, 0.0
-'''
-
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
-      f.flush()
-
-      changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
-
-      with open(f.name) as result_file:
-        result = result_file.read()
-
-      # Should add blank line after docstring per PEP 257
-      assert result == input_code
-      assert not changed
-
-  def testDocstringWithHashSymbol(self):
+  def test_docstringWithHashSymbol(self):
     """Test that # symbols inside docstrings are not treated as comments"""
 
     # Set afterDocstring = 0 for this test (compact docstring formatting)
@@ -147,7 +133,7 @@ class TestDocstringPreservation:
 
     setConfig(config)
 
-    input_code = '''def parse_markdown():
+    inputCode = '''def parse_markdown():
   """
   Parse markdown with headers.
 
@@ -160,7 +146,7 @@ class TestDocstringPreservation:
 '''
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
@@ -168,41 +154,12 @@ class TestDocstringPreservation:
       # Should not change
       assert not changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == input_code
+      assert result == inputCode
 
-  def testMultilineDocstringFollowedByImport(self):
-    """Test that blank line is added after docstring per PEP 257 and import"""
-
-    input_code = '''def suggestUserNeedId(featureFile):
-    """
-    Suggests the most appropriate User Need ID.
-
-    Returns:
-      tuple[str|None, float]: A tuple containing the suggested User Need ID
-      (or None) and the confidence score (0.0 to 1.0).
-    """
-    from fcheck.parser.featureextractor import extractCompleteFeatureData
-    result_un_id = None
-    return result_un_id, 0.0
-'''
-
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
-      f.flush()
-
-      changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
-
-      with open(f.name) as result_file:
-        result = result_file.read()
-
-      # Should add blank line after docstring per PEP 257
-      assert result == input_code
-      assert not changed
-
-  def testNestedQuotesInDocstring(self):
+  def test_nestedQuotesInDocstring(self):
     """Test docstrings containing nested quotes"""
 
     # Set afterDocstring = 0 for this test (compact docstring formatting)
@@ -213,7 +170,7 @@ class TestDocstringPreservation:
 
     setConfig(config)
 
-    input_code = '''def example():
+    inputCode = '''def example():
   """
   This docstring contains "quotes" and 'apostrophes'.
 
@@ -226,7 +183,7 @@ class TestDocstringPreservation:
 '''
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
@@ -234,41 +191,12 @@ class TestDocstringPreservation:
       # Should not change
       assert not changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == input_code
+      assert result == inputCode
 
-  def testMultilineDocstringFollowedByImport(self):
-    """Test that blank line is added after docstring per PEP 257 and import"""
-
-    input_code = '''def suggestUserNeedId(featureFile):
-    """
-    Suggests the most appropriate User Need ID.
-
-    Returns:
-      tuple[str|None, float]: A tuple containing the suggested User Need ID
-      (or None) and the confidence score (0.0 to 1.0).
-    """
-    from fcheck.parser.featureextractor import extractCompleteFeatureData
-    result_un_id = None
-    return result_un_id, 0.0
-'''
-
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
-      f.flush()
-
-      changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
-
-      with open(f.name) as result_file:
-        result = result_file.read()
-
-      # Should add blank line after docstring per PEP 257
-      assert result == input_code
-      assert not changed
-
-  def testDocstringFollowedByCodeInFunctionBody(self):
+  def test_docstringFollowedByCodeInFunctionBody(self):
     """Test that blank line is added between docstring and code per PEP 257"""
 
     # Ensure we're using default config (in case previous tests modified global config)
@@ -276,14 +204,14 @@ class TestDocstringPreservation:
 
     setConfig(BlankLineConfig.fromDefaults())
 
-    input_code = '''def __init__(self):
+    inputCode = '''def __init__(self):
   """Initialize the AI service."""
   try:
     self.client = None
   except Exception:
     pass
 '''
-    expected_code = '''def __init__(self):
+    expectedCode = '''def __init__(self):
   """Initialize the AI service."""
 
   try:
@@ -293,7 +221,7 @@ class TestDocstringPreservation:
 '''
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
@@ -301,49 +229,20 @@ class TestDocstringPreservation:
       # Should add blank line after docstring per PEP 257
       assert changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == expected_code
+      assert result == expectedCode
 
-  def testMultilineDocstringFollowedByImport(self):
-    """Test that blank line is added after docstring per PEP 257 and import"""
-
-    input_code = '''def suggestUserNeedId(featureFile):
-    """
-    Suggests the most appropriate User Need ID.
-
-    Returns:
-      tuple[str|None, float]: A tuple containing the suggested User Need ID
-      (or None) and the confidence score (0.0 to 1.0).
-    """
-    from fcheck.parser.featureextractor import extractCompleteFeatureData
-    result_un_id = None
-    return result_un_id, 0.0
-'''
-
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
-      f.flush()
-
-      changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
-
-      with open(f.name) as result_file:
-        result = result_file.read()
-
-      # Should add blank line after docstring per PEP 257
-      assert result == input_code
-      assert not changed
-
-  def testRegularStatementsInFunctionBody(self):
+  def test_regularStatementsInFunctionBody(self):
     """Test that blank lines are added between different block types in function body"""
 
-    input_code = """def func():
+    inputCode = """def func():
   x = "not a docstring"
   y = 42
   return x + str(y)
 """
-    expected_code = """def func():
+    expectedCode = """def func():
   x = "not a docstring"
   y = 42
 
@@ -351,7 +250,7 @@ class TestDocstringPreservation:
 """
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
@@ -359,13 +258,13 @@ class TestDocstringPreservation:
       # Should add blank line between ASSIGNMENT (y = 42) and CALL (return)
       assert changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == expected_code
+      assert result == expectedCode
 
-  def testMultilineDocstringFollowedByImport(self):
-    """Test blank lines after docstring and between different block types"""
+  def test_multilineDocstringFollowedByImportCompactDocstring(self):
+    """Test blank lines after docstring and between different block types with afterDocstring=0"""
 
     # Set afterDocstring = 0 for this test (compact docstring formatting)
     from spacing.config import BlankLineConfig, setConfig
@@ -375,7 +274,7 @@ class TestDocstringPreservation:
 
     setConfig(config)
 
-    input_code = '''def suggestUserNeedId(featureFile):
+    inputCode = '''def suggestUserNeedId(featureFile):
     """
     Suggests the most appropriate User Need ID.
 
@@ -387,7 +286,7 @@ class TestDocstringPreservation:
     result_un_id = None
     return result_un_id, 0.0
 '''
-    expected_code = '''def suggestUserNeedId(featureFile):
+    expectedCode = '''def suggestUserNeedId(featureFile):
     """
     Suggests the most appropriate User Need ID.
 
@@ -403,23 +302,23 @@ class TestDocstringPreservation:
 '''
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
       # Should add blank lines: IMPORT->ASSIGNMENT and ASSIGNMENT->CALL
       # Should NOT add blank line after docstring
-      assert result == expected_code
+      assert result == expectedCode
       assert changed
 
-  def testNoBlankLineAfterAsyncDefBeforeDocstring(self):
+  def test_noBlankLineAfterAsyncDefBeforeDocstring(self):
     """Test that no blank line is added between async def and its docstring"""
 
-    input_code = '''class Foo:
+    inputCode = '''class Foo:
   async def method(self):
     """Docstring"""
     pass
@@ -437,22 +336,22 @@ class TestDocstringPreservation:
     setConfig(config)
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
       assert changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
       assert result == expected, f'Expected no blank before docstring\nGot:\n{result}'
 
-  def testModuleLevelDocstringAlwaysHasBlankLineAfter(self):
+  def test_moduleLevelDocstringAlwaysHasBlankLineAfter(self):
     """Test that module-level docstrings ALWAYS have blank line after them (PEP 257)"""
 
-    input_code = '''"""
+    inputCode = '''"""
 This is a module-level docstring.
 """
 import sys
@@ -474,22 +373,22 @@ x = 1
     setConfig(config)
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
       assert changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
       assert result == expected, f'Expected blank line after module docstring\nGot:\n{result}'
 
-  def testModuleLevelDocstringWithAfterDocstringZero(self):
+  def test_moduleLevelDocstringWithAfterDocstringZero(self):
     """Test that module-level docstrings ALWAYS have blank line even with after_docstring=0"""
 
-    input_code = '''"""
+    inputCode = '''"""
 This is a module-level docstring.
 It should have a blank line after it regardless of after_docstring config.
 """
@@ -519,25 +418,25 @@ def foo():
     setConfig(config)
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
       assert changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
       assert result == expected, f'Module docstring should have blank line even with after_docstring=0\nGot:\n{result}'
 
     # Reset to defaults
     setConfig(BlankLineConfig.fromDefaults())
 
-  def testModuleLevelDocstringFollowedByDefinition(self):
+  def test_moduleLevelDocstringFollowedByDefinition(self):
     """Test module-level docstring followed by top-level definition"""
 
-    input_code = '''"""Module docstring."""
+    inputCode = '''"""Module docstring."""
 def foo():
   pass
 '''
@@ -552,15 +451,15 @@ def foo():
     setConfig(config)
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
       assert changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
       assert result == expected, (
         f'Module docstring should have blank line, then PEP 8 spacing before def\nGot:\n{result}'

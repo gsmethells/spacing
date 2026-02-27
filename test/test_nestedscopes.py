@@ -11,7 +11,7 @@ from spacing.processor import FileProcessor
 
 
 class TestNestedScopes:
-  def testNoBlankLineAtStartOfIfBody(self):
+  def test_noBlankLineAtStartOfIfBody(self):
     """Test no blank line added at start of if body"""
 
     testCode = """def process(data):
@@ -37,12 +37,12 @@ class TestNestedScopes:
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
       assert result == expectedCode
 
-  def testNoBlankLineAfterNestedIf(self):
+  def test_noBlankLineAfterNestedIf(self):
     """Test no blank line added after if/elif/else in nested context"""
 
     testCode = """def analyze(lines):
@@ -73,12 +73,12 @@ class TestNestedScopes:
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
       assert result == expectedCode
 
-  def testNoBlankLineAfterForInNestedContext(self):
+  def test_noBlankLineAfterForInNestedContext(self):
     """Test no blank line added after for loop in nested context"""
 
     testCode = """def process():
@@ -104,12 +104,12 @@ class TestNestedScopes:
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
       assert result == expectedCode
 
-  def testAssignmentBeforeReturnNeedsBlankLine(self):
+  def test_assignmentBeforeReturnNeedsBlankLine(self):
     """Test that assignment before return needs blank line"""
 
     testCode = """def createStatement(lines, startIdx, endIdx):
@@ -138,12 +138,12 @@ class TestNestedScopes:
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
       assert result == expectedCode
 
-  def testAnalyzerFileFormatting(self):
+  def test_analyzerFileFormatting(self):
     """Test that analyzer.py has been manually corrected by the user"""
 
     # Read the manually corrected analyzer.py
@@ -164,7 +164,7 @@ class TestNestedScopes:
       # This test documents that analyzer.py has been manually corrected
       assert True, 'User manually corrected analyzer.py - their formatting is always correct'
 
-  def testNoBlankLineBeforeCommentAtStartOfNestedScope(self):
+  def test_noBlankLineBeforeCommentAtStartOfNestedScope(self):
     """Test that comments at start of nested scopes don't get blank lines"""
 
     # This specific pattern from analyzer.py was problematic
@@ -183,12 +183,12 @@ class TestNestedScopes:
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
       assert result == expectedCode, 'Should not add blank line before comment at start of nested scope'
 
-  def testNoBlankLinesAtStartOfNestedScopes(self):
+  def test_noBlankLinesAtStartOfNestedScopes(self):
     """Test that blank lines are not added at the start of nested scopes (if/for/while/else bodies)"""
 
     testCode = """def process(data):
@@ -220,8 +220,8 @@ class TestNestedScopes:
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
       # No blank lines should be added at start of nested scopes
       if result != expectedCode:

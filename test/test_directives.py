@@ -15,7 +15,7 @@ from spacing.types import BlockType
 class TestDirectiveDetection:
   """Unit tests for directive detection in FileAnalyzer"""
 
-  def testBasicSkipDirective(self):
+  def test_basicSkipDirective(self):
     """Test basic # spacing: skip directive is detected and statement is marked"""
 
     analyzer = FileAnalyzer()
@@ -34,7 +34,7 @@ class TestDirectiveDetection:
     assert statements[2].blockType == BlockType.ASSIGNMENT
     assert statements[2].skipBlankLineRules
 
-  def testSkipDirectiveCaseInsensitive(self):
+  def test_skipDirectiveCaseInsensitive(self):
     """Test directive works with various case combinations"""
 
     analyzer = FileAnalyzer()
@@ -63,7 +63,7 @@ class TestDirectiveDetection:
     assert statements[0].isComment
     assert statements[1].skipBlankLineRules
 
-  def testSkipDirectiveWhitespaceVariations(self):
+  def test_skipDirectiveWhitespaceVariations(self):
     """Test directive tolerates extra whitespace"""
 
     analyzer = FileAnalyzer()
@@ -77,7 +77,7 @@ class TestDirectiveDetection:
     assert statements[0].isComment
     assert statements[1].skipBlankLineRules
 
-  def testSkipDirectiveEndsAtBlankLine(self):
+  def test_skipDirectiveEndsAtBlankLine(self):
     """Test skip directive block ends at first blank line"""
 
     analyzer = FileAnalyzer()
@@ -101,7 +101,7 @@ class TestDirectiveDetection:
 
     assert not statements[4].skipBlankLineRules  # z = 3
 
-  def testMultipleSkipDirectives(self):
+  def test_multipleSkipDirectives(self):
     """Test multiple skip directives in same file work independently"""
 
     analyzer = FileAnalyzer()
@@ -135,7 +135,7 @@ class TestDirectiveDetection:
     assert statements[7].skipBlankLineRules  # d = 4
     assert statements[8].skipBlankLineRules  # e = 5
 
-  def testSkipDirectiveWithNoFollowingStatements(self):
+  def test_skipDirectiveWithNoFollowingStatements(self):
     """Test skip directive at end of file with no following statements"""
 
     analyzer = FileAnalyzer()
@@ -156,10 +156,10 @@ class TestDirectiveDetection:
 class TestDirectiveIntegration:
   """Integration tests for directive behavior with full processing pipeline"""
 
-  def testBasicSkipTwoStatements(self):
+  def test_basicSkipTwoStatements(self):
     """Test skip directive preserves spacing for two consecutive statements"""
 
-    input_code = """import sys
+    inputCode = """import sys
 # spacing: skip
 x = 1
 y = 2
@@ -168,7 +168,7 @@ z = 3
 """
 
     # Directive is kept in output, x and y keep no blank lines between them
-    expected_output = """import sys
+    expectedOutput = """import sys
 
 # spacing: skip
 x = 1
@@ -178,22 +178,22 @@ z = 3
 """
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
       assert changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == expected_output
+      assert result == expectedOutput
 
-  def testSkipLongerBlock(self):
+  def test_skipLongerBlock(self):
     """Test skip directive for block with 3+ statements"""
 
-    input_code = """import sys
+    inputCode = """import sys
 # spacing: skip
 x = 1
 y = 2
@@ -201,7 +201,7 @@ z = 3
 
 a = 4
 """
-    expected_output = """import sys
+    expectedOutput = """import sys
 
 # spacing: skip
 x = 1
@@ -212,22 +212,22 @@ a = 4
 """
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
       assert changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == expected_output
+      assert result == expectedOutput
 
-  def testSkipEndsAtBlankLine(self):
+  def test_skipEndsAtBlankLine(self):
     """Test skip directive block ends at first blank line (block = consecutive non-blank statements)"""
 
-    input_code = """import sys
+    inputCode = """import sys
 # spacing: skip
 x = 1
 
@@ -237,7 +237,7 @@ z = 3
 
     # Only x = 1 is in the skip block (ends at blank line)
     # y and z follow normal rules (no blank between assignments)
-    expected_output = """import sys
+    expectedOutput = """import sys
 
 # spacing: skip
 x = 1
@@ -247,22 +247,22 @@ z = 3
 """
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
       assert changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == expected_output
+      assert result == expectedOutput
 
-  def testSkipInNestedScope(self):
+  def test_skipInNestedScope(self):
     """Test skip directive inside function/class"""
 
-    input_code = """def foo():
+    inputCode = """def foo():
   import sys
   # spacing: skip
   x = 1
@@ -270,7 +270,7 @@ z = 3
 
   z = 3
 """
-    expected_output = """def foo():
+    expectedOutput = """def foo():
   import sys
 
   # spacing: skip
@@ -281,22 +281,22 @@ z = 3
 """
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
       assert changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == expected_output
+      assert result == expectedOutput
 
-  def testSkipMultipleBlocks(self):
+  def test_skipMultipleBlocks(self):
     """Test multiple skip directives in same file"""
 
-    input_code = """import sys
+    inputCode = """import sys
 # spacing: skip
 a = 1
 b = 2
@@ -306,7 +306,7 @@ import os
 c = 3
 d = 4
 """
-    expected_output = """import sys
+    expectedOutput = """import sys
 
 # spacing: skip
 a = 1
@@ -320,22 +320,22 @@ d = 4
 """
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
       assert changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == expected_output
+      assert result == expectedOutput
 
-  def testDirectiveInDocstring(self):
+  def test_directiveInDocstring(self):
     """Test directive inside docstring is ignored"""
 
-    input_code = '''def foo():
+    inputCode = '''def foo():
   """
   This is a docstring.
   # spacing: skip
@@ -348,7 +348,7 @@ d = 4
 
     # Directive in docstring is ignored - normal formatting rules apply
     # Blank line after docstring added, blank between assignments removed
-    expected_output = '''def foo():
+    expectedOutput = '''def foo():
   """
   This is a docstring.
   # spacing: skip
@@ -360,7 +360,7 @@ d = 4
 '''
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
@@ -368,43 +368,43 @@ d = 4
       # Changes should be made (directive in docstring is ignored)
       assert changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == expected_output
+      assert result == expectedOutput
 
-  def testDirectiveInString(self):
+  def test_directiveInString(self):
     """Test directive inside regular string is ignored"""
 
-    input_code = """x = '# spacing: skip'
+    inputCode = """x = '# spacing: skip'
 y = 1
 
 z = 2
 """
 
     # Blank line between y and z should be removed normally
-    expected_output = """x = '# spacing: skip'
+    expectedOutput = """x = '# spacing: skip'
 y = 1
 z = 2
 """
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
       assert changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == expected_output
+      assert result == expectedOutput
 
-  def testSkipWithDifferentBlockTypes(self):
+  def test_skipWithDifferentBlockTypes(self):
     """Test skip directive works across different block types"""
 
-    input_code = """import os
+    inputCode = """import os
 # spacing: skip
 import sys
 x = 1
@@ -414,7 +414,7 @@ y = 2
 """
 
     # import, assignment, call should have no blanks between them
-    expected_output = """import os
+    expectedOutput = """import os
 
 # spacing: skip
 import sys
@@ -425,22 +425,22 @@ y = 2
 """
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
       assert changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == expected_output
+      assert result == expectedOutput
 
-  def testSkipAtModuleLevel(self):
+  def test_skipAtModuleLevel(self):
     """Test skip directive at module level"""
 
-    input_code = """# spacing: skip
+    inputCode = """# spacing: skip
 import sys
 import os
 
@@ -450,7 +450,7 @@ def foo():
 
     # Imports should have no blank between them
     # But function should have proper spacing (2 blank lines)
-    expected_output = """# spacing: skip
+    expectedOutput = """# spacing: skip
 import sys
 import os
 
@@ -460,22 +460,22 @@ def foo():
 """
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
       assert changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == expected_output
+      assert result == expectedOutput
 
-  def testIdempotency(self):
+  def test_idempotency(self):
     """Test that processing a file with skip directive is idempotent"""
 
-    input_code = """import sys
+    inputCode = """import sys
 # spacing: skip
 x = 1
 y = 2
@@ -484,7 +484,7 @@ z = 3
 """
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       # First pass - should add blank line before directive
