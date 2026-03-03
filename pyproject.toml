@@ -4,7 +4,7 @@ build-backend = 'hatchling.build'
 
 [project]
 name = 'spacing'
-version = '1.0.0'
+version = '1.0.1'
 description = 'Python blank line formatter enforcing spacing rules for clean, readable code'
 authors = [{name = 'Greg Smethells'}]
 license = {text = 'GPL-3.0-or-later'}
@@ -42,16 +42,14 @@ indent-style = "space"
 line-ending = "auto"
 
 [tool.ruff.lint]
-# F503 = line continuation before binary operator
+# F401 = unused imports
 # F601 = duplicate key literals
 # F602 = repeated dictionary keys
 # F701 = break statement outside a loop
 # F821 = undefined variables
-# F901 = syntax or indentation error
-# F821 = missing variables
 # I = Import formatting rules from isort
 # Q = quote-related rules from flake8-quotes
-select = ["Q", "I", "F401", "F503", "F601", "F602", "F701", "F821", "F901"]
+select = ["Q", "I", "F401", "F601", "F602", "F701", "F821"]
 
 [tool.ruff.lint.per-file-ignores]
 "**/__init__.py" = ["F401"]

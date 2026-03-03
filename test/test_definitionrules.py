@@ -35,7 +35,8 @@ class TestDefinitionRuleHandler:
     currentStmt = createStatement(BlockType.ASSIGNMENT, 0)
     result = handler.needsBlankAfterDefinition(prevStmt, currentStmt, [], 0)
 
-    assert result >= 0  # Should return config value
+    # PEP 8 requires 2 blank lines from module-level definitions
+    assert result == 2
 
   def test_needsBlankAfterControlBasic(self):
     """Test needsBlankAfterControl returns value from config"""
@@ -44,7 +45,8 @@ class TestDefinitionRuleHandler:
     currentStmt = createStatement(BlockType.ASSIGNMENT, 0)
     result = handler.needsBlankAfterControl(currentStmt)
 
-    assert result >= 0  # Should return config value
+    # Default config: 1 blank line between different block types
+    assert result == 1
 
   def test_needsBlankAfterBlockTypeBasic(self):
     """Test needsBlankAfterBlockType returns value from config"""
@@ -53,7 +55,8 @@ class TestDefinitionRuleHandler:
     currentStmt = createStatement(BlockType.ASSIGNMENT, 0)
     result = handler.needsBlankAfterBlockType(BlockType.IMPORT, currentStmt, [], 0)
 
-    assert result >= 0  # Should return config value
+    # Default config: 1 blank line between different block types
+    assert result == 1
 
   def test_needsBlankAfterDefinitionClassDocstring(self):
     """Test needsBlankAfterDefinition returns 1 for class definition followed by docstring (PEP 257)"""

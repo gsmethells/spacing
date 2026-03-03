@@ -150,26 +150,38 @@ include_hidden = false
 
 Spacing recognizes these code block types (in precedence order):
 
-1. **`assignment`** - Variable assignments, comprehensions, lambda expressions
+1. **`type_annotation`** (or `annotation`) - PEP 526 type annotations
+   ```python
+   x: int = 42
+   name: str
+   ```
+
+2. **`assignment`** - Variable assignments, comprehensions, lambda expressions
    ```python
    x = 42
    items = [i for i in range(10)]
    func = lambda x: x * 2
    ```
 
-2. **`call`** - Function/method calls, `del`, `assert`, `pass`, `raise`, `yield`, `return`
+3. **`flow_control`** - Flow control statements
    ```python
-   print('hello')
    return result
+   yield value
    ```
 
-3. **`import`** - Import statements
+4. **`call`** - Function/method calls, `del`, `assert`, `pass`, `raise`
+   ```python
+   print('hello')
+   assert valid
+   ```
+
+5. **`import`** - Import statements
    ```python
    import os
    from pathlib import Path
    ```
 
-4. **`control`** - Control structures with blocks (`if`, `for`, `while`, `try`, `with`)
+6. **`control`** - Control structures with blocks (`if`, `for`, `while`, `try`, `with`)
    ```python
    if condition:
        process()
@@ -178,7 +190,7 @@ Spacing recognizes these code block types (in precedence order):
        handle(item)
    ```
 
-5. **`definition`** - Function and class definitions
+7. **`definition`** - Function and class definitions
    ```python
    def myFunction():
        pass
@@ -187,13 +199,13 @@ Spacing recognizes these code block types (in precedence order):
        pass
    ```
 
-6. **`declaration`** - `global` and `nonlocal` statements
+8. **`declaration`** - `global` and `nonlocal` statements
    ```python
    global myVar
    nonlocal count
    ```
 
-7. **`docstring`** - Module, class, and function docstrings
+9. **`docstring`** - Module, class, and function docstrings
    ```python
    """Module docstring."""
 
@@ -202,10 +214,10 @@ Spacing recognizes these code block types (in precedence order):
        pass
    ```
 
-8. **`comment`** - Comment lines
-   ```python
-   # This is a comment
-   ```
+10. **`comment`** - Comment lines
+    ```python
+    # This is a comment
+    ```
 
 **Precedence**: When a statement matches multiple types, the first matching type is used:
 ```python

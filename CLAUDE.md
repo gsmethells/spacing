@@ -132,6 +132,7 @@ Verification checklist:
 - Create a branch before making any changes: `git checkout -b <type>/<short-description>`
 - Commit after each logical, self-contained unit of work that passes tests (atomic commits)
 - Push the branch and open a PR/MR when the work is complete
+- **MANDATORY**: Before shipping (`/ship`) or opening a PR/MR, verify `CHANGELOG.md` has entries in the `[Unreleased]` section for the changes being shipped
 
 **Note**: The branch policy above is a team default. Individual developers may override it in their `CLAUDE.local.md` (e.g., for trunk-based development on personal projects).
 

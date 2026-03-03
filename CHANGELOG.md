@@ -1,5 +1,20 @@
 # Changelog
 
+## [Unreleased]
+
+## [1.0.1] - 2026-03-03
+
+### Changed
+- Updated DESIGN.md with current test count (316 tests, >95% coverage) and corrected ContextBuilder version reference
+- Updated README.md and DESIGN.md block type lists to include `flow_control` and `type_annotation`
+- Strengthened weak test assertions in test_commentrules.py and test_definitionrules.py with exact expected values
+- Removed invalid ruff rules (F503, F901) and duplicate comments from pyproject.toml
+
+### Fixed
+- Removed dead Python < 3.8 `importlib_metadata` fallback (project requires Python 3.11)
+- Removed unused `timestamp` variable in processor.py `_generateDiff()`
+- Fixed lines exceeding 120-character limit in classifier.py and config.py
+
 ## [1.0.0] - 2026-01-20
 
 **Major Performance Refactoring**

@@ -196,10 +196,8 @@ class FileProcessor:
     :rtype: str
     """
 
-    import datetime
     import difflib
 
-    timestamp = datetime.datetime.now().isoformat()
     diff = difflib.unified_diff(
       originalLines, newLines, fromfile=f'{filepath} (original)', tofile=f'{filepath} (formatted)', lineterm=''
     )

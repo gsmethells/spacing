@@ -61,9 +61,10 @@ class BlankLineConfig:
     unknownSections = set(data.keys()) - validSections
 
     if unknownSections:
-      raise ValueError(
-        f'Unknown configuration sections: {", ".join(sorted(unknownSections))}. Valid sections: {", ".join(sorted(validSections))}'
-      )
+      unknownStr = ', '.join(sorted(unknownSections))
+      validStr = ', '.join(sorted(validSections))
+
+      raise ValueError(f'Unknown configuration sections: {unknownStr}. Valid sections: {validStr}')
 
     blankLinesConfig = data.get('blank_lines', {})
     pathsConfig = data.get('paths', {})
