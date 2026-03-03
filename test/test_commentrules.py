@@ -108,8 +108,8 @@ class TestCommentRuleHandler:
 
     assert result == 0  # No blank between consecutive comments
 
-  def test_hasBlankAfterCommentTrue(self):
-    """Test _hasBlankAfterComment detects blank line after comment"""
+  def test_needsBlankAfterCommentWithBlankBeforeModuleDef(self):
+    """Test needsBlankAfterComment returns PEP 8 value when blank line exists between comment and module-level def"""
 
     handler = CommentRuleHandler()
     statements = [
@@ -117,71 +117,71 @@ class TestCommentRuleHandler:
       createStatement(BlockType.ASSIGNMENT, 0, isBlank=True),
       createStatement(BlockType.DEFINITION, 0),
     ]
-    result = handler._hasBlankAfterComment(statements, 2)
+    result = handler.needsBlankAfterComment(statements[0], statements[2], statements, 2)
 
-    assert result is True
+    assert result == 2
 
-  def test_hasBlankAfterCommentFalse(self):
-    """Test _hasBlankAfterComment returns False when no blank"""
+  def test_needsBlankAfterCommentNoBlankBeforeModuleDef(self):
+    """Test needsBlankAfterComment when comment directly precedes module-level def with no blank line"""
 
     handler = CommentRuleHandler()
     statements = [
       createStatement(BlockType.COMMENT, 0, isComment=True),
       createStatement(BlockType.DEFINITION, 0),
     ]
-    result = handler._hasBlankAfterComment(statements, 1)
+    result = handler.needsBlankAfterComment(statements[0], statements[1], statements, 1)
 
-    assert result is False
+    assert result == 2
 
-  def test_hasCompletedDefinitionBeforeCommentTrue(self):
-    """Test _hasCompletedDefinitionBeforeComment detects completed definition"""
+  def test_needsBlankAfterCommentCompletedDefBeforeNoBlank(self):
+    """Test needsBlankAfterComment returns 0 when completed def exists before comment and no blank after comment
+
+    When a completed definition exists before the comment and there is no blank line
+    between the comment and the next module-level definition, the handler returns 0
+    to preserve the user's intent of attaching the comment to the next definition.
+    """
 
     handler = CommentRuleHandler()
     statements = [
       createStatement(BlockType.DEFINITION, 0),  # def foo():
       createStatement(BlockType.ASSIGNMENT, 2),  #   x = 1
+      createStatement(BlockType.ASSIGNMENT, 0, isBlank=True),  # blank
       createStatement(BlockType.COMMENT, 0, isComment=True),  # # comment
+      createStatement(BlockType.ASSIGNMENT, 0, isBlank=True),  # blank
       createStatement(BlockType.DEFINITION, 0),  # def bar():
     ]
-    result = handler._hasCompletedDefinitionBeforeComment(statements, 3)
+    result = handler.needsBlankAfterComment(statements[3], statements[5], statements, 5)
 
-    assert result is True  # foo() is complete before comment
+    assert result == 2
 
-  def test_hasCompletedDefinitionBeforeCommentFalse(self):
-    """Test _hasCompletedDefinitionBeforeComment returns False when no completed definition"""
+  def test_needsBlankAfterCommentNoDefBeforeComment(self):
+    """Test needsBlankAfterComment returns PEP 8 value when no completed def exists before comment"""
 
     handler = CommentRuleHandler()
     statements = [
       createStatement(BlockType.COMMENT, 0, isComment=True),  # # comment
       createStatement(BlockType.DEFINITION, 0),  # def foo():
     ]
-    result = handler._hasCompletedDefinitionBeforeComment(statements, 1)
+    result = handler.needsBlankAfterComment(statements[0], statements[1], statements, 1)
 
-    assert result is False  # No definition before comment
+    assert result == 2
 
-  def test_isModuleLevelDefinitionAfterCommentTrue(self):
-    """Test _isModuleLevelDefinitionAfterComment detects module-level definition"""
-
-    handler = CommentRuleHandler()
-    stmt = createStatement(BlockType.DEFINITION, 0)
-    result = handler._isModuleLevelDefinitionAfterComment(stmt)
-
-    assert result is True
-
-  def test_isModuleLevelDefinitionAfterCommentFalseIndented(self):
-    """Test _isModuleLevelDefinitionAfterComment returns False for indented definition"""
+  def test_hasBlankAfterCommentNoStatementsBeforeIndex(self):
+    """Test _hasBlankAfterComment returns False when no statements before index"""
 
     handler = CommentRuleHandler()
-    stmt = createStatement(BlockType.DEFINITION, 2)
-    result = handler._isModuleLevelDefinitionAfterComment(stmt)
+    statements = [
+      createStatement(BlockType.ASSIGNMENT, 0),
+    ]
+    result = handler._hasBlankAfterComment(statements, 0)
 
-    assert result is False
+    assert not result
 
-  def test_isModuleLevelDefinitionAfterCommentFalseNotDef(self):
-    """Test _isModuleLevelDefinitionAfterComment returns False for non-definition"""
+  def test_needsBlankBeforeCommentNoPrevBlockType(self):
+    """Test needsBlankBeforeComment returns 0 when prevBlockType is None"""
 
     handler = CommentRuleHandler()
-    stmt = createStatement(BlockType.ASSIGNMENT, 0)
-    result = handler._isModuleLevelDefinitionAfterComment(stmt)
+    currentStmt = createStatement(BlockType.COMMENT, 0, isComment=True)
+    result = handler.needsBlankBeforeComment(currentStmt, False, None, startsNewScope=False)
 
-    assert result is False
+    assert result == 0

@@ -13,10 +13,10 @@ from spacing.types import BlockType
 
 
 class TestConfigurationIntegration:
-  def testDefaultConfigurationBehavior(self):
+  def test_defaultConfigurationBehavior(self):
     """Test that default configuration produces PEP 8 compliant behavior"""
 
-    input_code = """import sys
+    inputCode = """import sys
 x = 1
 def func():
   pass
@@ -25,7 +25,7 @@ if True:
 """
 
     # PEP 8: 2 blank lines around module-level definitions
-    expected_output = """import sys
+    expectedOutput = """import sys
 
 x = 1
 
@@ -42,22 +42,22 @@ if True:
     setConfig(config)
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
       assert changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == expected_output
+      assert result == expectedOutput
 
-  def testZeroBlankLinesConfiguration(self):
+  def test_zeroBlankLinesConfiguration(self):
     """Test custom configuration with 0 blank lines between different types (PEP 8 rules still apply)"""
 
-    input_code = """import sys
+    inputCode = """import sys
 
 x = 1
 
@@ -71,7 +71,7 @@ if True:
 
     # With 0 blank lines, removes blank lines between non-definition types
     # BUT PEP 8 rule for module-level definitions still applies (2 blank lines)
-    expected_output = """import sys
+    expectedOutput = """import sys
 x = 1
 
 
@@ -87,22 +87,22 @@ if True:
     setConfig(config)
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
       assert changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == expected_output
+      assert result == expectedOutput
 
-  def testTwoBlankLinesConfiguration(self):
+  def test_twoBlankLinesConfiguration(self):
     """Test custom configuration with 2 blank lines between different types"""
 
-    input_code = """import sys
+    inputCode = """import sys
 x = 1
 def func():
   pass
@@ -110,7 +110,7 @@ def func():
 
     # With 2 blank lines config, adds 2 blank lines between different types
     # Module-level definitions also get 2 blank lines (PEP 8)
-    expected_output = """import sys
+    expectedOutput = """import sys
 
 
 x = 1
@@ -124,22 +124,22 @@ def func():
     setConfig(config)
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
       assert changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == expected_output
+      assert result == expectedOutput
 
-  def testSpecificTransitionOverrides(self):
+  def test_specificTransitionOverrides(self):
     """Test specific transition overrides work correctly"""
 
-    input_code = """import sys
+    inputCode = """import sys
 x = 1
 print(x)
 def func():
@@ -148,7 +148,7 @@ def func():
 
     # Transition overrides: assignment->call = 0, import->assignment = 2
     # PEP 8 still applies: module-level definition gets 2 blank lines
-    expected_output = """import sys
+    expectedOutput = """import sys
 
 
 x = 1
@@ -169,29 +169,29 @@ def func():
     setConfig(config)
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
       assert changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == expected_output
+      assert result == expectedOutput
 
-  def testConsecutiveControlConfiguration(self):
+  def test_consecutiveControlConfiguration(self):
     """Test consecutive control configuration works"""
 
-    input_code = """if condition1:
+    inputCode = """if condition1:
   pass
 if condition2:
   pass
 """
 
     # Change to 2 blank lines between consecutive control blocks
-    expected_output = """if condition1:
+    expectedOutput = """if condition1:
   pass
 
 
@@ -203,23 +203,23 @@ if condition2:
     setConfig(config)
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
       assert changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == expected_output
+      assert result == expectedOutput
 
-  def testConsecutiveDefinitionConfiguration(self):
+  def test_consecutiveDefinitionConfiguration(self):
     """Test consecutive definition configuration works at nested level"""
 
     # Use nested definitions to avoid PEP 8 module-level 2-blank-line rule
-    input_code = """class Foo:
+    inputCode = """class Foo:
   def func1(self):
     pass
 
@@ -228,7 +228,7 @@ if condition2:
 """
 
     # Change to 0 blank lines between consecutive nested definitions
-    expected_output = """class Foo:
+    expectedOutput = """class Foo:
   def func1(self):
     pass
   def func2(self):
@@ -239,22 +239,22 @@ if condition2:
     setConfig(config)
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
       assert changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == expected_output
+      assert result == expectedOutput
 
-  def testCompactStyleConfiguration(self):
+  def test_compactStyleConfiguration(self):
     """Test compact style with minimal blanks between block types"""
 
-    input_code = """import sys
+    inputCode = """import sys
 from os import path
 
 x = 1
@@ -274,7 +274,7 @@ def func():
     )
 
     # Expected: all blocks tight together, except module-level def gets PEP 8's 2 blanks
-    expected_output = """import sys
+    expectedOutput = """import sys
 from os import path
 x = 1
 y = 2
@@ -289,23 +289,23 @@ def func():
     setConfig(config)
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
       assert changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == expected_output
+      assert result == expectedOutput
 
-  def testConfigurationDoesNotChangeAlreadyCorrectFile(self):
+  def test_configurationDoesNotChangeAlreadyCorrectFile(self):
     """Test that correctly formatted files are not changed"""
 
     # This input is already correctly formatted with default config (PEP 8)
-    input_code = """import sys
+    inputCode = """import sys
 
 x = 1
 
@@ -320,7 +320,7 @@ def func():
     setConfig(config)
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       # Should return False (no changes needed)
@@ -328,79 +328,79 @@ def func():
 
       assert not changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
       # Content should be unchanged
-      assert result == input_code
+      assert result == inputCode
 
-  def testAfterDocstringConfiguration(self):
+  def test_afterDocstringConfiguration(self):
     """Test afterDocstring configuration controls blank lines after docstrings"""
 
-    input_code = '''def func():
+    inputCode = '''def func():
   """This is a docstring"""
   pass
 '''
 
     # Test with default (1 blank line after docstring)
-    expected_with_blank = '''def func():
+    expectedWithBlank = '''def func():
   """This is a docstring"""
 
   pass
 '''
-    config_default = BlankLineConfig.fromDefaults()
+    configDefault = BlankLineConfig.fromDefaults()
 
-    setConfig(config_default)
+    setConfig(configDefault)
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
       assert changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == expected_with_blank
+      assert result == expectedWithBlank
 
     # Test with afterDocstring=0 (no blank line after docstring)
-    expected_no_blank = '''def func():
+    expectedNoBlank = '''def func():
   """This is a docstring"""
   pass
 '''
-    config_compact = BlankLineConfig(afterDocstring=0)
+    configCompact = BlankLineConfig(afterDocstring=0)
 
-    setConfig(config_compact)
+    setConfig(configCompact)
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
       assert not changed  # No changes needed since input already matches config
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == expected_no_blank
+      assert result == expectedNoBlank
 
-  def testClassDocstringAlwaysHasBlankLine(self):
+  def test_classDocstringAlwaysHasBlankLine(self):
     """Regression test: Class docstrings must always have 1 blank line before first method, regardless of afterDocstring config"""
 
     # Test with afterDocstring=0 (compact mode for function docstrings)
-    config_compact = BlankLineConfig(afterDocstring=0)
+    configCompact = BlankLineConfig(afterDocstring=0)
 
-    setConfig(config_compact)
+    setConfig(configCompact)
 
-    input_code = '''class MessageServer:
+    inputCode = '''class MessageServer:
   """Message server."""
   def __init__(self):
     pass
 '''
-    expected_output = '''class MessageServer:
+    expectedOutput = '''class MessageServer:
   """Message server."""
 
   def __init__(self):
@@ -408,38 +408,38 @@ def func():
 '''
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
       assert changed  # Should add blank line after class docstring
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == expected_output
+      assert result == expectedOutput
 
     # Verify function docstrings still respect afterDocstring=0
-    function_input = '''def foo():
+    functionInput = '''def foo():
   """Foo function."""
 
   return 42
 '''
-    function_expected = '''def foo():
+    functionExpected = '''def foo():
   """Foo function."""
   return 42
 '''
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(function_input)
+      f.write(functionInput)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
       assert changed  # Should remove blank line after function docstring
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == function_expected
+      assert result == functionExpected

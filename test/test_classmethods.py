@@ -11,10 +11,10 @@ from spacing.processor import FileProcessor
 
 
 class TestClassMethods:
-  def testBlankLineBetweenClassMethods(self):
+  def test_blankLineBetweenClassMethods(self):
     """Test that blank line is added between ASSIGNMENT and CALL in method bodies"""
 
-    input_code = """class MyClass:
+    inputCode = """class MyClass:
   def method1(self):
     x = 1
     return x
@@ -23,7 +23,7 @@ class TestClassMethods:
     y = 2
     return y
 """
-    expected_code = """class MyClass:
+    expectedCode = """class MyClass:
   def method1(self):
     x = 1
 
@@ -36,7 +36,7 @@ class TestClassMethods:
 """
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
@@ -44,15 +44,15 @@ class TestClassMethods:
       # Should add blank lines between ASSIGNMENT and CALL
       assert changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == expected_code
+      assert result == expectedCode
 
-  def testBlankLineAfterMethodBody(self):
+  def test_blankLineAfterMethodBody(self):
     """Test that blank line is added between ASSIGNMENT and CALL in method body"""
 
-    input_code = '''class AIService:
+    inputCode = '''class AIService:
   def __init__(self):
     self.aiAvailable = False
     logger.warning('AIService initialized without AI support - Vertex AI not available')
@@ -65,7 +65,7 @@ class TestClassMethods:
     """Call the AI model"""
     pass
 '''
-    expected_code = '''class AIService:
+    expectedCode = '''class AIService:
   def __init__(self):
     self.aiAvailable = False
 
@@ -82,7 +82,7 @@ class TestClassMethods:
 '''
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
@@ -90,15 +90,15 @@ class TestClassMethods:
       # Should add blank line between ASSIGNMENT and CALL
       assert changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == expected_code
+      assert result == expectedCode
 
-  def testNestedFunctionInMethod(self):
+  def test_nestedFunctionInMethod(self):
     """Test that nested functions within methods follow function body rules"""
 
-    input_code = """class MyClass:
+    inputCode = """class MyClass:
   def outer_method(self):
     x = 1
     
@@ -107,7 +107,7 @@ class TestClassMethods:
     
     return inner_function()
 """
-    expected_output = """class MyClass:
+    expectedOutput = """class MyClass:
   def outer_method(self):
     x = 1
 
@@ -118,21 +118,21 @@ class TestClassMethods:
 """
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
       # Nested functions should follow function body rules
-      assert result == expected_output
+      assert result == expectedOutput
 
-  def testClassWithMultipleMethods(self):
+  def test_classWithMultipleMethods(self):
     """Test class with multiple methods adds blank lines between ASSIGNMENT and CALL"""
 
-    input_code = """class Calculator:
+    inputCode = """class Calculator:
   def __init__(self):
     self.result = 0
 
@@ -147,7 +147,7 @@ class TestClassMethods:
   def reset(self):
     self.result = 0
 """
-    expected_code = """class Calculator:
+    expectedCode = """class Calculator:
   def __init__(self):
     self.result = 0
 
@@ -166,7 +166,7 @@ class TestClassMethods:
 """
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
@@ -174,15 +174,15 @@ class TestClassMethods:
       # Should add blank lines between ASSIGNMENT and CALL in add() and subtract()
       assert changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == expected_code
+      assert result == expectedCode
 
-  def testClassAttributesAndMethods(self):
+  def test_classAttributesAndMethods(self):
     """Test that class attributes and methods have proper spacing"""
 
-    input_code = """class Config:
+    inputCode = """class Config:
   # Class attributes
   DEBUG = True
   VERSION = "1.0"
@@ -195,7 +195,7 @@ class TestClassMethods:
 """
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
@@ -203,15 +203,15 @@ class TestClassMethods:
       # Should not change
       assert not changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == input_code
+      assert result == inputCode
 
-  def testClassMethodBlankLineRegression(self):
+  def test_classMethodBlankLineRegression(self):
     """Regression test: ensure blank lines between consecutive class methods are preserved"""
 
-    input_code = """class Service:
+    inputCode = """class Service:
   def method1(self):
     pass
 
@@ -223,7 +223,7 @@ class TestClassMethods:
 """
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
@@ -231,15 +231,15 @@ class TestClassMethods:
       # Should not change - blank lines between methods should be preserved
       assert not changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == input_code
+      assert result == inputCode
 
-  def testClassWithMixedMembersRegression(self):
+  def test_classWithMixedMembersRegression(self):
     """Regression test: ensure blank lines are preserved between different member types"""
 
-    input_code = """class Complex:
+    inputCode = """class Complex:
   # Class comment
   VALUE = 42
 
@@ -255,7 +255,7 @@ class TestClassMethods:
 """
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
@@ -263,7 +263,7 @@ class TestClassMethods:
       # Should not change - proper spacing already exists
       assert not changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == input_code
+      assert result == inputCode

@@ -10,7 +10,7 @@ from spacing.types import BlockType
 
 
 class TestStatementClassifier:
-  def testAssignmentClassification(self):
+  def test_assignmentClassification(self):
     # Variable assignment
     assert StatementClassifier.classifyStatement(['x = 1']) == BlockType.ASSIGNMENT
     assert StatementClassifier.classifyStatement(['result = func()']) == BlockType.ASSIGNMENT
@@ -20,40 +20,40 @@ class TestStatementClassifier:
 
     assert StatementClassifier.classifyStatement(lines) == BlockType.ASSIGNMENT
 
-  def testCallClassification(self):
+  def test_callClassification(self):
     assert StatementClassifier.classifyStatement(['func()']) == BlockType.CALL
     assert StatementClassifier.classifyStatement(['pass']) == BlockType.CALL
     assert StatementClassifier.classifyStatement(['assert x']) == BlockType.CALL
     assert StatementClassifier.classifyStatement(['raise ValueError()']) == BlockType.CALL
 
-  def testFlowControlClassification(self):
+  def test_flowControlClassification(self):
     assert StatementClassifier.classifyStatement(['return x']) == BlockType.FLOW_CONTROL
     assert StatementClassifier.classifyStatement(['return']) == BlockType.FLOW_CONTROL
     assert StatementClassifier.classifyStatement(['yield item']) == BlockType.FLOW_CONTROL
     assert StatementClassifier.classifyStatement(['yield from generator()']) == BlockType.FLOW_CONTROL
 
-  def testImportClassification(self):
+  def test_importClassification(self):
     assert StatementClassifier.classifyStatement(['import sys']) == BlockType.IMPORT
     assert StatementClassifier.classifyStatement(['from os import path']) == BlockType.IMPORT
 
-  def testControlClassification(self):
+  def test_controlClassification(self):
     assert StatementClassifier.classifyStatement(['if True:']) == BlockType.CONTROL
     assert StatementClassifier.classifyStatement(['for i in range(10):']) == BlockType.CONTROL
     assert StatementClassifier.classifyStatement(['try:']) == BlockType.CONTROL
 
-  def testDefinitionClassification(self):
+  def test_definitionClassification(self):
     assert StatementClassifier.classifyStatement(['def func():']) == BlockType.DEFINITION
     assert StatementClassifier.classifyStatement(['class MyClass:']) == BlockType.DEFINITION
     assert StatementClassifier.classifyStatement(['@decorator']) == BlockType.DEFINITION
 
-  def testSecondaryClause(self):
+  def test_secondaryClause(self):
     assert StatementClassifier.isSecondaryClause('elif condition:')
     assert StatementClassifier.isSecondaryClause('else:')
     assert StatementClassifier.isSecondaryClause('except Exception:')
     assert StatementClassifier.isSecondaryClause('finally:')
     assert not StatementClassifier.isSecondaryClause('if condition:')
 
-  def testTypeAnnotationClassification(self):
+  def test_typeAnnotationClassification(self):
     # Type annotations without default values
     assert StatementClassifier.classifyStatement(['name: str']) == BlockType.TYPE_ANNOTATION
     assert StatementClassifier.classifyStatement(['count: int']) == BlockType.TYPE_ANNOTATION
@@ -76,7 +76,7 @@ class TestStatementClassifier:
 class TestClassifierRegressions:
   """Regression tests for classifier bugs"""
 
-  def testAsyncDefClassifiedAsDefinition(self):
+  def test_asyncDefClassifiedAsDefinition(self):
     """Regression: async def should be DEFINITION, not CALL"""
 
     asyncDefLine = ['  async def method(self):']
@@ -90,7 +90,7 @@ class TestClassifierRegressions:
 
     assert blockType == BlockType.DEFINITION
 
-  def testDictionaryAssignmentWithStringKeyClassification(self):
+  def test_dictionaryAssignmentWithStringKeyClassification(self):
     """Regression: environ['STRING_KEY'] = value was misclassified as CALL instead of ASSIGNMENT"""
 
     # Test dictionary assignment with string literal key
@@ -111,7 +111,7 @@ class TestClassifierRegressions:
 
     assert blockType3 == BlockType.ASSIGNMENT, f'environ[obj.attr] = value should be ASSIGNMENT, got {blockType3.name}'
 
-  def testIfStatementWithParenthesesClassifiedAsControl(self):
+  def test_ifStatementWithParenthesesClassifiedAsControl(self):
     """Regression: if statements with parentheses should be CONTROL, not CALL"""
 
     # Test various if statement formats
@@ -130,7 +130,7 @@ class TestClassifierRegressions:
 
     assert blockType3 == BlockType.CONTROL, f'while (complex) should be CONTROL, got {blockType3.name}'
 
-  def testReturnAndYieldClassifiedAsFlowControl(self):
+  def test_returnAndYieldClassifiedAsFlowControl(self):
     """Regression: return and yield should be FLOW_CONTROL, not CALL"""
 
     # Test return statements
@@ -147,7 +147,7 @@ class TestClassifierRegressions:
     assert StatementClassifier.classifyStatement(['pass']) == BlockType.CALL
     assert StatementClassifier.classifyStatement(['del item']) == BlockType.CALL
 
-  def testControlStatementWithEqualsInStringLiteral(self):
+  def test_controlStatementWithEqualsInStringLiteral(self):
     """Regression: if 'CN=' in subject was misclassified as ASSIGNMENT due to equals in string"""
 
     # Control statement with equals sign in string literal
@@ -157,7 +157,7 @@ class TestClassifierRegressions:
     assert StatementClassifier.classifyStatement(['if "key=value" in text:']) == BlockType.CONTROL
     assert StatementClassifier.classifyStatement(["if 'x=5' in data:"]) == BlockType.CONTROL
 
-  def testYieldWithParenthesesClassifiedAsFlowControl(self):
+  def test_yieldWithParenthesesClassifiedAsFlowControl(self):
     """Regression: yield (Status.SUCCESS, None) was misclassified as CALL instead of FLOW_CONTROL"""
 
     # yield with parentheses (tuple syntax)
@@ -169,7 +169,7 @@ class TestClassifierRegressions:
     # return with parentheses
     assert StatementClassifier.classifyStatement(['return (x, y)']) == BlockType.FLOW_CONTROL
 
-  def testFStringInDictionaryAssignmentClassifiedAsAssignment(self):
+  def test_fStringInDictionaryAssignmentClassifiedAsAssignment(self):
     """Regression: cookies[f'{VAR}_0'] = value was misclassified as CALL instead of ASSIGNMENT"""
 
     # F-string as dictionary key
@@ -181,7 +181,7 @@ class TestClassifierRegressions:
     # Regular dictionary assignment (no f-string) for comparison
     assert StatementClassifier.classifyStatement(['cookies[SIGNATURE] = \'"junk"\'']) == BlockType.ASSIGNMENT
 
-  def testDictionaryAssignmentWithMethodCallInKey(self):
+  def test_dictionaryAssignmentWithMethodCallInKey(self):
     """Regression: dict[methodCall()] = value was misclassified as CALL instead of ASSIGNMENT"""
 
     # Method call in dictionary key
@@ -199,7 +199,7 @@ class TestClassifierRegressions:
     # Method call in both key and value
     assert StatementClassifier.classifyStatement(['data[getKey()] = getValue()']) == BlockType.ASSIGNMENT
 
-  def testDictionaryAssignmentWithHyphensInStringKey(self):
+  def test_dictionaryAssignmentWithHyphensInStringKey(self):
     """Regression: dict['key-with-hyphens'] = value was misclassified as CALL instead of ASSIGNMENT"""
 
     # String key with hyphens (HTTP headers)
@@ -217,7 +217,7 @@ class TestClassifierRegressions:
     # Hyphen at start or end of string
     assert StatementClassifier.classifyStatement(["data['-key-'] = value"]) == BlockType.ASSIGNMENT
 
-  def testDictionaryAssignmentWithSpecialCharactersInStringKey(self):
+  def test_dictionaryAssignmentWithSpecialCharactersInStringKey(self):
     """Test that assignments with various special characters in string keys are classified as ASSIGNMENT"""
 
     # Colon (URLs, timestamps)
@@ -273,7 +273,7 @@ class TestClassifierRegressions:
       == BlockType.ASSIGNMENT
     )
 
-  def testComparisonOperatorsNotMisclassifiedAsAssignment(self):
+  def test_comparisonOperatorsNotMisclassifiedAsAssignment(self):
     """Ensure comparison operators (!=, <=, >=) are NOT classified as ASSIGNMENT"""
 
     # These should NOT be ASSIGNMENT (they're comparison expressions, likely CALL as default)
@@ -287,7 +287,7 @@ class TestClassifierRegressions:
     )  # Assignment of comparison result
     assert StatementClassifier.classifyStatement(['x != y']) != BlockType.ASSIGNMENT  # Just comparison, should be CALL
 
-  def testMethodCallsWithLambdaKeywordArgumentsClassifiedAsCall(self):
+  def test_methodCallsWithLambdaKeywordArgumentsClassifiedAsCall(self):
     """Regression: method calls with lambda keyword arguments should be CALL, not ASSIGNMENT"""
 
     # Lambda in keyword argument
@@ -302,7 +302,7 @@ class TestClassifierRegressions:
       == BlockType.CALL
     )
 
-  def testAsyncWithAndAsyncForClassifiedAsControl(self):
+  def test_asyncWithAndAsyncForClassifiedAsControl(self):
     """Regression: async with and async for should be CONTROL, not CALL"""
 
     # async with
@@ -317,7 +317,7 @@ class TestClassifierRegressions:
     assert StatementClassifier.classifyStatement(['with open(file):']) == BlockType.CONTROL
     assert StatementClassifier.classifyStatement(['for i in range(10):']) == BlockType.CONTROL
 
-  def testEmptyLinesListReturnsCall(self):
+  def test_emptyLinesListReturnsCall(self):
     """Test that classifyStatement returns CALL for empty lines list"""
 
     # Edge case: empty lines should default to CALL

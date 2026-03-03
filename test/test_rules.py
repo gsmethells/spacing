@@ -5,7 +5,6 @@ See the accompanying AUTHORS file for a complete list of authors.
 This file is subject to the terms and conditions defined in LICENSE.
 """
 
-from spacing.analyzer import FileAnalyzer
 from spacing.config import BlankLineConfig, setConfig
 from spacing.processor import FileProcessor
 from spacing.rules import BlankLineRuleEngine
@@ -27,7 +26,7 @@ class TestBlankLineRuleEngine:
       isSecondaryClause=isSecondaryClause,
     )
 
-  def testSameBlockType(self):
+  def test_sameBlockType(self):
     """Test no blank line between same block types (except Control/Definition)"""
 
     setConfig(BlankLineConfig.fromDefaults())
@@ -41,7 +40,7 @@ class TestBlankLineRuleEngine:
 
     assert result == [0, 0]
 
-  def testDifferentBlockTypes(self):
+  def test_differentBlockTypes(self):
     """Test blank line between different block types"""
 
     setConfig(BlankLineConfig.fromDefaults())
@@ -55,7 +54,7 @@ class TestBlankLineRuleEngine:
 
     assert result == [0, 1]  # Blank line before second statement
 
-  def testConsecutiveControlBlocks(self):
+  def test_consecutiveControlBlocks(self):
     """Test consecutive Control blocks need separation"""
 
     setConfig(BlankLineConfig.fromDefaults())
@@ -69,7 +68,7 @@ class TestBlankLineRuleEngine:
 
     assert result == [0, 1]  # Blank line before second control block
 
-  def testConsecutiveDefinitionBlocks(self):
+  def test_consecutiveDefinitionBlocks(self):
     """Test consecutive Definition blocks at module level (PEP 8: 2 blank lines)"""
 
     setConfig(BlankLineConfig.fromDefaults())
@@ -83,7 +82,7 @@ class TestBlankLineRuleEngine:
 
     assert result == [0, 2]  # PEP 8: 2 blank lines at module level
 
-  def testConsecutiveDefinitionBlocksNested(self):
+  def test_consecutiveDefinitionBlocksNested(self):
     """Test consecutive Definition blocks inside class (PEP 8: 1 blank line)"""
 
     setConfig(BlankLineConfig.fromDefaults())
@@ -97,7 +96,7 @@ class TestBlankLineRuleEngine:
 
     assert result == [0, 1]  # PEP 8: 1 blank line inside class
 
-  def testSecondaryClauseRule(self):
+  def test_secondaryClauseRule(self):
     """Test no blank line before secondary clauses"""
 
     setConfig(BlankLineConfig.fromDefaults())
@@ -111,7 +110,7 @@ class TestBlankLineRuleEngine:
 
     assert result == [0, 0]  # No blank line before else
 
-  def testCommentBreakRule(self):
+  def test_commentBreakRule(self):
     """Test blank line before comments (comment break rule)"""
 
     setConfig(BlankLineConfig.fromDefaults())
@@ -125,7 +124,7 @@ class TestBlankLineRuleEngine:
 
     assert result == [0, 1]  # Blank line before comment
 
-  def testBlankLinesIgnored(self):
+  def test_blankLinesIgnored(self):
     """Test blank lines are ignored in rule processing"""
 
     setConfig(BlankLineConfig.fromDefaults())
@@ -140,7 +139,7 @@ class TestBlankLineRuleEngine:
 
     assert result == [0, 0, 1]  # Blank line before CALL (different from ASSIGNMENT)
 
-  def testIndentationLevelProcessing(self):
+  def test_indentationLevelProcessing(self):
     """Test rules applied independently at each indentation level"""
 
     setConfig(BlankLineConfig.fromDefaults())
@@ -158,27 +157,7 @@ class TestBlankLineRuleEngine:
     # Level 2: ASSIGNMENT -> CALL (different types, need blank line)
     assert result == [0, 0, 1, 1]
 
-  def testNeedsBlankLineBetweenMethod(self):
-    """Test private _needsBlankLineBetween method"""
-
-    setConfig(BlankLineConfig.fromDefaults())
-
-    engine = BlankLineRuleEngine()
-
-    # Same types (except Control/Definition)
-    assert not engine._needsBlankLineBetween(BlockType.ASSIGNMENT, BlockType.ASSIGNMENT)
-    assert not engine._needsBlankLineBetween(BlockType.CALL, BlockType.CALL)
-    assert not engine._needsBlankLineBetween(BlockType.IMPORT, BlockType.IMPORT)
-
-    # Same Control/Definition types (special rule)
-    assert engine._needsBlankLineBetween(BlockType.CONTROL, BlockType.CONTROL)
-    assert engine._needsBlankLineBetween(BlockType.DEFINITION, BlockType.DEFINITION)
-
-    # Different types
-    assert engine._needsBlankLineBetween(BlockType.IMPORT, BlockType.ASSIGNMENT)
-    assert engine._needsBlankLineBetween(BlockType.ASSIGNMENT, BlockType.CALL)
-
-  def testEmptyStatements(self):
+  def test_emptyStatements(self):
     """Test handling of empty statement list"""
 
     setConfig(BlankLineConfig.fromDefaults())
@@ -188,7 +167,7 @@ class TestBlankLineRuleEngine:
 
     assert result == []
 
-  def testComplexScenario(self):
+  def test_complexScenario(self):
     """Test complex scenario with multiple rules"""
 
     setConfig(BlankLineConfig.fromDefaults())
@@ -218,7 +197,7 @@ class TestBlankLineRuleEngine:
 
     assert result == expected
 
-  def testCommentBreakRuleRegression(self):
+  def test_commentBreakRuleRegression(self):
     """Regression test for comment break rule bug (original issue)"""
 
     setConfig(BlankLineConfig.fromDefaults())
@@ -233,7 +212,7 @@ class TestBlankLineRuleEngine:
     # Comment should get blank line despite same block type
     assert result == [0, 1]
 
-  def testIndentationProcessingRegression(self):
+  def test_indentationProcessingRegression(self):
     """Regression test for indentation level processing bug (original issue)"""
 
     setConfig(BlankLineConfig.fromDefaults())
@@ -250,7 +229,7 @@ class TestBlankLineRuleEngine:
     # Should get blank lines: none, none, different types at level 2, returning from nested
     assert result == [0, 0, 1, 1]
 
-  def testCommentBlankLinePreservation(self):
+  def test_commentBlankLinePreservation(self):
     """Test that existing blank lines after comments are preserved (leave-as-is rule)"""
 
     setConfig(BlankLineConfig.fromDefaults())
@@ -276,7 +255,7 @@ class TestBlankLineRuleEngine:
     # 5: assignment after import (different type)
     assert result == [0, 0, 0, 0, 1, 1]
 
-  def testCommentWithoutBlankLineFollowing(self):
+  def test_commentWithoutBlankLineFollowing(self):
     """Test that no blank line is added after comment when none exists"""
 
     setConfig(BlankLineConfig.fromDefaults())
@@ -295,7 +274,7 @@ class TestBlankLineRuleEngine:
     # 2: assignment after import (different type gets blank line)
     assert result == [0, 0, 1]
 
-  def testBlankLineAfterTryExceptInFunctionBody(self):
+  def test_blankLineAfterTryExceptInFunctionBody(self):
     """Regression test: blank line should be added after try/except completes in function body"""
 
     setConfig(BlankLineConfig.fromDefaults())
@@ -316,7 +295,7 @@ class TestBlankLineRuleEngine:
     # Since we're in a function body, CONTROL -> ASSIGNMENT should get a blank line
     assert result == [0, 0, 0, 0, 0, 1]
 
-  def testCommentParagraphSeparationPreserved(self):
+  def test_commentParagraphSeparationPreserved(self):
     """Regression: Blank lines between comment blocks (comment paragraphs) should be preserved"""
 
     import tempfile
@@ -324,7 +303,7 @@ class TestBlankLineRuleEngine:
     from spacing.processor import FileProcessor
 
     # Input with blank lines separating comment paragraphs
-    input_code = """def setup():
+    inputCode = """def setup():
   from catapult.lang.console import promptForAnswer, promptYesOrNo
 
   # Define the base environment variables
@@ -349,7 +328,7 @@ class TestBlankLineRuleEngine:
 """
 
     # Expected: preserve blank lines directly adjacent to comments only
-    expected_code = """def setup():
+    expectedCode = """def setup():
   from catapult.lang.console import promptForAnswer, promptYesOrNo
 
   # Define the base environment variables
@@ -374,18 +353,18 @@ class TestBlankLineRuleEngine:
 """
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == expected_code, f'Comment paragraph separation should be preserved\nGot:\n{result}'
+      assert result == expectedCode, f'Comment paragraph separation should be preserved\nGot:\n{result}'
       assert not changed, 'Input already correctly formatted - no changes needed'
 
-  def testDecoratedClassDocstringAlwaysGetsBlankLine(self):
+  def test_decoratedClassDocstringAlwaysGetsBlankLine(self):
     """Regression: Decorated class docstrings should always have 1 blank line after them"""
 
     import tempfile
@@ -398,7 +377,7 @@ class TestBlankLineRuleEngine:
 
     setConfig(config)
 
-    input_code = '''@dataclass
+    inputCode = '''@dataclass
 class DICOMPushRequest:
   """Event payload representing a request to push a study"""
 
@@ -407,7 +386,7 @@ class DICOMPushRequest:
 '''
 
     # Expected: Class docstrings ALWAYS get 1 blank line (PEP 257), regardless of after_docstring config
-    expected_code = '''@dataclass
+    expectedCode = '''@dataclass
 class DICOMPushRequest:
   """Event payload representing a request to push a study"""
 
@@ -416,15 +395,15 @@ class DICOMPushRequest:
 '''
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == expected_code, f'Decorated class docstrings must have 1 blank line\nGot:\n{result}'
+      assert result == expectedCode, f'Decorated class docstrings must have 1 blank line\nGot:\n{result}'
       assert not changed, 'Input already has correct formatting'
 
     # Reset config to defaults to avoid test pollution
@@ -432,14 +411,14 @@ class DICOMPushRequest:
 
     setConfig(defaultConfig)
 
-  def testConsecutiveControlBlocksGetBlankLine(self):
+  def test_consecutiveControlBlocksGetBlankLine(self):
     """Regression: Consecutive if statements (control blocks) should have blank line between them"""
 
     import tempfile
     from pathlib import Path
     from spacing.processor import FileProcessor
 
-    input_code = '''def makeDir(path):
+    inputCode = '''def makeDir(path):
   """Docstring"""
   if (not wasDir or forceGroup) and isDir:
     chgrp(path, groupname)
@@ -449,7 +428,7 @@ class DICOMPushRequest:
 '''
 
     # Expected: blank line after docstring added, blank line between consecutive control blocks preserved
-    expected_code = '''def makeDir(path):
+    expectedCode = '''def makeDir(path):
   """Docstring"""
 
   if (not wasDir or forceGroup) and isDir:
@@ -460,27 +439,30 @@ class DICOMPushRequest:
 '''
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == expected_code, f'Consecutive if statements should keep blank line\nGot:\n{result}'
+      assert result == expectedCode, f'Consecutive if statements should keep blank line\nGot:\n{result}'
 
-  def testPep8TwoBlankLinesBeforeCommentAtModuleLevel(self):
+  def test_pep8TwoBlankLinesBeforeCommentAtModuleLevel(self):
     """Regression: 2 blank lines before comment after module-level class definition"""
 
-    input = [
+    import tempfile
+    from pathlib import Path
+
+    inputLines = [
       'class Foo:\n',
       '  pass\n',
       '\n',
       '# Comment before module-level variable\n',
       'x = 1\n',
     ]
-    expected = [
+    expectedLines = [
       'class Foo:\n',
       '  pass\n',
       '\n',
@@ -488,18 +470,27 @@ class DICOMPushRequest:
       '# Comment before module-level variable\n',
       'x = 1\n',
     ]
-    analyzer = FileAnalyzer()
-    statements = analyzer.analyzeFile(input)
-    ruleEngine = BlankLineRuleEngine()
-    blankLineCounts = ruleEngine.applyRules(statements)
-    result = FileProcessor._reconstructFile(statements, blankLineCounts, input)
+    inputCode = ''.join(inputLines)
+    expectedCode = ''.join(expectedLines)
 
-    assert result == expected, f'Expected 2 blank lines before comment after class definition, got:\n{result}'
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+      f.write(inputCode)
+      f.flush()
 
-  def testPep8TwoBlankLinesBetweenDefinitionsWithComment(self):
+      changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
+
+      with open(f.name) as resultFile:
+        result = resultFile.read()
+
+      assert result == expectedCode, f'Expected 2 blank lines before comment after class definition\nGot:\n{result}'
+
+  def test_pep8TwoBlankLinesBetweenDefinitionsWithComment(self):
     """Regression: 2 blank lines between top-level definitions even with comment in between"""
 
-    input = [
+    import tempfile
+    from pathlib import Path
+
+    inputLines = [
       'def foo():\n',
       '  pass\n',
       '\n',
@@ -507,7 +498,7 @@ class DICOMPushRequest:
       'def bar():\n',
       '  pass\n',
     ]
-    expected = [
+    expectedLines = [
       'def foo():\n',
       '  pass\n',
       '\n',
@@ -516,22 +507,31 @@ class DICOMPushRequest:
       'def bar():\n',
       '  pass\n',
     ]
-    analyzer = FileAnalyzer()
-    statements = analyzer.analyzeFile(input)
-    ruleEngine = BlankLineRuleEngine()
-    blankLineCounts = ruleEngine.applyRules(statements)
-    result = FileProcessor._reconstructFile(statements, blankLineCounts, input)
+    inputCode = ''.join(inputLines)
+    expectedCode = ''.join(expectedLines)
 
-    assert result == expected, f'Expected 2 blank lines before comment between definitions, got:\n{result}'
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+      f.write(inputCode)
+      f.flush()
 
-  def testPep8TwoBlankLinesAfterCommentBeforeDefinition(self):
+      changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
+
+      with open(f.name) as resultFile:
+        result = resultFile.read()
+
+      assert result == expectedCode, f'Expected 2 blank lines before comment between definitions\nGot:\n{result}'
+
+  def test_pep8TwoBlankLinesAfterCommentBeforeDefinition(self):
     """Regression: 2 blank lines after comment when followed by module-level definition
 
     This tests the case where a comment appears BETWEEN two top-level definitions.
     PEP 8 requires 2 blank lines between top-level definitions, even with a comment.
     """
 
-    input = [
+    import tempfile
+    from pathlib import Path
+
+    inputLines = [
       'class TestReconciler(unittest.TestCase):\n',
       '  pass\n',
       '\n',
@@ -540,7 +540,7 @@ class DICOMPushRequest:
       'class TestDuplicateRuleValidation(TestReconciler):\n',
       '  pass\n',
     ]
-    expected = [
+    expectedLines = [
       'class TestReconciler(unittest.TestCase):\n',
       '  pass\n',
       '\n',
@@ -551,10 +551,98 @@ class DICOMPushRequest:
       'class TestDuplicateRuleValidation(TestReconciler):\n',
       '  pass\n',
     ]
-    analyzer = FileAnalyzer()
-    statements = analyzer.analyzeFile(input)
-    ruleEngine = BlankLineRuleEngine()
-    blankLineCounts = ruleEngine.applyRules(statements)
-    result = FileProcessor._reconstructFile(statements, blankLineCounts, input)
+    inputCode = ''.join(inputLines)
+    expectedCode = ''.join(expectedLines)
 
-    assert result == expected, f'Expected 2 blank lines after comment before definition, got:\n{result}'
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+      f.write(inputCode)
+      f.flush()
+
+      changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
+
+      with open(f.name) as resultFile:
+        result = resultFile.read()
+
+      assert result == expectedCode, f'Expected 2 blank lines after comment before definition\nGot:\n{result}'
+
+  def test_determineBlankLineWithoutPreserveHasCompletedDefBefore(self):
+    """_determineBlankLineWithoutPreserve hits hasCompletedDefBefore when preserveBlankLines is set by a skip block
+
+    When a skip block (def + body) is followed by a blank then a module-level definition,
+    the second definition has preserveBlankLines=True (from the skip block).
+    It also has hasCompletedDefBefore=True (the first def has a body).
+    The result is max(1 existing blank, 2 required by PEP 8) = 2.
+    This covers line 172 of rules.py.
+    """
+
+    setConfig(BlankLineConfig.fromDefaults())
+
+    engine = BlankLineRuleEngine()
+    statements = [
+      Statement(
+        lines=['def foo():\n'],
+        startLineIndex=0,
+        endLineIndex=0,
+        blockType=BlockType.DEFINITION,
+        indentLevel=0,
+        skipBlankLineRules=True,
+      ),
+      Statement(
+        lines=['  pass\n'],
+        startLineIndex=1,
+        endLineIndex=1,
+        blockType=BlockType.CALL,
+        indentLevel=2,
+        skipBlankLineRules=True,
+      ),
+      Statement(
+        lines=['\n'], startLineIndex=2, endLineIndex=2, blockType=BlockType.ASSIGNMENT, indentLevel=-1, isBlank=True
+      ),
+      Statement(
+        lines=['def bar():\n'], startLineIndex=3, endLineIndex=3, blockType=BlockType.DEFINITION, indentLevel=0
+      ),
+    ]
+    result = engine.applyRules(statements)
+
+    # def bar: max(1 existing blank, 2 required by PEP 8 for module-level def) = 2
+    assert result[3] == 2
+
+  def test_determineBlankLineWithoutPreserveReturningFromNestedLevel(self):
+    """_determineBlankLineWithoutPreserve hits returningFromNestedLevel when preserveBlankLines is set by a skip block
+
+    A skip block with mixed indent levels (x at 0, y at 2) is followed by a blank
+    then z at level 0. z has preserveBlankLines=True and returningFromNestedLevel=True,
+    with no prevAtSameLevel (prevNonBlank y is at a different indent level).
+    Result is max(1 existing blank, 1 required by returningFromNestedLevel) = 1.
+    This covers lines 203-207 of rules.py and the branch where prevAtSameLevel is None.
+    """
+
+    setConfig(BlankLineConfig.fromDefaults())
+
+    engine = BlankLineRuleEngine()
+    statements = [
+      Statement(
+        lines=['x = 1\n'],
+        startLineIndex=0,
+        endLineIndex=0,
+        blockType=BlockType.ASSIGNMENT,
+        indentLevel=0,
+        skipBlankLineRules=True,
+      ),
+      Statement(
+        lines=['  y = 2\n'],
+        startLineIndex=1,
+        endLineIndex=1,
+        blockType=BlockType.ASSIGNMENT,
+        indentLevel=2,
+        skipBlankLineRules=True,
+      ),
+      Statement(
+        lines=['\n'], startLineIndex=2, endLineIndex=2, blockType=BlockType.ASSIGNMENT, indentLevel=-1, isBlank=True
+      ),
+      Statement(lines=['z = 3\n'], startLineIndex=3, endLineIndex=3, blockType=BlockType.ASSIGNMENT, indentLevel=0),
+    ]
+    result = engine.applyRules(statements)
+
+    # z=3: max(1 existing blank, 1 required by returningFromNestedLevel) = 1
+    assert result[3] == 1

@@ -9,7 +9,7 @@ from spacing.types import BlockType, Statement
 
 
 class TestBlockType:
-  def testBlockTypeEnumValues(self):
+  def test_blockTypeEnumValues(self):
     """Test BlockType enum has correct values and precedence order"""
 
     assert BlockType.ASSIGNMENT.value == 1
@@ -19,7 +19,7 @@ class TestBlockType:
     assert BlockType.DEFINITION.value == 5
     assert BlockType.DECLARATION.value == 6
 
-  def testBlockTypePrecedence(self):
+  def test_blockTypePrecedence(self):
     """Test BlockType precedence ordering"""
 
     # Assignment has highest precedence (lowest number)
@@ -29,7 +29,7 @@ class TestBlockType:
     assert BlockType.CONTROL.value < BlockType.DEFINITION.value
     assert BlockType.DEFINITION.value < BlockType.DECLARATION.value
 
-  def testBlockTypeNames(self):
+  def test_blockTypeNames(self):
     """Test BlockType enum names"""
 
     assert BlockType.ASSIGNMENT.name == 'ASSIGNMENT'
@@ -41,7 +41,7 @@ class TestBlockType:
 
 
 class TestStatement:
-  def testStatementCreation(self):
+  def test_statementCreation(self):
     """Test Statement dataclass creation"""
 
     lines = ['x = 1']
@@ -56,7 +56,7 @@ class TestStatement:
     assert not stmt.isBlank  # Default
     assert not stmt.isSecondaryClause  # Default
 
-  def testStatementWithAllFields(self):
+  def test_statementWithAllFields(self):
     """Test Statement with all fields specified"""
 
     lines = ['# Comment']
@@ -80,7 +80,7 @@ class TestStatement:
     assert not stmt.isBlank
     assert not stmt.isSecondaryClause
 
-  def testStatementMultiline(self):
+  def test_statementMultiline(self):
     """Test Statement for multiline statement"""
 
     lines = ['result = func(', '  arg1,', '  arg2', ')']
@@ -91,7 +91,7 @@ class TestStatement:
     assert stmt.endLineIndex == 13
     assert stmt.blockType == BlockType.ASSIGNMENT
 
-  def testStatementBlankLine(self):
+  def test_statementBlankLine(self):
     """Test Statement for blank line"""
 
     stmt = Statement(
@@ -107,7 +107,7 @@ class TestStatement:
     assert stmt.isBlank
     assert stmt.indentLevel == -1
 
-  def testStatementSecondaryClause(self):
+  def test_statementSecondaryClause(self):
     """Test Statement for secondary clause"""
 
     stmt = Statement(
@@ -122,7 +122,7 @@ class TestStatement:
     assert stmt.isSecondaryClause
     assert stmt.blockType == BlockType.CONTROL
 
-  def testStatementEquality(self):
+  def test_statementEquality(self):
     """Test Statement equality comparison"""
 
     stmt1 = Statement(lines=['x = 1'], startLineIndex=0, endLineIndex=0, blockType=BlockType.ASSIGNMENT, indentLevel=0)
@@ -130,7 +130,7 @@ class TestStatement:
 
     assert stmt1 == stmt2
 
-  def testStatementInequality(self):
+  def test_statementInequality(self):
     """Test Statement inequality comparison"""
 
     stmt1 = Statement(lines=['x = 1'], startLineIndex=0, endLineIndex=0, blockType=BlockType.ASSIGNMENT, indentLevel=0)

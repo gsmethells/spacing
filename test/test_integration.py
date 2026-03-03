@@ -11,10 +11,10 @@ from spacing.processor import FileProcessor
 
 
 class TestIntegration:
-  def testBasicBlankLineRules(self):
+  def test_basicBlankLineRules(self):
     """Test basic blank line rules between different block types (PEP 8 compliant)"""
 
-    input_code = """import sys
+    inputCode = """import sys
 x = 1
 def foo():
   pass
@@ -23,7 +23,7 @@ if True:
 """
 
     # PEP 8: 2 blank lines around module-level definitions
-    expected_output = """import sys
+    expectedOutput = """import sys
 
 x = 1
 
@@ -37,7 +37,7 @@ if True:
 """
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       # Process the file
@@ -46,20 +46,20 @@ if True:
       assert changed
 
       # Read the result
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == expected_output
+      assert result == expectedOutput
 
       # Verify idempotency - second run should not change anything
       changed_again = FileProcessor.processFile(Path(f.name), checkOnly=True)
 
       assert not changed_again
 
-  def testSecondaryClauseRules(self):
+  def test_secondaryClauseRules(self):
     """Test that secondary clauses don't get blank lines before them"""
 
-    input_code = """if condition:
+    inputCode = """if condition:
   pass
 else:
 
@@ -73,7 +73,7 @@ finally:
   pass
 
 """
-    expected_output = """if condition:
+    expectedOutput = """if condition:
   pass
 else:
   pass
@@ -87,22 +87,22 @@ finally:
 """
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
       assert changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == expected_output
+      assert result == expectedOutput
 
-  def testCommentBreakRules(self):
+  def test_commentBreakRules(self):
     """Test comment break behavior"""
 
-    input_code = """x = 1
+    inputCode = """x = 1
 
 # Comment causes break
 y = 2
@@ -111,7 +111,7 @@ y = 2
 z = 3
 
 """
-    expected_output = """x = 1
+    expectedOutput = """x = 1
 
 # Comment causes break
 y = 2
@@ -121,22 +121,22 @@ z = 3
 """
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
       assert changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == expected_output
+      assert result == expectedOutput
 
-  def testMultilineStatements(self):
+  def test_multilineStatements(self):
     """Test multiline statement classification and blank line rules"""
 
-    input_code = """result = complexFunction(
+    inputCode = """result = complexFunction(
   arg1,
   arg2
 )
@@ -146,7 +146,7 @@ def func():
 """
 
     # Assignment block groups together, then PEP 8: 2 blank lines before module-level def
-    expected_output = """result = complexFunction(
+    expectedOutput = """result = complexFunction(
   arg1,
   arg2
 )
@@ -158,22 +158,22 @@ def func():
 """
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
       assert changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == expected_output
+      assert result == expectedOutput
 
-  def testPEP8ModuleLevelDefinitions(self):
+  def test_pep8ModuleLevelDefinitions(self):
     """Test PEP 8: 2 blank lines between top-level function/class definitions"""
 
-    input_code = """def func1():
+    inputCode = """def func1():
   pass
 def func2():
   pass
@@ -181,7 +181,7 @@ def func2():
 class MyClass:
   pass
 """
-    expected_output = """def func1():
+    expectedOutput = """def func1():
   pass
 
 
@@ -194,28 +194,28 @@ class MyClass:
 """
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
       assert changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == expected_output
+      assert result == expectedOutput
 
-  def testPEP8ClassMethodDefinitions(self):
+  def test_pep8ClassMethodDefinitions(self):
     """Test PEP 8: 1 blank line between method definitions inside class"""
 
-    input_code = """class MyClass:
+    inputCode = """class MyClass:
   def method1(self):
     pass
   def method2(self):
     pass
 """
-    expected_output = """class MyClass:
+    expectedOutput = """class MyClass:
   def method1(self):
     pass
 
@@ -224,19 +224,19 @@ class MyClass:
 """
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
       assert changed
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == expected_output
+      assert result == expectedOutput
 
-  def testMethodCallsWithKeywordArgumentsAsCallBlocks(self):
+  def test_methodCallsWithKeywordArgumentsAsCallBlocks(self):
     """Test that method calls with keyword arguments are treated as call blocks"""
 
     testCode = """def setup():
@@ -263,8 +263,8 @@ class MyClass:
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
       # This test will fail due to classifier bug
       # When fixed, the tool should add blank lines correctly
@@ -273,7 +273,7 @@ class MyClass:
       else:
         assert changed, 'Should detect formatting changes needed'
 
-  def testBlankLineBetweenAssignmentAndReturn(self):
+  def test_blankLineBetweenAssignmentAndReturn(self):
     """Test that blank line is added between assignment block and return statement"""
 
     testCode = """def calculate():
@@ -296,12 +296,12 @@ class MyClass:
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
       assert result == expectedCode
 
-  def testCoreFilesPreserveFormatting(self):
+  def test_coreFilesPreserveFormatting(self):
     """Test that core files (cli.py, analyzer.py) maintain their correct formatting"""
 
     files_to_test = [Path('src/spacing/cli.py'), Path('src/spacing/analyzer.py')]
@@ -321,10 +321,10 @@ class MyClass:
         else:
           assert not changed, f'{filePath} should not need changes'
 
-  def testConsecutiveDictionaryAssignmentsNoBlankLine(self):
+  def test_consecutiveDictionaryAssignmentsNoBlankLine(self):
     """Regression: Consecutive dictionary assignments should NOT have blank lines between them"""
 
-    input_code = """def setup():
+    inputCode = """def setup():
   # Setup environment
   environ['JOINTS_TEST_SUITE'] = 'True'
   environ[JOINTS_ENV_IS_VALIDATION] = 'False'
@@ -333,7 +333,7 @@ class MyClass:
 """
 
     # All environ assignments should be grouped together with NO blank lines
-    expected_code = """def setup():
+    expectedCode = """def setup():
   # Setup environment
   environ['JOINTS_TEST_SUITE'] = 'True'
   environ[JOINTS_ENV_IS_VALIDATION] = 'False'
@@ -342,22 +342,22 @@ class MyClass:
 """
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == expected_code, f'Consecutive assignments should have no blank lines\nGot:\n{result}'
+      assert result == expectedCode, f'Consecutive assignments should have no blank lines\nGot:\n{result}'
       assert not changed, 'Should not need changes - already correctly formatted'
 
-  def testConsecutiveAsyncDefModuleLevelGetTwoBlankLines(self):
+  def test_consecutiveAsyncDefModuleLevelGetTwoBlankLines(self):
     """Regression: Consecutive async def functions at module level should have 2 blank lines (PEP 8)"""
 
     # Input with no blank lines between test functions
-    input_code = """@pytest.mark.asyncio
+    inputCode = """@pytest.mark.asyncio
 async def test_handlerRegistersWithDaemon(client, daemon):
   daemon.register.assert_called_once()
 @pytest.mark.asyncio
@@ -369,7 +369,7 @@ async def test_anotherTestCase(client):
 """
 
     # Expected: 2 blank lines between consecutive module-level function definitions (PEP 8)
-    expected_code = """@pytest.mark.asyncio
+    expectedCode = """@pytest.mark.asyncio
 async def test_handlerRegistersWithDaemon(client, daemon):
   daemon.register.assert_called_once()
 
@@ -385,13 +385,13 @@ async def test_anotherTestCase(client):
 """
 
     with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-      f.write(input_code)
+      f.write(inputCode)
       f.flush()
 
       changed = FileProcessor.processFile(Path(f.name), checkOnly=False)
 
-      with open(f.name) as result_file:
-        result = result_file.read()
+      with open(f.name) as resultFile:
+        result = resultFile.read()
 
-      assert result == expected_code, f'Consecutive async def test functions need 2 blank lines\nGot:\n{result}'
+      assert result == expectedCode, f'Consecutive async def test functions need 2 blank lines\nGot:\n{result}'
       assert changed, 'Should detect that formatting changes are needed'

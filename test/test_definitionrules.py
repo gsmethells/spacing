@@ -55,64 +55,75 @@ class TestDefinitionRuleHandler:
 
     assert result >= 0  # Should return config value
 
-  def test_isClassDocstringTrue(self):
-    """Test _isClassDocstring detects class docstring"""
+  def test_needsBlankAfterDefinitionClassDocstring(self):
+    """Test needsBlankAfterDefinition returns 1 for class definition followed by docstring (PEP 257)"""
 
     handler = DefinitionRuleHandler()
     statements = [
       createStatement(BlockType.DEFINITION, 0, lines=['class Foo:']),
       createStatement(BlockType.DOCSTRING, 2),
     ]
-    result = handler._isClassDocstring(statements, 1, BlockType.DOCSTRING)
+    result = handler.needsBlankAfterDefinition(statements[0], statements[1], statements, 0)
 
-    assert result is True
+    assert result == 1
 
-  def test_isClassDocstringFalseNotClass(self):
-    """Test _isClassDocstring returns False for function docstring"""
+  def test_needsBlankAfterDefinitionClassDocstringWithBlank(self):
+    """Test needsBlankAfterDefinition returns 1 when blank line separates class def from docstring
+
+    Covers the branch where blank lines are skipped during backward scan for class docstring detection.
+    """
+
+    handler = DefinitionRuleHandler()
+    blankStmt = Statement(
+      lines=[''], startLineIndex=1, endLineIndex=1, blockType=BlockType.ASSIGNMENT, indentLevel=-1, isBlank=True
+    )
+    statements = [
+      createStatement(BlockType.DEFINITION, 0, lines=['class Foo:']),
+      blankStmt,
+      createStatement(BlockType.DOCSTRING, 2),
+    ]
+    result = handler.needsBlankAfterDefinition(statements[0], statements[2], statements, 0)
+
+    assert result == 1
+
+  def test_needsBlankAfterDefinitionFunctionDocstring(self):
+    """Test needsBlankAfterDefinition for function def followed by docstring (not class docstring)"""
 
     handler = DefinitionRuleHandler()
     statements = [
       createStatement(BlockType.DEFINITION, 0, lines=['def foo():']),
       createStatement(BlockType.DOCSTRING, 2),
     ]
-    result = handler._isClassDocstring(statements, 1, BlockType.DOCSTRING)
+    result = handler.needsBlankAfterDefinition(statements[0], statements[1], statements, 0)
 
-    assert result is False
+    assert result == 1
 
-  def test_isClassDocstringFalseNotDocstring(self):
-    """Test _isClassDocstring returns False when not a docstring"""
+  def test_needsBlankAfterDefinitionClassFollowedByAssignment(self):
+    """Test needsBlankAfterDefinition for class def followed by assignment (not a docstring)"""
 
     handler = DefinitionRuleHandler()
     statements = [
       createStatement(BlockType.DEFINITION, 0, lines=['class Foo:']),
       createStatement(BlockType.ASSIGNMENT, 2),
     ]
-    result = handler._isClassDocstring(statements, 1, BlockType.ASSIGNMENT)
+    result = handler.needsBlankAfterDefinition(statements[0], statements[1], statements, 0)
 
-    assert result is False
+    assert result == 1
 
-  def test_isClassDocstringFalseNoneIndex(self):
-    """Test _isClassDocstring returns False when index is None"""
-
-    handler = DefinitionRuleHandler()
-    statements = []
-    result = handler._isClassDocstring(statements, None, BlockType.DOCSTRING)
-
-    assert result is False
-
-  def test_isModuleLevelDocstringTrue(self):
-    """Test _isModuleLevelDocstring detects module-level docstring"""
+  def test_needsBlankAfterBlockTypeModuleLevelDocstring(self):
+    """Test needsBlankAfterBlockType returns 1 for module-level docstring followed by code"""
 
     handler = DefinitionRuleHandler()
     statements = [
-      createStatement(BlockType.DOCSTRING, 0),  # First statement
+      createStatement(BlockType.DOCSTRING, 0),  # Module-level docstring
+      createStatement(BlockType.IMPORT, 0),  # import statement
     ]
-    result = handler._isModuleLevelDocstring(statements, 0, BlockType.DOCSTRING)
+    result = handler.needsBlankAfterBlockType(BlockType.DOCSTRING, statements[1], statements, 0)
 
-    assert result is True
+    assert result == 1
 
-  def test_isModuleLevelDocstringTrueWithBlanksAndComments(self):
-    """Test _isModuleLevelDocstring detects module-level docstring with blanks/comments before"""
+  def test_needsBlankAfterBlockTypeModuleLevelDocstringWithBlanksAndComments(self):
+    """Test needsBlankAfterBlockType returns 1 for module-level docstring preceded by blanks and comments"""
 
     handler = DefinitionRuleHandler()
     statements = [
@@ -126,39 +137,33 @@ class TestDefinitionRuleHandler:
         isComment=True,
       ),
       createStatement(BlockType.DOCSTRING, 0),  # Module-level docstring
+      createStatement(BlockType.IMPORT, 0),  # import statement
     ]
-    result = handler._isModuleLevelDocstring(statements, 2, BlockType.DOCSTRING)
+    result = handler.needsBlankAfterBlockType(BlockType.DOCSTRING, statements[3], statements, 2)
 
-    assert result is True
+    assert result == 1
 
-  def test_isModuleLevelDocstringFalseCodeBefore(self):
-    """Test _isModuleLevelDocstring returns False when code exists before docstring"""
+  def test_needsBlankAfterBlockTypeDocstringWithCodeBefore(self):
+    """Test needsBlankAfterBlockType for docstring that is not module-level due to code before it"""
 
     handler = DefinitionRuleHandler()
     statements = [
       createStatement(BlockType.ASSIGNMENT, 0),  # x = 1
       createStatement(BlockType.DOCSTRING, 0),  # Not module-level
+      createStatement(BlockType.ASSIGNMENT, 0),  # y = 2
     ]
-    result = handler._isModuleLevelDocstring(statements, 1, BlockType.DOCSTRING)
+    result = handler.needsBlankAfterBlockType(BlockType.DOCSTRING, statements[2], statements, 1)
 
-    assert result is False
+    assert result == 1
 
-  def test_isModuleLevelDocstringFalseNotDocstring(self):
-    """Test _isModuleLevelDocstring returns False when not a docstring"""
+  def test_needsBlankAfterBlockTypeAssignment(self):
+    """Test needsBlankAfterBlockType for assignment block type (not a docstring)"""
 
     handler = DefinitionRuleHandler()
     statements = [
       createStatement(BlockType.ASSIGNMENT, 0),
+      createStatement(BlockType.CALL, 0),
     ]
-    result = handler._isModuleLevelDocstring(statements, 0, BlockType.ASSIGNMENT)
+    result = handler.needsBlankAfterBlockType(BlockType.ASSIGNMENT, statements[1], statements, 0)
 
-    assert result is False
-
-  def test_isModuleLevelDocstringFalseNoneIndex(self):
-    """Test _isModuleLevelDocstring returns False when index is None"""
-
-    handler = DefinitionRuleHandler()
-    statements = []
-    result = handler._isModuleLevelDocstring(statements, None, BlockType.DOCSTRING)
-
-    assert result is False
+    assert result == 1

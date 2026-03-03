@@ -69,7 +69,7 @@ Uncomment the language(s) used in this project:
 
 ### Code Quality & Linting
 - Use language-specific linters and formatters as defined in the language standard files (e.g., python-code-standard.md, java-code-standard.md)
-- All code must pass linting checks before committing
+- If a required linter or tool is not found, attempt to install it using the appropriate package manager (e.g., `brew` on macOS, `apt` on Linux) before proceeding
 - Configure linting tools in project root (e.g., .eslintrc, .clang-format, pyproject.toml, etc.)
 - Common issues to avoid across all languages:
   - Unused imports or variables
@@ -81,6 +81,7 @@ Uncomment the language(s) used in this project:
 
 #### General Standards
 - **MANDATORY**: When fixing a bug, **always** add regression tests to the existing unit test suite
+- **MANDATORY**: When writing new public functions or methods, **always** add unit tests covering success and failure scenarios
 - Prefer short, to-the-point tests that test situations corresponding to a single use case
 - Do not call private methods directly inside unit tests
 - Never mock methods of the class under test
@@ -123,6 +124,17 @@ Verification checklist:
 - Use `/review` command for comprehensive code reviews
 - The Code Implementation Workflow below is **MANDATORY** for all code changes
 
+### Git Workflow
+
+**MANDATORY**: Always follow these branching and commit rules.
+
+- **Never commit directly to `main` or `master`** — always work on a feature branch
+- Create a branch before making any changes: `git checkout -b <type>/<short-description>`
+- Commit after each logical, self-contained unit of work that passes tests (atomic commits)
+- Push the branch and open a PR/MR when the work is complete
+
+**Note**: The branch policy above is a team default. Individual developers may override it in their `CLAUDE.local.md` (e.g., for trunk-based development on personal projects).
+
 ### Code Implementation Workflow
 
 **MANDATORY**: Always follow this approach when writing any code.
@@ -139,7 +151,11 @@ When implementing code changes:
 - Set up and use appropriate development environment for your language
 - When fixing tests, only run the failing tests during iteration
 - Update `DESIGN.md` immediately after making significant code changes (replace outdated info, don't append dated sections)
-- Run language-specific linters and formatters as specified in the language standard files
+- Maintain a `CHANGELOG.md` file in the project base directory following [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format:
+  - **MANDATORY**: Add an entry for every user-visible change (features, fixes, breaking changes)
+  - Group entries under: Added, Changed, Deprecated, Removed, Fixed, Security
+  - Keep an `[Unreleased]` section at the top for in-progress changes
+  - When releasing, move unreleased entries under a version heading matching the project's versioning scheme (git tags, pyproject.toml, package.json, etc.)
 
 ### Project-Specific Context
 
