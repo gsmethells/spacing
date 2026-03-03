@@ -8,18 +8,12 @@ This file is subject to the terms and conditions defined in LICENSE.
 import argparse
 import logging
 import sys
-from pathlib import Path
-
-try:
-  from importlib.metadata import PackageNotFoundError, version
-except ImportError:
-  # Python < 3.8
-  from importlib_metadata import PackageNotFoundError, version
-
 from .config import BlankLineConfig, MAX_BLANK_LINES, setConfig
 from .pathfilter import discoverPythonFiles
 from .processor import FileProcessor
 from .types import BlockType
+from importlib.metadata import PackageNotFoundError, version
+from pathlib import Path
 
 
 def getVersion():

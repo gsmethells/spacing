@@ -46,8 +46,8 @@ class TestCommentRuleHandler:
     ]
     result = handler.needsBlankAfterComment(statements[0], statements[1], statements, 1)
 
-    # Should return PEP 8 requirement (2 blank lines for module-level definitions)
-    assert result >= 0  # Actual value depends on config
+    # PEP 8 requires 2 blank lines before module-level definitions
+    assert result == 2
 
   def test_needsBlankAfterCommentNonModuleLevelDef(self):
     """Test needsBlankAfterComment returns 0 for nested definition after comment"""
@@ -77,8 +77,8 @@ class TestCommentRuleHandler:
     currentStmt = createStatement(BlockType.COMMENT, 0, isComment=True)
     result = handler.needsBlankBeforeComment(currentStmt, True, None, startsNewScope=False)
 
-    # Should return config value for definition -> comment
-    assert result >= 0
+    # PEP 8 requires 2 blank lines from module-level definitions
+    assert result == 2
 
   def test_needsBlankBeforeCommentAfterDocstring(self):
     """Test needsBlankBeforeComment after docstring"""
@@ -87,8 +87,8 @@ class TestCommentRuleHandler:
     currentStmt = createStatement(BlockType.COMMENT, 2, isComment=True)
     result = handler.needsBlankBeforeComment(currentStmt, False, BlockType.DOCSTRING, startsNewScope=False)
 
-    # Should return config value for docstring -> comment
-    assert result >= 0
+    # PEP 257 requires 1 blank line after method/function docstrings
+    assert result == 1
 
   def test_needsBlankBeforeCommentTransition(self):
     """Test needsBlankBeforeComment when transitioning from non-comment block"""

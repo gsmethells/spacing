@@ -11,7 +11,7 @@ Python code formatter enforcing configurable blank line rules. Processes files i
 1. **MultilineParser** (`parser.py`): Line-by-line reading with bracket/quote tracking for multiline statements
 2. **StatementClassifier** (`classifier.py`): Statement type identification with pre-compiled regex patterns
 3. **FileAnalyzer** (`analyzer.py`): File structure parsing and analysis
-4. **ContextBuilder** (`context.py`): Pre-compute statement relationships in O(n) (new in v1.1)
+4. **ContextBuilder** (`context.py`): Pre-compute statement relationships in O(n) (new in v1.0.0)
 5. **BlankLineRuleEngine** (`rules.py`): Context-based rule application with specialized handlers
 6. **CommentRuleHandler** (`commentrules.py`): Comment-specific blank line rules
 7. **DefinitionRuleHandler** (`definitionrules.py`): PEP 8/257 definition and docstring rules
@@ -84,12 +84,13 @@ Python code formatter enforcing configurable blank line rules. Processes files i
 Precedence (highest to lowest):
 1. Type Annotation (PEP 526 type annotations with or without default values)
 2. Assignment (assignments, comprehensions, lambdas)
-3. Call (function calls, del, assert, pass, raise, yield, return)
-4. Import
-5. Control (if/for/while/try/with structures)
-6. Definition (def/class)
-7. Declaration (global/nonlocal)
-8. Comment
+3. Flow Control (return, yield, yield from)
+4. Call (function calls, del, assert, pass, raise)
+5. Import
+6. Control (if/for/while/try/with structures)
+7. Definition (def/class)
+8. Declaration (global/nonlocal)
+9. Comment
 
 ### 7. Scope-Aware Processing
 - Rules applied independently at each indentation level
@@ -203,7 +204,7 @@ Block type names: `type_annotation` (or `annotation`), `assignment`, `call`, `im
 
 ## Testing
 
-Comprehensive test suite (217 tests, >90% coverage) covering:
+Comprehensive test suite (316 tests, >95% coverage) covering:
 - Unit tests per component (parser, classifier, rules, analyzer, processor, config)
 - Integration tests (end-to-end, configuration-driven, docstrings, class methods, nested scopes)
 - Directive tests (16 tests): Detection, idempotency, edge cases, integration

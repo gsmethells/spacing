@@ -35,7 +35,8 @@ class StatementClassifier:
       r'^\s*\w+\s*:\s*[\w\[\], \.]+',  # Type annotation (with or without default value)
     ],
     BlockType.ASSIGNMENT: [
-      r'^\s*[\w\s\[\]\'.{}():+&?;@#%*|/",-]+\s*=(?!=)',  # Variable/tuple assignment (includes f-strings, method calls, and common string characters, but not ==)
+      # Variable/tuple assignment (f-strings, method calls, common string chars, but not ==)
+      r'^\s*[\w\s\[\]\'.{}():+&?;@#%*|/",-]+\s*=(?!=)',
       r'^\s*[\w.\[\]]+\s*[+\-*/%@&|^]=',  # Augmented assignment (+=, -=, *=, etc.)
       r'^\s*[\[\{].*=',  # Comprehension assignment
     ],
