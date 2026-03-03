@@ -299,3 +299,70 @@ some_value = 1
 
       with pytest.raises(ValueError, match='paths.include_hidden must be a boolean'):
         BlankLineConfig.fromToml(Path(f.name))
+
+  def test_fromTomlOsError(self, monkeypatch):
+    """Test TOML loading when OS read error occurs"""
+
+    import builtins
+
+    tomlContent = """
+[blank_lines]
+default_between_different = 1
+"""
+
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.toml', delete=False) as f:
+      f.write(tomlContent)
+      f.flush()
+
+      configPath = Path(f.name)
+
+    originalOpen = builtins.open
+
+    def mockOpen(path, *args, **kwargs):
+      if str(path) == str(configPath) and 'rb' in args:
+        raise OSError('Simulated read error')
+
+      return originalOpen(path, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, 'open', mockOpen)
+
+    with pytest.raises(ValueError, match='Failed to read TOML'):
+      BlankLineConfig.fromToml(configPath)
+
+  def test_validateBlankLineCountNonInteger(self):
+    """Test validation rejects non-integer blank line counts"""
+
+    with pytest.raises(ValueError, match='must be an integer'):
+      BlankLineConfig._validateBlankLineCount('not_int', 'test_key')
+
+  def test_validateIndentWidthNonInteger(self):
+    """Test validation rejects non-integer indent width"""
+
+    with pytest.raises(ValueError, match='must be an integer'):
+      BlankLineConfig._validateIndentWidth('not_int', 'test_key')
+
+  def test_getBlankLinesModuleLevelDefinition(self):
+    """Test PEP 8: 2 blank lines for module-level definitions"""
+
+    config = BlankLineConfig.fromDefaults()
+
+    # Module-level (indent 0) transitions to/from definitions always get 2
+    assert config.getBlankLines(BlockType.ASSIGNMENT, BlockType.DEFINITION, indentLevel=0) == 2
+    assert config.getBlankLines(BlockType.DEFINITION, BlockType.ASSIGNMENT, indentLevel=0) == 2
+    assert config.getBlankLines(BlockType.DEFINITION, BlockType.DEFINITION, indentLevel=0) == 2
+
+  def test_getBlankLinesClassDocstring(self):
+    """Test PEP 257: class docstrings always get 1 blank line after"""
+
+    config = BlankLineConfig(afterDocstring=0)
+
+    # Class docstrings always get 1, regardless of afterDocstring config
+    assert config.getBlankLines(BlockType.DOCSTRING, BlockType.CALL, isClassDocstring=True) == 1
+
+  def test_getBlankLinesModuleLevelDocstring(self):
+    """Test PEP 257: module-level docstrings always get 1 blank line after"""
+
+    config = BlankLineConfig(afterDocstring=0)
+
+    # Module-level docstrings always get 1, regardless of afterDocstring config
+    assert config.getBlankLines(BlockType.DOCSTRING, BlockType.IMPORT, isModuleLevelDocstring=True) == 1

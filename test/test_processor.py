@@ -8,6 +8,7 @@ This file is subject to the terms and conditions defined in LICENSE.
 import tempfile
 from pathlib import Path
 from spacing.processor import FileProcessor
+from spacing.types import BlockType
 
 
 class TestFileProcessor:
@@ -309,3 +310,119 @@ y = 2"""
       os.unlink(filePath)
     except Exception:
       pass
+
+  def test_writeErrorWithReturnDetails(self, monkeypatch):
+    """Test write error returns (False, None) when returnDetails is True"""
+
+    import os
+
+    content = """import sys
+x = 1
+y = 2"""
+
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+      f.write(content)
+      f.flush()
+
+      filePath = Path(f.name)
+
+    # Mock os.replace to simulate atomic write failure after temp file is created
+    def mockReplace(*args, **kwargs):
+      raise OSError('Simulated replace error')
+
+    monkeypatch.setattr(os, 'replace', mockReplace)
+
+    result = FileProcessor.processFile(filePath, checkOnly=False, returnDetails=True)
+
+    assert result == (False, None)
+
+    try:
+      os.unlink(filePath)
+    except Exception:
+      pass
+
+  def test_returnDetailsNoChanges(self):
+    """Test returnDetails returns (False, None) when no changes needed"""
+
+    content = """import sys
+
+x = 1
+"""
+
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+      f.write(content)
+      f.flush()
+
+      result = FileProcessor.processFile(Path(f.name), checkOnly=True, returnDetails=True)
+
+      assert result == (False, None)
+
+  def test_rearrangedBlankLinesSummary(self):
+    """Test summary says 'rearranged' when blank line count stays the same"""
+
+    # We need a file where blank lines are moved but total count stays the same
+    content = """import sys
+
+x = 1
+y = 2
+
+z = 3
+"""
+
+    # This specific case may or may not result in rearranging — test via the static method directly
+    originalLines = ['import sys\n', '\n', '\n', 'x = 1\n', 'y = 2\n']
+    newLines = ['import sys\n', '\n', 'x = 1\n', '\n', 'y = 2\n']
+    summary = FileProcessor._generateChangeSummary(originalLines, newLines)
+
+    assert summary == 'rearranged blank lines'
+
+  def test_generateChangeSummaryAdded(self):
+    """Test summary says 'added' when blank lines are added"""
+
+    originalLines = ['import sys\n', 'x = 1\n']
+    newLines = ['import sys\n', '\n', 'x = 1\n']
+    summary = FileProcessor._generateChangeSummary(originalLines, newLines)
+
+    assert 'added 1 blank line' in summary
+
+  def test_trailingNewlinePreservationAddNewline(self):
+    """Test that trailing newline is added when original had one but new doesn't"""
+
+    # Create file that ends with newline, where processing would remove it
+    # Test via _reconstructFile directly
+    from spacing.types import Statement
+
+    statements = [
+      Statement(
+        lines=['x = 1'],
+        startLineIndex=0,
+        endLineIndex=0,
+        blockType=BlockType.ASSIGNMENT,
+        indentLevel=0,
+      ),
+    ]
+    blankLineCounts = [0]
+    originalLines = ['x = 1\n']
+    result = FileProcessor._reconstructFile(statements, blankLineCounts, originalLines)
+
+    assert result[-1].endswith('\n')
+
+  def test_trailingNewlinePreservationRemoveNewline(self):
+    """Test that trailing newline is removed when original didn't have one"""
+
+    from spacing.types import Statement
+
+    statements = [
+      Statement(
+        lines=['x = 1\n'],
+        startLineIndex=0,
+        endLineIndex=0,
+        blockType=BlockType.ASSIGNMENT,
+        indentLevel=0,
+      ),
+    ]
+    blankLineCounts = [0]
+    originalLines = ['x = 1']  # No trailing newline
+    result = FileProcessor._reconstructFile(statements, blankLineCounts, originalLines)
+
+    assert not result[-1].endswith('\n')

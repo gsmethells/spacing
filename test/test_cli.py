@@ -693,3 +693,325 @@ x = 1"""
 
       # Should exit with 0 in dry-run mode
       assert exitCode == 0
+
+  def test_mainWithConfigError(self, monkeypatch):
+    """Test main() when configuration loading fails"""
+
+    import sys
+    from spacing.cli import main
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+      # Create invalid config file
+      configFile = Path(tmpdir) / 'bad.toml'
+
+      configFile.write_text('[blank_lines]\ndefault_between_different = 99\n')
+      monkeypatch.setattr(sys, 'argv', ['spacing', '--config', str(configFile), str(tmpdir)])
+
+      with pytest.raises(SystemExit) as excInfo:
+        main()
+
+      assert excInfo.value.code == 1
+
+  def test_mainWithDryRunVerboseChanges(self, monkeypatch):
+    """Test main() with --dry-run --verbose when changes are needed"""
+
+    import sys
+    from spacing.cli import main
+
+    content = """import sys
+x = 1"""
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+      testFile = Path(tmpdir) / 'test.py'
+
+      testFile.write_text(content)
+      monkeypatch.setattr(sys, 'argv', ['spacing', '--dry-run', '--verbose', str(testFile)])
+
+      exitCode = None
+
+      def mockExit(code):
+        nonlocal exitCode
+
+        exitCode = code
+
+      monkeypatch.setattr(sys, 'exit', mockExit)
+      main()
+      assert exitCode == 0
+
+  def test_mainWithNoPathsNoPythonFiles(self, monkeypatch):
+    """Test main() with no paths and no Python files in current directory"""
+
+    import os
+    import sys
+    from spacing.cli import main
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+      originalCwd = os.getcwd()
+
+      os.chdir(tmpdir)
+
+      try:
+        monkeypatch.setattr(sys, 'argv', ['spacing'])
+
+        exitCode = None
+
+        def mockExit(code):
+          nonlocal exitCode
+
+          exitCode = code
+
+        monkeypatch.setattr(sys, 'exit', mockExit)
+        main()
+        assert exitCode == 0
+      finally:
+        os.chdir(originalCwd)
+
+  def test_mainWithCheckModeVerbose(self, monkeypatch):
+    """Test main() with --check --verbose when changes needed"""
+
+    import sys
+    from spacing.cli import main
+
+    content = """import sys
+x = 1"""
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+      testFile = Path(tmpdir) / 'test.py'
+
+      testFile.write_text(content)
+      monkeypatch.setattr(sys, 'argv', ['spacing', '--check', '--verbose', str(testFile)])
+
+      exitCode = None
+
+      def mockExit(code):
+        nonlocal exitCode
+
+        exitCode = code
+
+      monkeypatch.setattr(sys, 'exit', mockExit)
+      main()
+      assert exitCode == 1
+
+
+class TestCLIGetVersion:
+  def test_getVersionPackageNotFoundTomllib(self, monkeypatch):
+    """Test getVersion fallback to pyproject.toml when package not installed"""
+
+    from spacing.cli import getVersion
+
+    # The function handles PackageNotFoundError internally, so it always returns a string
+    version = getVersion()
+
+    assert isinstance(version, str)
+    assert len(version) > 0
+
+  def test_getVersionPackageNotFoundImportError(self, monkeypatch):
+    """Test getVersion when PackageNotFoundError and tomllib ImportError"""
+
+    import importlib.metadata
+    from spacing.cli import getVersion
+
+    def mockVersion(name):
+      raise importlib.metadata.PackageNotFoundError()
+
+    monkeypatch.setattr('spacing.cli.version', mockVersion)
+
+    # Mock tomllib to simulate ImportError
+
+    originalImport = __builtins__.__import__ if hasattr(__builtins__, '__import__') else __import__
+
+    def mockImport(name, *args, **kwargs):
+      if name == 'tomllib':
+        raise ImportError('mocked')
+
+      return originalImport(name, *args, **kwargs)
+
+    monkeypatch.setattr('builtins.__import__', mockImport)
+
+    version = getVersion()
+
+    assert 'unknown' in version
+
+  def test_getVersionPackageNotFoundFileError(self, monkeypatch):
+    """Test getVersion when pyproject.toml doesn't exist at expected path"""
+
+    import importlib.metadata
+    from spacing.cli import getVersion
+
+    def mockVersion(name):
+      raise importlib.metadata.PackageNotFoundError()
+
+    monkeypatch.setattr('spacing.cli.version', mockVersion)
+
+    # Mock Path to make pyproject.toml not exist
+    originalPathExists = Path.exists
+
+    def mockExists(self):
+      if 'pyproject.toml' in str(self):
+        return False
+
+      return originalPathExists(self)
+
+    monkeypatch.setattr(Path, 'exists', mockExists)
+
+    version = getVersion()
+
+    assert 'unknown' in version
+
+
+class TestCLILoadConfigEdgeCases:
+  def test_loadConfigurationDefaultConfigFileError(self):
+    """Test loadConfiguration when default config file has parse errors (should use defaults)"""
+
+    import os
+
+    originalCwd = os.getcwd()
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+      # Create invalid default config file
+      configFile = Path(tmpdir) / 'spacing.toml'
+
+      configFile.write_text('[blank_lines\ninvalid toml\n')
+      os.chdir(tmpdir)
+
+      try:
+        args = argparse.Namespace(
+          no_config=False,
+          config=None,
+          blank_lines_default=None,
+          blank_lines=None,
+          blank_lines_consecutive_control=None,
+          blank_lines_consecutive_definition=None,
+          blank_lines_after_docstring=None,
+        )
+        config = loadConfiguration(args)
+
+        # Should fallback to defaults when default config has errors
+        assert config.defaultBetweenDifferent == 1
+      finally:
+        os.chdir(originalCwd)
+
+  def test_loadConfigurationExplicitConfigFileError(self):
+    """Test loadConfiguration when explicitly specified config file has errors (should raise)"""
+
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.toml', delete=False) as f:
+      f.write('[blank_lines\ninvalid toml\n')
+      f.flush()
+
+      args = argparse.Namespace(
+        no_config=False,
+        config=Path(f.name),
+        blank_lines_default=None,
+        blank_lines=None,
+        blank_lines_consecutive_control=None,
+        blank_lines_consecutive_definition=None,
+        blank_lines_after_docstring=None,
+      )
+
+      with pytest.raises(ValueError, match='Failed to parse TOML'):
+        loadConfiguration(args)
+
+  def test_loadConfigurationAfterDocstringOverride(self):
+    """Test --blank-lines-after-docstring CLI override"""
+
+    args = argparse.Namespace(
+      no_config=False,
+      config=None,
+      blank_lines_default=None,
+      blank_lines=None,
+      blank_lines_consecutive_control=None,
+      blank_lines_consecutive_definition=None,
+      blank_lines_after_docstring=0,
+    )
+    config = loadConfiguration(args)
+
+    assert config.afterDocstring == 0
+
+  def test_loadConfigurationInvalidTransitionFormat(self):
+    """Test loadConfiguration with invalid transition key (no _to_)"""
+
+    args = argparse.Namespace(
+      no_config=False,
+      config=None,
+      blank_lines_default=None,
+      blank_lines=['assignmentcall=1'],
+      blank_lines_consecutive_control=None,
+      blank_lines_consecutive_definition=None,
+      blank_lines_after_docstring=None,
+    )
+
+    with pytest.raises(ValueError, match='Invalid --blank-lines override'):
+      loadConfiguration(args)
+
+  def test_loadConfigurationInvalidTransitionValue(self):
+    """Test loadConfiguration with invalid value in --blank-lines"""
+
+    args = argparse.Namespace(
+      no_config=False,
+      config=None,
+      blank_lines_default=None,
+      blank_lines=['assignment_to_call=99'],
+      blank_lines_consecutive_control=None,
+      blank_lines_consecutive_definition=None,
+      blank_lines_after_docstring=None,
+    )
+
+    with pytest.raises(ValueError, match='Invalid --blank-lines override'):
+      loadConfiguration(args)
+
+
+class TestCLIProcessFileDetails:
+  def test_processFileDryRunVerboseWithDiff(self):
+    """Test _processFile in dry-run verbose mode showing diff output"""
+
+    from spacing.cli import _processFile
+
+    content = """import sys
+x = 1"""
+
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+      f.write(content)
+      f.flush()
+
+      args = argparse.Namespace(check=False, dry_run=True, verbose=True, quiet=False)
+      changed, exitCode = _processFile(Path(f.name), args)
+
+      assert changed
+      assert exitCode == 0
+
+  def test_processFileCheckModeQuiet(self):
+    """Test _processFile in check mode with quiet flag"""
+
+    from spacing.cli import _processFile
+
+    content = """import sys
+x = 1"""
+
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+      f.write(content)
+      f.flush()
+
+      args = argparse.Namespace(check=True, dry_run=False, verbose=False, quiet=True)
+      changed, exitCode = _processFile(Path(f.name), args)
+
+      assert changed
+      assert exitCode == 1
+
+  def test_processFileDryRunNoChange(self):
+    """Test _processFile dry-run mode when no changes needed returns False exit 0"""
+
+    from spacing.cli import _processFile
+
+    content = """import sys
+
+x = 1"""
+
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+      f.write(content)
+      f.flush()
+
+      args = argparse.Namespace(check=False, dry_run=True, verbose=False, quiet=False)
+      changed, exitCode = _processFile(Path(f.name), args)
+
+      assert not changed
+      assert exitCode == 0

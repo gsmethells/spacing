@@ -165,3 +165,23 @@ class TestCommentRuleHandler:
     result = handler.needsBlankAfterComment(statements[0], statements[1], statements, 1)
 
     assert result == 2
+
+  def test_hasBlankAfterCommentNoStatementsBeforeIndex(self):
+    """Test _hasBlankAfterComment returns False when no statements before index"""
+
+    handler = CommentRuleHandler()
+    statements = [
+      createStatement(BlockType.ASSIGNMENT, 0),
+    ]
+    result = handler._hasBlankAfterComment(statements, 0)
+
+    assert not result
+
+  def test_needsBlankBeforeCommentNoPrevBlockType(self):
+    """Test needsBlankBeforeComment returns 0 when prevBlockType is None"""
+
+    handler = CommentRuleHandler()
+    currentStmt = createStatement(BlockType.COMMENT, 0, isComment=True)
+    result = handler.needsBlankBeforeComment(currentStmt, False, None, startsNewScope=False)
+
+    assert result == 0

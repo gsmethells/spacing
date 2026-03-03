@@ -223,3 +223,115 @@ class TestFileAnalyzer:
     assert statements[0].blockType == BlockType.ASSIGNMENT  # result = some_function(...)
     assert len(statements[0].lines) == 4  # All bracket lines grouped
     assert statements[1].blockType == BlockType.ASSIGNMENT  # x = 1
+
+  def test_blankLineInsideBrackets(self):
+    """Test that blank lines inside brackets are skipped (not treated as statement separators)"""
+
+    analyzer = FileAnalyzer()
+    lines = [
+      'result = func(',
+      '  arg1,',
+      '',
+      '  arg2',
+      ')',
+    ]
+    statements = analyzer.analyzeFile(lines)
+
+    # Blank line inside brackets should be consumed, not separate statement
+    assert len(statements) == 1
+    assert statements[0].blockType == BlockType.ASSIGNMENT
+    assert len(statements[0].lines) == 4  # Blank line skipped
+
+  def test_commentInsideBrackets(self):
+    """Test that comments inside brackets are included in the statement"""
+
+    analyzer = FileAnalyzer()
+    lines = [
+      'result = func(',
+      '  arg1,',
+      '  # inline comment',
+      '  arg2',
+      ')',
+    ]
+    statements = analyzer.analyzeFile(lines)
+
+    assert len(statements) == 1
+    assert statements[0].blockType == BlockType.ASSIGNMENT
+    assert len(statements[0].lines) == 5  # Comment included in multiline statement
+
+  def test_commentAfterCurrentStatement(self):
+    """Test that a comment terminates a preceding non-multiline statement"""
+
+    analyzer = FileAnalyzer()
+    lines = [
+      'x = 1',
+      '# comment',
+      'y = 2',
+    ]
+    statements = analyzer.analyzeFile(lines)
+
+    assert len(statements) == 3
+    assert statements[0].blockType == BlockType.ASSIGNMENT
+    assert statements[1].isComment
+    assert statements[2].blockType == BlockType.ASSIGNMENT
+
+  def test_remainingStatementAtEndOfFile(self):
+    """Test that an unterminated statement at EOF is still captured"""
+
+    analyzer = FileAnalyzer()
+    lines = [
+      'x = 1',
+    ]
+    statements = analyzer.analyzeFile(lines)
+
+    assert len(statements) == 1
+    assert statements[0].blockType == BlockType.ASSIGNMENT
+    assert statements[0].startLineIndex == 0
+    assert statements[0].endLineIndex == 0
+
+  def test_createStatementEmptyLines(self):
+    """Test that _createStatement raises ValueError for empty lines list"""
+
+    import pytest
+
+    analyzer = FileAnalyzer()
+
+    with pytest.raises(ValueError, match='Cannot create statement from empty lines'):
+      analyzer._createStatement([], 0, 0)
+
+  def test_getIndentLevelBlankLine(self):
+    """Test that _getIndentLevel returns BLANK_LINE_INDENT for blank lines"""
+
+    from spacing.types import BLANK_LINE_INDENT
+
+    analyzer = FileAnalyzer()
+    result = analyzer._getIndentLevel('')
+
+    assert result == BLANK_LINE_INDENT
+
+  def test_getIndentLevelTabCharacter(self):
+    """Test that _getIndentLevel handles tab characters using config.indentWidth"""
+
+    analyzer = FileAnalyzer()
+    result = analyzer._getIndentLevel('\tx = 1')
+
+    # Default indent width is 2, so tab = 2 spaces
+    assert result == 2
+
+  def test_hasSpacingSkipDirectiveEmptyLines(self):
+    """Test _hasSpacingSkipDirective returns False for statement with empty lines"""
+
+    from spacing.types import Statement
+
+    analyzer = FileAnalyzer()
+    stmt = Statement(
+      lines=[],
+      startLineIndex=0,
+      endLineIndex=0,
+      blockType=BlockType.COMMENT,
+      indentLevel=0,
+      isComment=True,
+    )
+    result = analyzer._hasSpacingSkipDirective(stmt)
+
+    assert not result

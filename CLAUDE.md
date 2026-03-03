@@ -151,6 +151,11 @@ When implementing code changes:
 - Set up and use appropriate development environment for your language
 - When fixing tests, only run the failing tests during iteration
 - Update `DESIGN.md` immediately after making significant code changes (replace outdated info, don't append dated sections)
+- Maintain a `CHANGELOG.md` file in the project base directory following [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) format:
+  - **MANDATORY**: Add an entry for every user-visible change (features, fixes, breaking changes)
+  - Group entries under: Added, Changed, Deprecated, Removed, Fixed, Security
+  - Keep an `[Unreleased]` section at the top for in-progress changes
+  - When releasing, move unreleased entries under a version heading matching the project's versioning scheme (git tags, pyproject.toml, package.json, etc.)
 
 ### Project-Specific Context
 
