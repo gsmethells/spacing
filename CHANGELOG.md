@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-03-05
+
+### Changed
+- Eliminated code duplication in `BlankLineRuleEngine` by merging `_determineBlankLineWithoutPreserve` into `_determineBlankLine` with a `skipPreserve` parameter
+- Corrected O(n) complexity claims in DESIGN.md and context.py docstrings to reflect O(n²) worst case in scope detection
+
+### Fixed
+- Added missing `type_annotation` and `annotation` alias to CLI `--blank-lines` block type map (already supported in TOML config)
+- Removed dead `_needsBlankLineBetween` method from `BlankLineRuleEngine`
+
 ## [1.0.1] - 2026-03-03
 
 ### Changed

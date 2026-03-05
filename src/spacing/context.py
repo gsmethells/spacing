@@ -10,10 +10,10 @@ from .types import BlockType, StatementContext
 
 
 class ContextBuilder:
-  """Build StatementContext objects in one O(n) forward pass
+  """Build StatementContext objects in a forward pass
 
   This class pre-computes all relational information needed for blank line
-  rule application, eliminating the need for O(n²) backward scanning during
+  rule application, eliminating the need for backward scanning during
   rule evaluation.
 
   The buildContexts method performs a single forward pass to populate:
@@ -28,7 +28,7 @@ class ContextBuilder:
   """
 
   def buildContexts(self, statements):
-    """Build context in one O(n) forward pass
+    """Build context in a forward pass
 
     :type statements: list[Statement]
     :param statements: List of statements to build context for
