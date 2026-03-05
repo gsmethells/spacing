@@ -104,9 +104,10 @@ Precedence (highest to lowest):
 **Solution**: Context-based architecture with pre-computation:
 
 **StatementContext Pattern**:
-- Pre-compute all relational information (prev/next statements, scope changes, completed blocks) in ONE O(n) pass
+- Pre-compute all relational information (prev/next statements, scope changes, completed blocks) in a forward pass
 - Cache in `StatementContext` dataclass attached to each statement
-- Eliminates O(n²) backward scanning during rule application
+- XXX: `_computeScopeInfo` returning-from-nested detection uses O(n²) backward scan; acceptable for typical file sizes
+- Eliminates most O(n²) backward scanning during rule application
 
 **Specialized Handlers**:
 - `CommentRuleHandler`: Comment-specific rules (guard clauses, max 3-level nesting)
@@ -114,7 +115,7 @@ Precedence (highest to lowest):
 - `HelperFunctions`: Pure stateless functions for statement analysis
 
 **Results**:
-- Complexity: O(n²)-O(n³) → O(n)
+- Complexity: O(n²)-O(n³) → O(n) for rule application (context build has O(n²) worst case for scope detection)
 - Code size: 692 lines → 248 lines (64% reduction)
 - Max nesting: 6-7 levels → 3 levels max
 - Max parameters: 10 → 4

@@ -79,7 +79,7 @@ class BlankLineRuleEngine:
 
     return blankLineCounts
 
-  def _determineBlankLine(self, ctx, statements):
+  def _determineBlankLine(self, ctx, statements, skipPreserve=False):
     """Determine blank lines needed before a statement using context
 
     Replaces old _determineBlankLineForStatement (91 lines, 10 params, 6-level nesting)
@@ -89,6 +89,8 @@ class BlankLineRuleEngine:
     :param ctx: Pre-computed context for the statement
     :type statements: list[Statement]
     :param statements: Full list of statements
+    :type skipPreserve: bool
+    :param skipPreserve: If True, skip preserve-blank-lines logic (used for calculating rule-based count)
     :rtype: int
     :return: Number of blank lines needed
     """
@@ -101,11 +103,11 @@ class BlankLineRuleEngine:
 
     # Rule 2: Preserve blank lines (comment-adjacent or after skip block)
     # Use max of existing and calculated to ensure PEP 8 compliance
-    if ctx.preserveBlankLines:
+    if not skipPreserve and ctx.preserveBlankLines:
       existingBlanks = self._countExistingBlanks(statements, ctx.index)
 
       # Calculate what the rule would normally require
-      calculatedBlanks = self._determineBlankLineWithoutPreserve(ctx, statements)
+      calculatedBlanks = self._determineBlankLine(ctx, statements, skipPreserve=True)
 
       return max(existingBlanks, calculatedBlanks)
 
@@ -118,64 +120,6 @@ class BlankLineRuleEngine:
       return self.definitionHandler.needsBlankAfterControl(stmt)
 
     # Find previous statement at SAME indent level (for transition rules)
-    prevAtSameLevel = None
-    prevAtSameLevelIdx = None
-
-    if ctx.prevNonBlank and ctx.prevNonBlank.indentLevel == stmt.indentLevel:
-      prevAtSameLevel = ctx.prevNonBlank
-      prevAtSameLevelIdx = ctx.prevNonBlankIdx
-
-    # Rule 5: Handle comments specially
-    if stmt.isComment:
-      prevBlockType = prevAtSameLevel.blockType if prevAtSameLevel else None
-
-      return self.commentHandler.needsBlankBeforeComment(stmt, False, prevBlockType, ctx.startsNewScope)
-
-    # Rule 6: After comment (at same level)
-    if prevAtSameLevel and prevAtSameLevel.isComment:
-      return self.commentHandler.needsBlankAfterComment(prevAtSameLevel, stmt, statements, ctx.index)
-
-    # Rule 7: After other block types (at same level)
-    if prevAtSameLevel:
-      prevBlockType = prevAtSameLevel.blockType
-
-      return self.definitionHandler.needsBlankAfterBlockType(prevBlockType, stmt, statements, prevAtSameLevelIdx)
-
-    # Rule 8: Returning from nested level
-    if ctx.returningFromNestedLevel:
-      return 1
-
-    # Default: no blank line
-    return 0
-
-  def _determineBlankLineWithoutPreserve(self, ctx, statements):
-    """Determine blank lines without considering preserve flag
-
-    Used when preserve is set to calculate the max of existing and required.
-
-    :type ctx: StatementContext
-    :param ctx: Pre-computed context for the statement
-    :type statements: list[Statement]
-    :param statements: Full list of statements
-    :rtype: int
-    :return: Number of blank lines needed by rules (ignoring preserve)
-    """
-
-    stmt = ctx.statement
-
-    # Rule 1: No blank line at start of new scope (highest priority)
-    if ctx.startsNewScope:
-      return 0
-
-    # Rule 3: After completed definition block
-    if ctx.hasCompletedDefBefore:
-      return self.definitionHandler.needsBlankAfterDefinition(ctx.prevNonBlank, stmt, statements, ctx.prevNonBlankIdx)
-
-    # Rule 4: After completed control block
-    if ctx.hasCompletedControlBefore:
-      return self.definitionHandler.needsBlankAfterControl(stmt)
-
-    # Find previous statement at SAME indent level
     prevAtSameLevel = None
     prevAtSameLevelIdx = None
 
@@ -226,28 +170,3 @@ class BlankLineRuleEngine:
         break
 
     return count
-
-  def _needsBlankLineBetween(
-    self, prevType, currentType, indentLevel=None, isClassDocstring=False, isModuleLevelDocstring=False
-  ):
-    """Determine number of blank lines needed between block types
-
-    Thin wrapper to config.getBlankLines for backward compatibility with tests.
-
-    :param prevType: Previous block type
-    :type prevType: BlockType
-    :param currentType: Current block type
-    :type currentType: BlockType
-    :param indentLevel: Indentation level of current statement
-    :type indentLevel: int
-    :param isClassDocstring: True if prevType is a class docstring
-    :type isClassDocstring: bool
-    :param isModuleLevelDocstring: True if prevType is a module-level docstring
-    :type isModuleLevelDocstring: bool
-    :rtype: int
-    :return: Number of blank lines needed
-    """
-
-    from .config import config
-
-    return config.getBlankLines(prevType, currentType, indentLevel, isClassDocstring, isModuleLevelDocstring)

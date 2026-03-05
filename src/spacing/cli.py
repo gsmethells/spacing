@@ -362,6 +362,8 @@ def parseBlockTypeName(name: str) -> BlockType:
     'docstring': BlockType.DOCSTRING,
     'comment': BlockType.COMMENT,
     'flow_control': BlockType.FLOW_CONTROL,
+    'type_annotation': BlockType.TYPE_ANNOTATION,
+    'annotation': BlockType.TYPE_ANNOTATION,
   }
 
   if name not in blockTypeMap:
