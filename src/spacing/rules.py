@@ -8,6 +8,7 @@ This file is subject to the terms and conditions defined in LICENSE.
 from .commentrules import CommentRuleHandler
 from .context import ContextBuilder
 from .definitionrules import DefinitionRuleHandler
+from .types import BlockType
 
 
 class BlankLineRuleEngine:
@@ -140,8 +141,15 @@ class BlankLineRuleEngine:
     # Rule 7: After other block types (at same level)
     if prevAtSameLevel:
       prevBlockType = prevAtSameLevel.blockType
+      blanks = self.definitionHandler.needsBlankAfterBlockType(prevBlockType, stmt, statements, prevAtSameLevelIdx)
 
-      return self.definitionHandler.needsBlankAfterBlockType(prevBlockType, stmt, statements, prevAtSameLevelIdx)
+      # Preserve existing blank lines between import groups (PEP 8 / isort convention).
+      # Spacing otherwise collapses the blank line separating stdlib from third-party
+      # imports, which conflicts with ruff's I001 rule.
+      if prevBlockType == BlockType.IMPORT and stmt.blockType == BlockType.IMPORT:
+        return max(blanks, self._countExistingBlanks(statements, ctx.index))
+
+      return blanks
 
     # Rule 8: Returning from nested level
     if ctx.returningFromNestedLevel:
