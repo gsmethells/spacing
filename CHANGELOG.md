@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-03-09
+
+### Fixed
+- Preserve blank lines between import groups (e.g., stdlib vs third-party), preventing a conflict with ruff's isort/PEP 8 import-group-separator rule (issue #1)
+
 ## [1.0.2] - 2026-03-05
 
 ### Changed

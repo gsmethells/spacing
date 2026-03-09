@@ -165,3 +165,27 @@ class TestRegressionFormatting:
     expected = 'if x > 0:\n  a = 1\n\nif y > 0:\n  b = 2\n'
 
     assert formatContent(inputCode) == expected
+
+  def test_importGroupSeparatorPreserved(self):
+    """Verify blank line separating stdlib from third-party imports is preserved
+
+    Regression test for issue #1: spacing was removing the import group separator,
+    conflicting with ruff's I001 rule (isort / PEP 8 convention).
+    """
+
+    # Blank line between stdlib and third-party groups must not be removed
+    inputCode = 'import os\nimport sys\n\nimport pytest\n'
+
+    assert formatContent(inputCode) == inputCode
+
+  def test_noBlankLineAddedBetweenSameGroupImports(self):
+    """Verify spacing does not insert blank lines between imports that have none
+
+    Complements test_importGroupSeparatorPreserved: the preserve logic must not
+    create blank lines where none existed.
+    """
+
+    # No blank between imports → spacing must leave them as-is
+    inputCode = 'import os\nimport sys\nimport pytest\n'
+
+    assert formatContent(inputCode) == inputCode
